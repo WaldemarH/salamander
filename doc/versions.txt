@@ -1,0 +1,25 @@
+5.1
+• Configuration\Colors\Custom Scheme\'Icon tincture in panel'
+
+  1. Added "Don't change the color' in color dropdown menu. Giving us the option that files/folders icons colors don't change.
+     So they are keeps as original and only text of the file/folder changes when selected/focused.
+  
+• Files/Folder panel\'Current path header window'
+  
+  1. Replaced old png/bmp icons with SVG icons.
+  2. History and other icons left of it, don't change x position depending on the length of path anymore.
+     The icons are now always fixed to the right side of the header window.
+  3. Context menu now contains 'Set to other panel' menu item.
+  
+W:   tole naredi sedaj -> je v tej funkciji taka zmesnjava, da me kar glava boli :)
+     CMainWindow::OnWmContextMenu
+  
+• 
+
+     
+     Kaj je potrebno naredit:
+     naredi toolbar SVG ikonce, ki manjkajo -> 
+       UnselectOthers
+       
+    pri nekaterih toolbar itemih pa manjka text in je ikonca... izgleda kot, da so duplicirani itemi, brez teksta
+    

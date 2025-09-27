@@ -773,7 +773,7 @@ BOOL CPackerConfig::SetPackerTitle(int index, const char* title)
     return data->Title != NULL;
 }
 
-BOOL CPackerConfig::ExecutePacker(CFilesWindow* panel, const char* zipFile, BOOL move,
+BOOL CPackerConfig::ExecutePacker(CPanelWindow* panel, const char* zipFile, BOOL move,
                                   const char* sourcePath, SalEnumSelection2 next, void* param)
 {
     CALL_STACK_MESSAGE4("CPackerConfig::ExecutePacker(, %s, %d, %s, , ,)",
@@ -1416,7 +1416,7 @@ BOOL CUnpackerConfig::SetUnpackerTitle(int index, const char* title)
     return data->Title != NULL;
 }
 
-BOOL CUnpackerConfig::ExecuteUnpacker(HWND parent, CFilesWindow* panel, const char* zipFile, const char* mask,
+BOOL CUnpackerConfig::ExecuteUnpacker(HWND parent, CPanelWindow* panel, const char* zipFile, const char* mask,
                                       const char* targetDir, BOOL delArchiveWhenDone, CDynamicString* archiveVolumes)
 {
     CALL_STACK_MESSAGE5("CUnpackerConfig::ExecuteUnpacker(, %s, %s, %s, %d, )",

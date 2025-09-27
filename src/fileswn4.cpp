@@ -22,10 +22,10 @@
 
 //****************************************************************************
 //
-// CFilesWindow::SetFontAndColors
+// CPanelWindow::SetFontAndColors
 //
 
-void CFilesWindow::SetFontAndColors(HDC hDC, CHighlightMasksItem* highlightMasksItem, CFileData* f,
+void CPanelWindow::SetFontAndColors(HDC hDC, CHighlightMasksItem* highlightMasksItem, CFileData* f,
                                     BOOL isItemFocusedOrEditMode, int itemIndex)
 {
     // local scope enum
@@ -122,16 +122,25 @@ void CFilesWindow::SetFontAndColors(HDC hDC, CHighlightMasksItem* highlightMasks
 
 //****************************************************************************
 //
-// CFilesWindow::DrawIcon
+// CPanelWindow::DrawIcon
 //
 
-void CFilesWindow::DrawIcon(HDC hDC, CFileData* f, BOOL isDir, BOOL isItemUpDir,
-                            BOOL isItemFocusedOrEditMode, int x, int y, CIconSizeEnum iconSize,
-                            const RECT* overlayRect, DWORD drawFlags)
+void CPanelWindow::DrawIcon(
+    HDC hDC,
+    CFileData* f,
+    BOOL isDir,
+    BOOL isItemUpDir,
+    BOOL isItemFocusedOrEditMode,
+    int x,
+    int y,
+    IconSize::Value iconSize,
+    const RECT* overlayRect,
+    DWORD drawFlags
+)
 {
     BOOL drawSimpleSymbol = FALSE;
     int symbolIndex;                   // index v bitmape Symbols...
-    DWORD iconState = 0;               // flagy pro vykresleni ikonky
+    ImageState::Value iconState = ImageState::not_set;               // flags for drawing icons
     char lowerExtension[MAX_PATH + 4]; // pripona malymi pismeny, zarovnana na DWORDy
 
     if (!(drawFlags & DRAWFLAG_NO_STATE))
@@ -139,32 +148,32 @@ void CFilesWindow::DrawIcon(HDC hDC, CFileData* f, BOOL isDir, BOOL isItemUpDir,
         if ((f->Hidden == 1 || f->CutToClip == 1) && !isItemUpDir)
         {
             if (f->CutToClip == 0 && f->Selected == 1)
-                iconState |= IMAGE_STATE_SELECTED; //hidden budou mit selected state (cut ne)
+                iconState |= ImageState::selected;      //hidden will have selected state (not cut)
             else
-                iconState |= IMAGE_STATE_HIDDEN;
+                iconState |= ImageState::hidden;
         }
         else
         {
             if (isItemFocusedOrEditMode)
-                iconState |= IMAGE_STATE_FOCUSED;
+                iconState |= ImageState::focused;
             if (!isItemUpDir)
                 if (f->Selected == 1)
-                    iconState |= IMAGE_STATE_SELECTED;
+                    iconState |= ImageState::selected;
         }
     }
 
     if (drawFlags & DRAWFLAG_MASK)
-        iconState |= IMAGE_STATE_MASK;
+        iconState |= ImageState::mask;
 
     if (f->IsLink)
-        iconState |= IMAGE_STATE_SHORTCUT;
+        iconState |= ImageState::shortcut;
 
     if (f->IsOffline)
-        iconState |= IMAGE_STATE_OFFLINE;
+        iconState |= ImageState::offline;
 
     if (!isDir)
     {
-        // znaky pripony konvertuju do malych pismen
+        // suffix characters are converted to lowercase letters
         char *dstExt = lowerExtension, *srcExt = f->Ext;
         while (*srcExt != 0)
             *dstExt++ = LowerCase[*srcExt++];
@@ -191,7 +200,7 @@ void CFilesWindow::DrawIcon(HDC hDC, CFileData* f, BOOL isDir, BOOL isItemUpDir,
         {
             symbolIndex = symbolsDirectory;
             if (f->Shared)
-                iconState |= IMAGE_STATE_SHARED;
+                iconState |= ImageState::shared;
         }
     }
 
@@ -208,11 +217,15 @@ void CFilesWindow::DrawIcon(HDC hDC, CFileData* f, BOOL isDir, BOOL isItemUpDir,
         }
     }
 
-    // behem prepinani mezi rezimy panelu je nastavena TemporarilySimpleIcons==TRUE
-    // takze pro kresleni ikon nepouzijeme jeste nepripravenou IconCache
+    // during switching between panel modes, Temporarily SimpleIcons==TRUE is set
+    // so we don't use an unprepared IconCache for drawing icons
     if (!TemporarilySimpleIcons && UseSystemIcons)
     {
-        if (symbolIndex != symbolsUpDir && symbolIndex != symbolsArchive)
+        if (
+            ( symbolIndex != symbolsUpDir )
+            &&
+            ( symbolIndex != symbolsArchive )
+        )
         {
             CIconList* iconList = NULL;
             int iconListIndex = -1; // at zavreme, pokud nebude nastavena
@@ -247,9 +260,9 @@ void CFilesWindow::DrawIcon(HDC hDC, CFileData* f, BOOL isDir, BOOL isItemUpDir,
                     if (exceptions || Associations.GetIndex(lowerExtension, index)) // pripona ma ikonku (asociaci)
                     {
                         if (!exceptions)
-                            TransferAssocIndex = index;                               // zapamatujeme si platny index v Associations
-                        if (exceptions || Associations[index].GetIndex(iconSize) < 0) // dynamicka ikonka (v souboru) nebo nacitana staticka ikona
-                        {                                                             // ikona v souboru
+                            TransferAssocIndex = index;                               // we remember the valid index in Associations
+                        if (exceptions || Associations[index].GetIndex(iconSize) < 0) // dynamic icon (in file) or loaded static icon
+                        {                                                             // icon in icon in filefile
                             int icon;
                             memmove(fileName, f->Name, f->NameLen);
                             *(DWORD*)(fileName + f->NameLen) = 0;
@@ -354,13 +367,25 @@ void CFilesWindow::DrawIcon(HDC hDC, CFileData* f, BOOL isDir, BOOL isItemUpDir,
 
     if (drawSimpleSymbol)
     { // simple symbols
-        StateImageList_Draw(SimpleIconLists[iconSize], symbolIndex, hDC, x, y, iconState, iconSize,
-                            f->IconOverlayIndex, overlayRect, (drawFlags & DRAWFLAG_OVERLAY_ONLY) != 0,
-                            iconOverlayFromPlugin, pluginIconOverlaysCount, pluginIconOverlays);
+        StateImageList_Draw(
+            SimpleIconLists[iconSize],
+            symbolIndex,
+            hDC,
+            x,
+            y,
+            iconState,
+            iconSize,
+            f->IconOverlayIndex,
+            overlayRect,
+            (drawFlags & DRAWFLAG_OVERLAY_ONLY) != 0,
+            iconOverlayFromPlugin,
+            pluginIconOverlaysCount,
+            pluginIconOverlays
+        );
     }
 
-    // nechapu proc, ale soucasna verze kresleni bitmap neblika.
-    // pravdepodobne v pripade blendu jsou ikonky kresleny pres memory dc
+    // I don't understand why, but the current version of bitmap drawing doesn't blink.
+    // probably in the case of blend the icons are drawn via memory dc
     //    BitBlt(hDC, iconRect.left, iconRect.top,
     //           iconRect.right - iconRect.left,
     //           iconRect.bottom - iconRect.top,
@@ -447,7 +472,7 @@ void DrawFocusRect(HDC hDC, const RECT* r, BOOL selected, BOOL editMode)
 
 //****************************************************************************
 //
-// CFilesWindow::DrawBriefDetailedItem
+// CPanelWindow::DrawBriefDetailedItem
 //
 // Kresli polozku v rezimech Brief a Detailed
 //
@@ -455,7 +480,7 @@ void DrawFocusRect(HDC hDC, const RECT* r, BOOL selected, BOOL editMode)
 //
 // zmeny v paintu polozky (rozlozeni) je treba zanest na tato mista:
 //
-// CFilesWindow::DrawItem(WPARAM wParam, LPARAM lParam)
+// CPanelWindow::DrawItem(WPARAM wParam, LPARAM lParam)
 // CFilesBox::GetIndex(int x, int y)
 // CFilesMap::CreateMap()
 //
@@ -463,7 +488,7 @@ void DrawFocusRect(HDC hDC, const RECT* r, BOOL selected, BOOL editMode)
 char DrawItemBuff[1024]; // cilovy buffer pro retezce
 int DrawItemAlpDx[1024]; // pro napocitavani sirek u sloupcu s FixedWidth bitem + elastickych sloupcu se zaplym smart-modem
 
-void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD drawFlags)
+void CPanelWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD drawFlags)
 {
     CALL_STACK_MESSAGE_NONE
     if (itemIndex < 0 || itemIndex >= Dirs->Count + Files->Count)
@@ -503,7 +528,7 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
         isItemFocusedOrEditMode = FALSE;
 
     BOOL fullRowHighlight = FALSE;
-    if (GetViewMode() == vmDetailed && !Configuration.FullRowSelect && Configuration.FullRowHighlight)
+    if (GetViewMode() == ViewMode::detailed && !Configuration.FullRowSelect && Configuration.FullRowHighlight)
         fullRowHighlight = TRUE;
 
     int xOffset = ListBox->XOffset;
@@ -548,15 +573,15 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
     //
 
     RECT iconRect = rect;
-    iconRect.right = iconRect.left + 1 + IconSizes[ICONSIZE_16] + 1;
+    iconRect.right = iconRect.left + 1 + IconSizes[IconSize::size_16x16] + 1;
 
     if (drawFlags & DRAWFLAG_SKIP_VISTEST || RectVisible(hDC, &iconRect))
     {
         RECT innerRect;
         innerRect.left = iconRect.left + 1;                                                           // iconX
-        innerRect.top = iconRect.top + (iconRect.bottom - iconRect.top - IconSizes[ICONSIZE_16]) / 2; // iconY
-        innerRect.right = innerRect.left + IconSizes[ICONSIZE_16];
-        innerRect.bottom = innerRect.top + IconSizes[ICONSIZE_16];
+        innerRect.top = iconRect.top + (iconRect.bottom - iconRect.top - IconSizes[IconSize::size_16x16]) / 2; // iconY
+        innerRect.right = innerRect.left + IconSizes[IconSize::size_16x16];
+        innerRect.bottom = innerRect.top + IconSizes[IconSize::size_16x16];
 
         // podmazu prostor kolem ikony
         if ((drawFlags & DRAWFLAG_MASK) == 0) // pokud kreslime masku (b&w), nesmi kreslit podkladovou barvu
@@ -572,10 +597,10 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
 */
 
         DrawIcon(hDC, f, isDir, isItemUpDir, isItemFocusedOrEditMode,
-                 innerRect.left, innerRect.top, ICONSIZE_16, NULL, drawFlags);
+                 innerRect.left, innerRect.top, IconSize::size_16x16, NULL, drawFlags);
 
         if (drawFlags & DRAWFLAG_SELFOC_CHANGE)
-            cacheValidWidth += 1 + IconSizes[ICONSIZE_16] + 1;
+            cacheValidWidth += 1 + IconSizes[IconSize::size_16x16] + 1;
     }
 
     BOOL showCaret = FALSE;
@@ -615,7 +640,7 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
 
         int nameWidth = Columns[0].Width;
 
-        r.left = x + 1 + IconSizes[ICONSIZE_16] + 1;
+        r.left = x + 1 + IconSizes[IconSize::size_16x16] + 1;
         r.right = x + nameWidth;
 
         // pokud je polozka orameckovana, budeme kreslit pouze vnitrek
@@ -652,7 +677,7 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
 
         if (drawFlags & DRAWFLAG_SKIP_VISTEST || RectVisible(hDC, &r))
         {
-            if (GetViewMode() == vmBrief && Configuration.FullRowSelect)
+            if (GetViewMode() == ViewMode::brief && Configuration.FullRowSelect)
             {
                 r.right -= 10; // korekce - musime vytvorit prostor pro tazeni klece
                 focusFrameRightValid = TRUE;
@@ -662,7 +687,7 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
             if (isItemUpDir)
             {
                 nameLen = 0;
-                if (GetViewMode() == vmBrief && !Configuration.FullRowSelect)
+                if (GetViewMode() == ViewMode::brief && !Configuration.FullRowSelect)
                 {
                     adjR.right -= 10; // 10 - abychom nebyli roztazeni pres celou sirku
                     r.right -= 10;
@@ -688,12 +713,12 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
             if (!isItemUpDir && !Configuration.FullRowSelect)
             {
                 // namerime skutecnou delku textu
-                if (GetViewMode() == vmDetailed && (column->FixedWidth == 1 || NarrowedNameColumn))
+                if (GetViewMode() == ViewMode::detailed && (column->FixedWidth == 1 || NarrowedNameColumn))
                 {
-                    textWidth = nameWidth - 1 - IconSizes[ICONSIZE_16] - 1 - 2 - SPACE_WIDTH;
+                    textWidth = nameWidth - 1 - IconSizes[IconSize::size_16x16] - 1 - 2 - SPACE_WIDTH;
                     GetTextExtentExPoint(hDC, TransferBuffer, nameLen, textWidth,
                                          &fitChars, DrawItemAlpDx, &fnSZ);
-                    int newWidth = 1 + IconSizes[ICONSIZE_16] + 1 + 2 + fnSZ.cx + 3;
+                    int newWidth = 1 + IconSizes[IconSize::size_16x16] + 1 + 2 + fnSZ.cx + 3;
                     if (newWidth > nameWidth)
                         newWidth = nameWidth;
                     adjR.right = r.right = rect.left + newWidth;
@@ -701,20 +726,20 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
                 else
                 {
                     GetTextExtentPoint32(hDC, TransferBuffer, nameLen, &fnSZ);
-                    adjR.right = r.right = rect.left + 1 + IconSizes[ICONSIZE_16] + 1 + 2 + fnSZ.cx + 3;
+                    adjR.right = r.right = rect.left + 1 + IconSizes[IconSize::size_16x16] + 1 + 2 + fnSZ.cx + 3;
                 }
 
                 // focus bude take kratsi
                 focusFrameRightValid = TRUE;
                 focusFrameRight = r.right;
             }
-            if (!isItemUpDir && GetViewMode() == vmDetailed && (column->FixedWidth == 1 || NarrowedNameColumn))
+            if (!isItemUpDir && GetViewMode() == ViewMode::detailed && (column->FixedWidth == 1 || NarrowedNameColumn))
             {
                 if (Configuration.FullRowSelect)
                 {
                     // jeste nemame namereno - jdeme na to
                     // retezec muze byt delsi nez dostupne misto a je treba zakoncit ho vypustkou ...
-                    textWidth = nameWidth - 1 - IconSizes[ICONSIZE_16] - 1 - 2 - SPACE_WIDTH;
+                    textWidth = nameWidth - 1 - IconSizes[IconSize::size_16x16] - 1 - 2 - SPACE_WIDTH;
                     GetTextExtentExPoint(hDC, TransferBuffer, nameLen, textWidth,
                                          &fitChars, DrawItemAlpDx, &fnSZ);
                 }
@@ -747,7 +772,7 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
             // DRAWFLAG_MASK: hack, pod XP se do masky pri kresleni kratkych textu pridavala pred text nejaka blitka, pokud text nekreslimne, nedela to
             ExtTextOut(hDC, r.left + 2, y, ETO_OPAQUE, &adjR, TransferBuffer, (drawFlags & DRAWFLAG_MASK) ? 0 : nameLen, NULL);
         SKIP1:
-            if (!Configuration.FullRowSelect || GetViewMode() == vmBrief)
+            if (!Configuration.FullRowSelect || GetViewMode() == ViewMode::brief)
             {
                 if (forFrameAdjusted)
                 {
@@ -775,7 +800,7 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
             cacheValidWidth = nameWidth;
         // neni-li FullRowSelect a kreslim pouze dirty polozky nebo doslo jen ke zmene
         // focusu/selectu, nebudu se zatezovat kreslenim dalsich sloupcu - nic se tam nezmenilo
-        if (GetViewMode() == vmDetailed && (fullRowHighlight || Configuration.FullRowSelect ||
+        if (GetViewMode() == ViewMode::detailed && (fullRowHighlight || Configuration.FullRowSelect ||
                                             !(drawFlags & DRAWFLAG_DIRTY_ONLY) && !(drawFlags & DRAWFLAG_SELFOC_CHANGE)))
         {
             if (!Configuration.FullRowSelect)
@@ -920,7 +945,7 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
             adjR.bottom++;
             forFrameAdjusted = FALSE;
         }
-        if (GetViewMode() == vmDetailed && !(drawFlags & DRAWFLAG_DIRTY_ONLY) &&
+        if (GetViewMode() == ViewMode::detailed && !(drawFlags & DRAWFLAG_DIRTY_ONLY) &&
             !(drawFlags & DRAWFLAG_SELFOC_CHANGE))
         {
             if (r.right < rect.right)
@@ -946,7 +971,7 @@ void CFilesWindow::DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRe
             (Configuration.FullRowSelect || focusFrameRightValid))
         {
             r = rect;
-            r.left += 1 + IconSizes[ICONSIZE_16] + 1;
+            r.left += 1 + IconSizes[IconSize::size_16x16] + 1;
             r.right = x;
             if (focusFrameRightValid)
                 r.right = focusFrameRight;
@@ -1138,8 +1163,7 @@ void SplitText(HDC hDC, const char* text, int textLen, int* maxWidth,
 // Kresli polozku v rezimech Icons a Thumbnails
 //
 
-void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRect,
-                                         DWORD drawFlags, CIconSizeEnum iconSize)
+void CPanelWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD drawFlags, IconSize::Value iconSize)
 {
     CALL_STACK_MESSAGE_NONE
     if (itemIndex < 0 || itemIndex >= Dirs->Count + Files->Count)
@@ -1148,9 +1172,9 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
         return;
     }
 #ifdef _DEBUG
-    if (GetViewMode() != vmIcons && GetViewMode() != vmThumbnails)
+    if (GetViewMode() != ViewMode::icons && GetViewMode() != ViewMode::thumbnails)
     {
-        TRACE_E("GetViewMode() != vmIcons && GetViewMode() != vmThumbnails");
+        TRACE_E("GetViewMode() != ViewMode::icons && GetViewMode() != ViewMode::thumbnails");
         return;
     }
 #endif // _DEBUG
@@ -1221,7 +1245,7 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
 
     //*****************************************
     //
-    // vykresleni ikony
+    // icon rendering
     //
 
     if (drawFlags & DRAWFLAG_SKIP_VISTEST || RectVisible(hDC, &rect))
@@ -1231,7 +1255,7 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
         int iconH = IconSizes[iconSize];
 
         HBITMAP hScaled = NULL; // pokud je ruzny od NULL, vykresli se thumbnail; jinak ikonka
-        if (GetViewMode() == vmThumbnails)
+        if (GetViewMode() == ViewMode::thumbnails)
         {
             // umime thumbnaily pouze na disku
             if (Is(ptDisk) && !isDir)
@@ -1259,7 +1283,7 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
                         CThumbnailData* thumbnailData;
                         if (IconCache->GetThumbnail(IconCache->At(icon).GetIndex(), &thumbnailData))
                         {
-                            // rekonstrukce bitmapy
+                            // bitmap reconstruction
                             hScaled = HANDLES(CreateBitmap(thumbnailData->Width,
                                                            thumbnailData->Height,
                                                            thumbnailData->Planes,
@@ -1286,7 +1310,7 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
 
         int iconX = rect.left + (rect.right - rect.left - iconW) / 2;
         int iconY;
-        if (GetViewMode() == vmThumbnails)
+        if (GetViewMode() == ViewMode::thumbnails)
             iconY = rect.top + (rect.bottom - Configuration.IconSpacingVert - rect.top - iconH) / 2 + 3;
         else
             iconY = rect.top + 2;
@@ -1297,7 +1321,7 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
         // obdelnik, ke kteremu budeme mazat
         RECT innerRect;
         BOOL thickFrame = FALSE; // pouze pro Thumbnails -- ma byt ramecek dvojnasobny?
-        if (GetViewMode() == vmThumbnails)
+        if (GetViewMode() == ViewMode::thumbnails)
         {
             // pro Thumbnail saha k ramecku kolem thumbnailu
             innerRect = rect;
@@ -1306,7 +1330,7 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
             innerRect.top += 3;
             innerRect.bottom = innerRect.top + ListBox->ThumbnailHeight + 2;
 
-            // pero pro ramecek
+            // pen for frame
             HPEN hPen;
             if (!f->Selected == 1 && !isItemFocusedOrEditMode)
                 hPen = HThumbnailNormalPen;
@@ -1335,17 +1359,17 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
             outerRect.bottom = innerRect.bottom;
         }
 
-        // podmazu pozadi k ikone nebo ramecku (pro Thumbnail)
+        // background for icon or frame (for Thumbnail)
         if ((drawFlags & DRAWFLAG_MASK) == 0) // pokud kreslime masku (b&w), nesmi kreslit podkadovou barvu
             FillIntersectionRegion(hDC, &outerRect, &innerRect);
 
         RECT overlayRect;
         overlayRect = innerRect;
         InflateRect(&overlayRect, -1, -1);
-        if (GetViewMode() == vmThumbnails && thickFrame)
+        if (GetViewMode() == ViewMode::thumbnails && thickFrame)
             InflateRect(&overlayRect, -1, -1);
 
-        if (GetViewMode() == vmThumbnails)
+        if (GetViewMode() == ViewMode::thumbnails)
         {
             if ((drawFlags & DRAWFLAG_SKIP_FRAME) == 0)
             {
@@ -1364,24 +1388,33 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
                 iiRect.top = iconY;
                 iiRect.right = iiRect.left + iconW;
                 iiRect.bottom = iiRect.top + iconH;
-                if ((drawFlags & DRAWFLAG_MASK) == 0) // pokud kreslime masku (b&w), nesmi kreslit podkladovou barvu
+                if ((drawFlags & DRAWFLAG_MASK) == 0) // if we draw a mask (b&w), we must not draw the background color
                     FillIntersectionRegion(hDC, &innerRect, &iiRect);
             }
         }
 
-        if (GetViewMode() == vmThumbnails)
+        if (GetViewMode() == ViewMode::thumbnails)
             drawFlags |= DRAWFLAG_NO_STATE;
 
         if (hScaled == NULL)
         {
-            // nemame zmenseninu -> vykreslime ikonu
-            DrawIcon(hDC, f, isDir, isItemUpDir, isItemFocusedOrEditMode,
-                     iconX, iconY, iconSize, (GetViewMode() == vmThumbnails ? &overlayRect : NULL),
-                     drawFlags);
+            // we don't have a diminutive -> let's draw an icon
+            DrawIcon(
+                hDC,
+                f,
+                isDir,
+                isItemUpDir,
+                isItemFocusedOrEditMode,
+                iconX,
+                iconY,
+                iconSize,
+                ( GetViewMode() == ViewMode::thumbnails ? &overlayRect : NULL ),
+                drawFlags
+            );
         }
         else
         {
-            // vykreslime zmenseninu
+            // let's draw a reduction
             HDC hTmpDC = HANDLES(CreateCompatibleDC(hDC));
             HBITMAP hOldBitmap = (HBITMAP)SelectObject(hTmpDC, hScaled);
 
@@ -1389,7 +1422,7 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
             {
                 // vykreslime masku pro overlay (pri kresleni masky je potreba napred nakreslit overlay, protoze ten neumime kreslit transparentne)
                 DrawIcon(hDC, f, isDir, isItemUpDir, isItemFocusedOrEditMode,
-                         iconX, iconY, iconSize, (GetViewMode() == vmThumbnails ? &overlayRect : NULL),
+                         iconX, iconY, iconSize, (GetViewMode() == ViewMode::thumbnails ? &overlayRect : NULL),
                          drawFlags | DRAWFLAG_OVERLAY_ONLY);
             }
 
@@ -1401,7 +1434,7 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
             {
                 // vykreslime overlay (pri normalnim kresleni musime overlay vykreslit az po bitmape)
                 DrawIcon(hDC, f, isDir, isItemUpDir, isItemFocusedOrEditMode,
-                         iconX, iconY, iconSize, (GetViewMode() == vmThumbnails ? &overlayRect : NULL),
+                         iconX, iconY, iconSize, (GetViewMode() == ViewMode::thumbnails ? &overlayRect : NULL),
                          drawFlags | DRAWFLAG_OVERLAY_ONLY);
             }
 
@@ -1463,7 +1496,7 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
         if (isItemUpDir)
         {
             out1Len = 0;
-            maxWidth = (GetViewMode() == vmThumbnails) ? ListBox->ThumbnailWidth : 32;
+            maxWidth = (GetViewMode() == ViewMode::thumbnails) ? ListBox->ThumbnailWidth : 32;
             out1Width = maxWidth;
             out2Len = 0;
         }
@@ -1471,7 +1504,7 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
         // vnejsi obdelnik, od ktereho mazu smerem k vnitrnimu
         int y; // pozice textu
         RECT outerRect = rect;
-        if (GetViewMode() == vmThumbnails)
+        if (GetViewMode() == ViewMode::thumbnails)
         {
             outerRect.top += 3 + ListBox->ThumbnailHeight + 2;
             y = outerRect.top + 4;
@@ -1480,7 +1513,7 @@ void CFilesWindow::DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRe
         }
         else
         {
-            outerRect.top += 2 + IconSizes[ICONSIZE_32];
+            outerRect.top += 2 + IconSizes[IconSize::size_32x32];
             y = outerRect.top + 4;
         }
 
@@ -1699,8 +1732,8 @@ void GetTileTexts(CFileData* f, int isDir,
     TruncateSringToFitWidth(hDC, out2, out2Len, maxTextWidth, widthNeeded);
 }
 
-void CFilesWindow::DrawTileItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD drawFlags,
-                                CIconSizeEnum iconSize)
+void CPanelWindow::DrawTileItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD drawFlags,
+                                IconSize::Value iconSize)
 {
     CALL_STACK_MESSAGE_NONE
     if (itemIndex < 0 || itemIndex >= Dirs->Count + Files->Count)
@@ -1709,9 +1742,9 @@ void CFilesWindow::DrawTileItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD
         return;
     }
 #ifdef _DEBUG
-    if (GetViewMode() != vmTiles)
+    if (GetViewMode() != ViewMode::tiles)
     {
-        TRACE_E("GetViewMode() != vmTiles");
+        TRACE_E("GetViewMode() != ViewMode::tiles");
         return;
     }
 #endif // _DEBUG
@@ -1938,24 +1971,68 @@ void CFilesWindow::DrawTileItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD
 // StateImageList_Draw
 //
 
-BOOL StateImageList_Draw(CIconList* iconList, int imageIndex, HDC hDC, int xDst, int yDst,
-                         DWORD state, CIconSizeEnum iconSize, DWORD iconOverlayIndex,
-                         const RECT* overlayRect, BOOL overlayOnly, BOOL iconOverlayFromPlugin,
-                         int pluginIconOverlaysCount, HICON* pluginIconOverlays)
+BOOL StateImageList_Draw(
+    CIconList* iconList,
+    int imageIndex,
+    HDC hDC,
+    int xDst,
+    int yDst,
+    ImageState::Value state,
+    IconSize::Value iconSize,
+    DWORD iconOverlayIndex,
+    const RECT* overlayRect,
+    BOOL overlayOnly,
+    BOOL iconOverlayFromPlugin,
+    int pluginIconOverlaysCount,
+    HICON* pluginIconOverlays
+)
 {
-    COLORREF rgbFg = CLR_DEFAULT;
     BOOL blend = FALSE;
+    COLORREF rgbFg = CLR_DEFAULT;
     if (Configuration.UseIconTincture)
     {
-        if (state & IMAGE_STATE_FOCUSED && state & IMAGE_STATE_SELECTED)
-            rgbFg = GetCOLORREF(CurrentColors[ICON_BLEND_FOCSEL]);
-        else if (state & IMAGE_STATE_FOCUSED)
-            rgbFg = GetCOLORREF(CurrentColors[ICON_BLEND_FOCUSED]);
-        else if (state & IMAGE_STATE_SELECTED)
-            rgbFg = GetCOLORREF(CurrentColors[ICON_BLEND_SELECTED]);
-        else if (state & IMAGE_STATE_HIDDEN)
+        if (
+            (state & ImageState::focused)
+            &&
+            (state & ImageState::selected)
+        )
+        {
+            const auto color = CurrentColors[ICON_BLEND_FOCSEL];
+            const auto flags = GetFValue( color );
+
+            if ( (flags & SCF_NOCOLOR) == 0 )
+            {
+                blend = TRUE;
+                rgbFg = GetCOLORREF( color );
+            }
+        }
+        else if (state & ImageState::focused)
+        {
+            const auto color = CurrentColors[ICON_BLEND_FOCUSED];
+            const auto flags = GetFValue( color );
+
+            if ( (flags & SCF_NOCOLOR) == 0 )
+            {
+                blend = TRUE;
+                rgbFg = GetCOLORREF( color );
+            }
+        }
+        else if (state & ImageState::selected)
+        {
+            const auto color = CurrentColors[ICON_BLEND_SELECTED];
+            const auto flags = GetFValue( color );
+
+            if ( (flags & SCF_NOCOLOR) == 0 )
+            {
+                blend = TRUE;
+                rgbFg = GetCOLORREF( color );
+            }
+        }
+        else if (state & ImageState::hidden)
+        {
+            blend = TRUE;
             rgbFg = CLR_NONE;
-        blend = state & IMAGE_STATE_FOCUSED || state & IMAGE_STATE_SELECTED || state & IMAGE_STATE_HIDDEN;
+        }
     }
     DWORD flags;
     COLORREF rgbBk;
@@ -1974,10 +2051,10 @@ BOOL StateImageList_Draw(CIconList* iconList, int imageIndex, HDC hDC, int xDst,
     int xOverlayDst = xDst;
     int yOverlayDst = yDst;
 
-    // na Viste se pouziva pro ikony 48x48 overlay ICONSIZE_32 a pro thumbnaily overlay ICONSIZE_48
-    if (iconSize == ICONSIZE_48 && overlayRect == NULL)
+    // na Viste se pouziva pro ikony 48x48 overlay IconSize::size_32x32 a pro thumbnaily overlay IconSize::size_48x48
+    if (iconSize == IconSize::size_48x48 && overlayRect == NULL)
     {
-        iconSize = ICONSIZE_32;
+        iconSize = IconSize::size_32x32;
         yOverlayDst += 48 - 32;
     }
 
@@ -1991,7 +2068,7 @@ BOOL StateImageList_Draw(CIconList* iconList, int imageIndex, HDC hDC, int xDst,
         yOverlayDst = overlayRect->bottom - iconH;
     }
 
-    if (state & IMAGE_STATE_MASK)
+    if (state & ImageState::mask)
     {
         // musim prohodit poradi, protoze funkce DrawIconEx nekresli masku transparentne
         if (iconOverlayIndex != ICONOVERLAYINDEX_NOTUSED) // pokud je nacteny tento overlay, znamena to, ze je prioritnejsi nez nize uvedene overlaye
@@ -2000,33 +2077,28 @@ BOOL StateImageList_Draw(CIconList* iconList, int imageIndex, HDC hDC, int xDst,
             {
                 if ((int)iconOverlayIndex < pluginIconOverlaysCount)
                 {
-                    DrawIconEx(hDC, xOverlayDst, yOverlayDst, pluginIconOverlays[3 * iconOverlayIndex + iconSize],
-                               iconW, iconH, 0, NULL, DI_MASK);
+                    DrawIconEx(hDC, xOverlayDst, yOverlayDst, pluginIconOverlays[3 * iconOverlayIndex + iconSize], iconW, iconH, 0, NULL, DI_MASK);
                 }
                 else
                     TRACE_E("StateImageList_Draw(): invalid icon-overlay index: " << iconOverlayIndex << ", max = " << pluginIconOverlaysCount);
             }
             else
             {
-                DrawIconEx(hDC, xOverlayDst, yOverlayDst, ShellIconOverlays.GetIconOverlay(iconOverlayIndex, iconSize),
-                           iconW, iconH, 0, NULL, DI_MASK);
+                DrawIconEx(hDC, xOverlayDst, yOverlayDst, ShellIconOverlays.GetIconOverlay(iconOverlayIndex, iconSize), iconW, iconH, 0, NULL, DI_MASK);
             }
         }
         else
         {
-            if (state & IMAGE_STATE_SHARED)
-                DrawIconEx(hDC, xOverlayDst, yOverlayDst, HSharedOverlays[iconSize],
-                           iconW, iconH, 0, NULL, DI_MASK);
+            if (state & ImageState::shared)
+                DrawIconEx(hDC, xOverlayDst, yOverlayDst, HSharedOverlays[iconSize], iconW, iconH, 0, NULL, DI_MASK);
             else
             {
-                if (state & IMAGE_STATE_SHORTCUT)
-                    DrawIconEx(hDC, xOverlayDst, yOverlayDst, HShortcutOverlays[iconSize],
-                               iconW, iconH, 0, NULL, DI_MASK);
+                if (state & ImageState::shortcut)
+                    DrawIconEx(hDC, xOverlayDst, yOverlayDst, HShortcutOverlays[iconSize], iconW, iconH, 0, NULL, DI_MASK);
                 else
                 {
-                    if (state & IMAGE_STATE_OFFLINE)
-                        DrawIconEx(hDC, xOverlayDst, yOverlayDst, HSlowFileOverlays[iconSize],
-                                   iconW, iconH, 0, NULL, DI_MASK);
+                    if (state & ImageState::offline)
+                        DrawIconEx(hDC, xOverlayDst, yOverlayDst, HSlowFileOverlays[iconSize], iconW, iconH, 0, NULL, DI_MASK);
                 }
             }
         }
@@ -2043,33 +2115,28 @@ BOOL StateImageList_Draw(CIconList* iconList, int imageIndex, HDC hDC, int xDst,
             {
                 if ((int)iconOverlayIndex < pluginIconOverlaysCount)
                 {
-                    DrawIconEx(hDC, xOverlayDst, yOverlayDst, pluginIconOverlays[3 * iconOverlayIndex + iconSize],
-                               iconW, iconH, 0, NULL, DI_NORMAL);
+                    DrawIconEx(hDC, xOverlayDst, yOverlayDst, pluginIconOverlays[3 * iconOverlayIndex + iconSize], iconW, iconH, 0, NULL, DI_NORMAL);
                 }
                 else
                     TRACE_E("StateImageList_Draw(): invalid icon-overlay index: " << iconOverlayIndex << ", max = " << pluginIconOverlaysCount);
             }
             else
             {
-                DrawIconEx(hDC, xOverlayDst, yOverlayDst, ShellIconOverlays.GetIconOverlay(iconOverlayIndex, iconSize),
-                           iconW, iconH, 0, NULL, DI_NORMAL);
+                DrawIconEx(hDC, xOverlayDst, yOverlayDst, ShellIconOverlays.GetIconOverlay(iconOverlayIndex, iconSize), iconW, iconH, 0, NULL, DI_NORMAL);
             }
         }
         else
         {
-            if (state & IMAGE_STATE_SHARED)
-                DrawIconEx(hDC, xOverlayDst, yOverlayDst, HSharedOverlays[iconSize],
-                           iconW, iconH, 0, NULL, DI_NORMAL);
+            if (state & ImageState::shared)
+                DrawIconEx(hDC, xOverlayDst, yOverlayDst, HSharedOverlays[iconSize], iconW, iconH, 0, NULL, DI_NORMAL);
             else
             {
-                if (state & IMAGE_STATE_SHORTCUT)
-                    DrawIconEx(hDC, xOverlayDst, yOverlayDst, HShortcutOverlays[iconSize],
-                               iconW, iconH, 0, NULL, DI_NORMAL);
+                if (state & ImageState::shortcut)
+                    DrawIconEx(hDC, xOverlayDst, yOverlayDst, HShortcutOverlays[iconSize], iconW, iconH, 0, NULL, DI_NORMAL);
                 else
                 {
-                    if (state & IMAGE_STATE_OFFLINE)
-                        DrawIconEx(hDC, xOverlayDst, yOverlayDst, HSlowFileOverlays[iconSize],
-                                   iconW, iconH, 0, NULL, DI_NORMAL);
+                    if (state & ImageState::offline)
+                        DrawIconEx(hDC, xOverlayDst, yOverlayDst, HSlowFileOverlays[iconSize], iconW, iconH, 0, NULL, DI_NORMAL);
                 }
             }
         }

@@ -14,7 +14,21 @@ CSVGSprite SVGArrowRight;
 CSVGSprite SVGArrowRightSmall;
 CSVGSprite SVGArrowMore;
 CSVGSprite SVGArrowLess;
-CSVGSprite SVGArrowDropDown;
+CSVGSprite SVGArrowDropDown_Buttons;
+CSVGSprite SVGFilter_Active;
+CSVGSprite SVGFilter_Inactive;
+CSVGSprite SVGHistory_Active;
+CSVGSprite SVGHistory_Inactive;
+CSVGSprite SVGLoading_Active[40];       //40 frames (has to divide 1000 and 360 values)
+CSVGSprite SVGLoading_Inactive[40];     //40 frames (has to divide 1000 and 360 values)
+CSVGSprite SVGSecurity_Locked_Active;
+CSVGSprite SVGSecurity_Locked_Inactive;
+CSVGSprite SVGSecurity_Unlocked_Active;
+CSVGSprite SVGSecurity_Unlocked_Inactive;
+CSVGSprite SVGZoom_In_Active;
+CSVGSprite SVGZoom_In_Inactive;
+CSVGSprite SVGZoom_Out_Active;
+CSVGSprite SVGZoom_Out_Inactive;
 
 // alternativa: http://stackoverflow.com/questions/11376288/fast-computing-of-log2-for-64-bit-integers
 // (asi by se nasla i pro kratsi verze)
@@ -31,14 +45,20 @@ CSVGSprite SVGArrowDropDown;
 //__popcnt16, __popcnt, __popcnt64
 //https://msdn.microsoft.com/en-us/library/bb385231(v=vs.100).aspx
 
-DWORD GetSVGSysColor(int index)
+DWORD GetSVGSysColor_App(int colorId)
 {
-    DWORD color = GetSysColor(index);
-    DWORD ret = 0xFF000000;
-    ret |= GetBValue(color) << 16;
-    ret |= GetGValue(color) << 8;
-    ret |= GetRValue(color);
-    return ret;
+    return ( 0xFF000000 | GetCOLORREF(CurrentColors[colorId]) );
+}
+DWORD GetSVGSysColor_Sys(int index)
+{
+    //DWORD color = GetSysColor(index);
+    //DWORD ret = 0xFF000000;
+    //ret |= GetBValue(color) << 16;
+    //ret |= GetGValue(color) << 8;
+    //ret |= GetRValue(color);
+    //return ret;
+
+    return ( 0xFF000000 | ( 0x00FFFFFF & GetSysColor(index) ) );
 }
 
 //*****************************************************************************
@@ -85,7 +105,7 @@ char* ReadSVGFile(const char* fileName)
     return buff;
 }
 
-// vykresli ikony pro ktere mame SVG reprezentaci
+// render icons for which we have SVG representation
 void RenderSVGImage(NSVGrasterizer* rast, HDC hDC, int x, int y, const char* svgName, int iconSize, COLORREF bkColor, BOOL enabled)
 {
     char svgFile[2 * MAX_PATH];
@@ -124,7 +144,7 @@ void RenderSVGImage(NSVGrasterizer* rast, HDC hDC, int x, int y, const char* svg
 
         if (!enabled)
         {
-            DWORD disabledColor = GetSVGSysColor(COLOR_BTNSHADOW); // JRYFIXME - prvotni nastrel, kde budeme brat disabled barvu?
+            DWORD disabledColor = GetSVGSysColor_Sys(COLOR_BTNSHADOW); // JRYFIXME - prvotni nastrel, kde budeme brat disabled barvu?
             NSVGshape* shape = image->shapes;
             while (shape != NULL)
             {
@@ -183,11 +203,12 @@ void CSVGSprite::Clean()
     Height = -1;
 }
 
-char* CSVGSprite::LoadSVGResource(int resID)
+std::string CSVGSprite::LoadSVGResource(int resID)
 {
-    char* ret = NULL;
+    std::string     svg;
+
     HRSRC hRsrc = FindResource(HInstance, MAKEINTRESOURCE(resID), RT_RCDATA);
-    if (hRsrc != NULL)
+    if ( hRsrc != NULL )
     {
         char* rawSVG = (char*)LoadResource(HInstance, hRsrc);
         if (rawSVG != NULL)
@@ -195,13 +216,15 @@ char* CSVGSprite::LoadSVGResource(int resID)
             DWORD size = SizeofResource(HInstance, hRsrc);
             if (size > 0)
             {
-                NSVGimage* image = NULL;
-                NSVGrasterizer* rast = NULL;
+                svg.append( rawSVG, size );
 
-                char* terminatedSVG = (char*)malloc(size + 1);
-                memcpy(terminatedSVG, rawSVG, size);
-                terminatedSVG[size] = 0;
-                ret = terminatedSVG;
+                ////NSVGimage* image = NULL;
+                ////NSVGrasterizer* rast = NULL;
+                //
+                //char* terminatedSVG = (char*)malloc(size + 1);
+                //memcpy(terminatedSVG, rawSVG, size);
+                //terminatedSVG[size] = 0;
+                //ret = terminatedSVG;
             }
             else
             {
@@ -217,7 +240,7 @@ char* CSVGSprite::LoadSVGResource(int resID)
     {
         TRACE_E("LoadSVGResource() Resource not found! resID=" << resID);
     }
-    return ret;
+    return svg;
 }
 
 void CSVGSprite::GetScaleAndSize(const NSVGimage* image, const SIZE* sz, float* scale, int* width, int* height)
@@ -323,36 +346,77 @@ void CSVGSprite::CreateDIB(int width, int height, HBITMAP* hMemBmp, void** lpMem
     HANDLES(DeleteDC(hMemDC));
 }
 
-void CSVGSprite::ColorizeSVG(NSVGimage* image, DWORD state)
+void CSVGSprite::ColorizeSVG(NSVGimage* image, DWORD state, int colorId )
 {
+//Use original color?
     if (state == SVGSTATE_ORIGINAL)
         return;
 
-    int sysIndex;
-    switch (state)
+//Set color.
+    DWORD color = 0;
+    BOOL defineSystemColor = TRUE;
+
+    if ( colorId >= 0 )
     {
-    case SVGSTATE_ENABLED:
-        sysIndex = COLOR_BTNTEXT;
-        break;
+    //Use user defined color.
+        const auto color_full = CurrentColors[colorId];
+        const auto flags = GetFValue( color_full );
+        
+        if ( flags & SCF_NOCOLOR )
+        {
+        //Don't change the color -> use original icon.
+            return;
+        }
+        else if ( ( flags & SCF_DEFAULT ) == 0 )
+        {
+        //Don't use default colors -> use custom color.
+            color = GetSVGSysColor_App(colorId);
 
-    case SVGSTATE_DISABLED:
-        sysIndex = COLOR_BTNSHADOW;
-        break;
-
-    default:
-        sysIndex = COLOR_BTNTEXT;
-        TRACE_E("CSVGSprite::ColorizeSVG() unknown state=" << state);
+            defineSystemColor = FALSE;
+        }
     }
-    DWORD color = GetSVGSysColor(sysIndex);
-    NSVGshape* shape = image->shapes;
-    while (shape != NULL)
+
+    //Was user's color defined?
+    if ( defineSystemColor == TRUE )
     {
-        shape->fill.color = color;
-        shape = shape->next;
+    //No -> use default system colors.
+        int sysIndex;
+
+        switch (state)
+        {
+        case SVGSTATE_ENABLED_OR_NORMAL:
+            sysIndex = COLOR_BTNTEXT;
+            break;
+
+        case SVGSTATE_DISABLED_OR_FOCUSED:
+            sysIndex = COLOR_BTNSHADOW;
+            break;
+
+        default:
+            sysIndex = COLOR_BTNTEXT;
+            TRACE_E("CSVGSprite::ColorizeSVG() unknown state=" << state);
+        }
+
+        color = GetSVGSysColor_Sys(sysIndex);
+    }
+
+//Set shape color.
+    NSVGshape*  pShape = image->shapes;
+
+    while ( pShape != NULL )
+    {
+    //Set shape color.
+    //
+    //Notice:
+    //As we are using fill the shape must always be a path.
+        pShape->fill.color = color;
+
+    //Go to next shape.
+        pShape = pShape->next;
     }
 }
 
-BOOL CSVGSprite::Load(int resID, int width, int height, DWORD states)
+BOOL CSVGSprite::Load(int resID, int width, int height, DWORD states, const int pColorIds[SVGSTATE_COUNT], std::string replaceParameter )
 {
     if (states == 0 || states >= (1 << SVGSTATE_COUNT))
     {
@@ -361,34 +425,59 @@ BOOL CSVGSprite::Load(int resID, int width, int height, DWORD states)
     }
     Clean();
 
-    char* terminatedSVG = LoadSVGResource(resID);
-    if (terminatedSVG != NULL)
+    auto    svg = LoadSVGResource(resID);
+
+    if ( svg.size() > 0 )
     {
-        NSVGimage* image = NULL;
-        image = nsvgParse(terminatedSVG, "px", (float)GetSystemDPI());
-        free(terminatedSVG);
-
-        float scale;
-        SIZE sz = {width, height};
-        GetScaleAndSize(image, &sz, &scale, &Width, &Height);
-
-        NSVGrasterizer* rast = NULL;
-        rast = nsvgCreateRasterizer();
-
-        for (int i = 0; i < SVGSTATE_COUNT; i++)
+    //Replace "{1}" text before parsing.
+        if ( replaceParameter.size() > 0 )
         {
-            DWORD state = 1 << i;
-            if (states & state)
+            auto    position = svg.find( "{1}", 0 );
+
+            if ( position != std::string::npos )
             {
-                void* lpMemBits;
-                CreateDIB(Width, Height, &HBitmaps[i], &lpMemBits);
-                ColorizeSVG(image, state);
-                nsvgRasterize(rast, image, 0, 0, scale, (BYTE*)lpMemBits, Width, Height, Width * 4);
+                svg.replace( position, sizeof("{1}")-1, replaceParameter );
             }
         }
 
-        nsvgDeleteRasterizer(rast);
-        nsvgDelete(image);
+    //Parse SVG.
+        NSVGimage*  pImage = nsvgParse( svg.data(), "px", (float)GetSystemDPI() );
+
+    //Get SVG image size in screen DPI.
+        float   image_scale;
+        SIZE    image_size = { width, height };
+
+        GetScaleAndSize( pImage, &image_size, &image_scale, &Width, &Height );
+
+    //Raster SVG in different state colors.
+        NSVGrasterizer*     pRasterizer = nsvgCreateRasterizer();
+
+        for ( int i = 0; i < SVGSTATE_COUNT; i++ )
+        {
+        //Is state bit flag defined?
+            DWORD state = 1 << i;
+
+            if ( !( states & state ) )
+            {
+            //No -> skip it.
+                continue;
+            }
+
+        //Define shape color.
+            ColorizeSVG(pImage, state, ( pColorIds != NULL ) ? pColorIds[i] : -1 );
+
+        //Create DIB.
+            void*   lpMemBits;
+
+            CreateDIB( Width, Height, &HBitmaps[i], &lpMemBits );
+
+        //Draw the image.
+            nsvgRasterize( pRasterizer, pImage, 0, 0, image_scale, (BYTE*)lpMemBits, Width, Height, Width * 4 );
+        }
+
+    //Free resources.
+        nsvgDeleteRasterizer( pRasterizer );
+        nsvgDelete( pImage );
     }
     return TRUE;
 }
@@ -411,10 +500,22 @@ int CSVGSprite::GetHeight()
 
 void CSVGSprite::AlphaBlend(HDC hDC, int x, int y, int width, int height, DWORD state)
 {
-    HDC hMemTmpDC = HANDLES(CreateCompatibleDC(hDC));
-    int index = LOG2_32(state);
-    HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemTmpDC, HBitmaps[index]);
+//Get icon index.
+    int     index_icon = 0;
 
+    switch ( state )
+    {
+    default:
+    case SVGSTATE_ORIGINAL: index_icon = 0; break;
+    case SVGSTATE_ENABLED_OR_NORMAL: index_icon = 1; break;
+    case SVGSTATE_DISABLED_OR_FOCUSED:  index_icon = 2; break;
+    }
+
+//Get bitmap.
+    HDC         hMemTmpDC = HANDLES(CreateCompatibleDC(hDC));
+    HBITMAP     hOldBitmap = (HBITMAP)SelectObject(hMemTmpDC, HBitmaps[index_icon]);
+
+//Draw icon.
     if (width == -1)
         width = Width;
     if (height == -1)
@@ -425,8 +526,11 @@ void CSVGSprite::AlphaBlend(HDC hDC, int x, int y, int width, int height, DWORD 
     bf.BlendFlags = 0;
     bf.SourceConstantAlpha = 0xff; // want to use per-pixel alpha values
     bf.AlphaFormat = AC_SRC_ALPHA;
+
     ::AlphaBlend(hDC, x, y, width, height, hMemTmpDC, 0, 0, Width, Height, bf);
 
-    SelectObject(hMemTmpDC, hOldBitmap);
-    HANDLES(DeleteDC(hMemTmpDC));
+    SelectObject( hMemTmpDC, hOldBitmap );
+
+//Free resources.
+    HANDLES( DeleteDC(hMemTmpDC) );
 }

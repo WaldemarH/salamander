@@ -8,3 +8,11 @@
 /src/plugins/automation/generated/salamander_h.h
 /src/plugins/automation/generated/salamander_i.c
 /src/plugins/automation/generated/salamander_p.c
+
+build/
+Intermediate/
+Debug_x64/
+Release_x64/
+
+todo.txt
+copyToProduction.bat

@@ -787,6 +787,8 @@
 #define IDS_TBTT_OPENMYDOC           10519   // Open Documents
 #define IDS_TBTT_SMARTMODE           10520   // Smart Column Mode
 
+#define IDS_TBTT_UNSELECTOTHERS      10521   // Select focused and unselect others
+
 // Error codes for variable strings
 #define IDS_EXP_UNMATCHEDPAR         10530   // unmatched '('
 #define IDS_EXP_INTERNALERR          10531   // implementation error
@@ -813,210 +815,215 @@
 #define IDS_SETCOLOR_SYSTEM_BK           10557
 #define IDS_SETCOLOR_DEFAULT_FG          10558
 #define IDS_SETCOLOR_DEFAULT_BK          10559
+#define IDS_SETCOLOR_NOCOLOR_FG          10560
+
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! FREESPACE
 
 // Color Item
-#define IDS_COLORITEM_PANELITEM          10564
-#define IDS_COLORITEM_FOCUSEDFRAME       10565
-#define IDS_COLORITEM_BLENDEDICONS       10566
-#define IDS_COLORITEM_PROGRESS           10567
-#define IDS_COLORITEM_CAPTION            10568
-#define IDS_COLORITEM_HOT                10569
+#define IDS_COLORITEM_PANELITEM                     10564
+#define IDS_COLORITEM_FOCUSEDFRAME                  10565
+#define IDS_COLORITEM_BLENDEDICONS                  10566
+#define IDS_COLORITEM_PROGRESS                      10567
+#define IDS_COLORITEM_CAPTION                       10568
+#define IDS_COLORITEM_HOT                           10569
 
 // Color Label
-#define IDS_COLORLABEL_ACTIVENORMAL      10570
-#define IDS_COLORLABEL_ACTIVESELECTED    10571
-#define IDS_COLORLABEL_INACTIVENORMAL    10572
-#define IDS_COLORLABEL_INACTIVESELECTED  10573
-#define IDS_COLORLABEL_NORMAL            10574
-#define IDS_COLORLABEL_SELECTED          10575
-#define IDS_COLORLABEL_FOCUSED           10576
-#define IDS_COLORLABEL_FOCUSEDSELECTED   10577
-#define IDS_COLORLABEL_LEFTPART          10578
-#define IDS_COLORLABEL_RIGHTPART         10579
-#define IDS_COLORLABEL_ACTIVE            10580
-#define IDS_COLORLABEL_INACTIVE          10581
-#define IDS_COLORLABEL_HOTPANEL          10582
-#define IDS_COLORLABEL_HOTACTIVE         10583
-#define IDS_COLORLABEL_HOTINACTIVE       10584
-#define IDS_COLORLABEL_HIGHLIGHTED       10585
+#define IDS_COLORLABEL_ACTIVENORMAL                 10570
+#define IDS_COLORLABEL_ACTIVESELECTED               10571
+#define IDS_COLORLABEL_INACTIVENORMAL               10572
+#define IDS_COLORLABEL_INACTIVESELECTED             10573
+#define IDS_COLORLABEL_NORMAL                       10574
+#define IDS_COLORLABEL_SELECTED                     10575
+#define IDS_COLORLABEL_FOCUSED                      10576
+#define IDS_COLORLABEL_FOCUSEDSELECTED              10577
+#define IDS_COLORLABEL_LEFTPART                     10578
+#define IDS_COLORLABEL_RIGHTPART                    10579
+#define IDS_COLORLABEL_ACTIVE                       10580
+#define IDS_COLORLABEL_INACTIVE                     10581
+#define IDS_COLORLABEL_HOTPANEL                     10582
+#define IDS_COLORLABEL_HOTACTIVE                    10583
+#define IDS_COLORLABEL_HOTINACTIVE                  10584
+#define IDS_COLORLABEL_HIGHLIGHTED                  10585
 
 // Color Item
-#define IDS_COLORITEM_THUMBNAILFRAME     10595
+#define IDS_COLORITEM_THUMBNAILFRAME                10595
 
 // Color Scheme
-#define IDS_COLORSCHEME_CUSTOM           10600
-#define IDS_COLORSCHEME_SALAMANDER       10601
-#define IDS_COLORSCHEME_EXPLORER         10602
-#define IDS_COLORSCHEME_NORTON           10603
-#define IDS_COLORSCHEME_NAVIGATOR        10604
+#define IDS_COLORSCHEME_CUSTOM                      10600
+#define IDS_COLORSCHEME_SALAMANDER                  10601
+#define IDS_COLORSCHEME_EXPLORER                    10602
+#define IDS_COLORSCHEME_NORTON                      10603
+#define IDS_COLORSCHEME_NAVIGATOR                   10604
 
 // ConfigPage5 - HotPaths
-#define IDS_HOTPATH_NAME             10665
-#define IDS_HOTPATH_HOTKEY           10666
-#define IDS_COLUMN_NAME              10667
+#define IDS_HOTPATH_NAME                            10665
+#define IDS_HOTPATH_HOTKEY                          10666
+#define IDS_COLUMN_NAME                             10667
 
-// Directory and Status line Tooltips
-#define IDS_PANELFILTER              10671
-#define IDS_FREESPACE                10672
-#define IDS_DIRHISTORY               10673
-#define IDS_ZOOMPANEL                10674
+// Directory and Status line Tooltips               
+#define IDS_PANELFILTER                             10671
+#define IDS_FREESPACE                               10672
+#define IDS_DIRHISTORY                              10673
+#define IDS_ZOOMPANEL                               10674
 
 // wait window
-#define IDS_ANALYSINGDIRTREEESC      10675
+#define IDS_ANALYSINGDIRTREEESC                     10675
 
 // viewers name
-#define IDS_VIEWER_INTERNAL          10680
-#define IDS_VIEWER_EXTERNAL          10681
+#define IDS_VIEWER_INTERNAL                         10680
+#define IDS_VIEWER_EXTERNAL                         10681
 
 
 // "Unable to change drive label.\nError: %s"
-#define IDS_UNABLETOCHANGEDRIVELABEL 10694
+#define IDS_UNABLETOCHANGEDRIVELABEL                10694
 
 // Ctrl modifier for string substitutions
-#define IDS_CTRL                     10696
+#define IDS_CTRL                                    10696
 
 // Ctrl modifier for string substitutions
-#define IDS_SHIFT                    10697
+#define IDS_SHIFT                                   10697
 
 // text was successfully copied to clipboard
-#define IDS_TEXTCOPIED               10698
+#define IDS_TEXTCOPIED                              10698
 
 // Copy To Clipboard
-#define IDS_COPYTOCLIPBOARD          10699
+#define IDS_COPYTOCLIPBOARD                         10699
 
 // The path is invalid
-#define IDS_THEPATHISINVALID         10700
+#define IDS_THEPATHISINVALID                        10700
 
 // The command '%s' is invalid. Would you like to change the command?
-//#define IDS_THECOMMANDISINVALID      10701
+//#define IDS_THECOMMANDISINVALID                   10701
 
 // A filename is invalid
-#define IDS_COMDLG_INVALIDFILENAME   10702
+#define IDS_COMDLG_INVALIDFILENAME                  10702
 
 // The file '' contains no icons
-#define IDS_NOICONS                  10703
+#define IDS_NOICONS                                 10703
 
 // Cannot find the file "".
-#define IDS_CANNONTFINDFILE          10704
+#define IDS_CANNONTFINDFILE                         10704
 
 // ViewWith, EditWith:
-#define IDS_VIEWWITH_EXTERNAL        10706
-#define IDS_VIEWWITH_INTERNAL        10707
-#define IDS_EDITWITH_EXTERNAL        10708
+#define IDS_VIEWWITH_EXTERNAL                       10706
+#define IDS_VIEWWITH_INTERNAL                       10707
+#define IDS_EDITWITH_EXTERNAL                       10708
 
 // Customize...
-#define IDS_CUSTOMIZE_HOTPATHS       10709
+#define IDS_CUSTOMIZE_HOTPATHS                      10709
 
 // Invalid submenu name. Empty string is not allowed here.
-#define IDS_SE_INVALIDSUBMENUNAME    10710
-#define IDS_SE_INVALIDOPTIONS        10711
-#define IDS_SE_INVALIDOPTIONSCOMB    10712
+#define IDS_SE_INVALIDSUBMENUNAME                   10710
+#define IDS_SE_INVALIDOPTIONS                       10711
+#define IDS_SE_INVALIDOPTIONSCOMB                   10712
 
-#define IDS_FILEHISTORY_VIEW         10715
-#define IDS_FILEHISTORY_EDIT         10716
-#define IDS_FILEHISTORY_OPEN         10717
+#define IDS_FILEHISTORY_VIEW                        10715
+#define IDS_FILEHISTORY_EDIT                        10716
+#define IDS_FILEHISTORY_OPEN                        10717
+
+// Set to other panel
+#define IDS_TOOTHERPANEL                            10719
 
 // Find File Advanced Dialog
-#define IDS_FFA_ATTRIBUTES           10720
-#define IDS_FFA_SIZE                 10721
-#define IDS_FFA_DATE                 10722
-#define IDS_FFA_TIME                 10723
-#define IDS_FFA_NONE                 10725
-#define IDS_FFA_OPTIONS              10726
+#define IDS_FFA_ATTRIBUTES                          10720
+#define IDS_FFA_SIZE                                10721
+#define IDS_FFA_DATE                                10722
+#define IDS_FFA_TIME                                10723
+#define IDS_FFA_NONE                                10725
+#define IDS_FFA_OPTIONS                             10726
 
 // Find Files Dialog
-#define IDS_CHANGE_DIRECTORY         10730
+#define IDS_CHANGE_DIRECTORY                        10730
 
 // "*.cpp" in "C:\"
-#define IDS_FF_IN                    10731
-#define IDS_FF_STOP                  10732
+#define IDS_FF_IN                                   10731
+#define IDS_FF_STOP                                 10732
 
-#define IDS_FF_SEARCHING             10734
-#define IDS_FF_NAME                  10735
-#define IDS_FF_NAMED                 10736
-#define IDS_FF_EMPTYSTRING           10737
-#define IDS_FF_AUTOLOAD              10738
-#define IDS_FF_BROWSE                10739
-#define IDS_FF_LOCALDRIVES           10740
-#define IDS_FF_ALLDRIVES             10741
+#define IDS_FF_SEARCHING                            10734
+#define IDS_FF_NAME                                 10735
+#define IDS_FF_NAMED                                10736
+#define IDS_FF_EMPTYSTRING                          10737
+#define IDS_FF_AUTOLOAD                             10738
+#define IDS_FF_BROWSE                               10739
+#define IDS_FF_LOCALDRIVES                          10740
+#define IDS_FF_ALLDRIVES                            10741
 
 // View/Edit - can't view/edit
-#define IDS_CANT_VIEW_FILE           10745
-#define IDS_CANT_VIEW_FILE_ALT       10746
-#define IDS_CANT_EDIT_FILE           10747
+#define IDS_CANT_VIEW_FILE                          10745
+#define IDS_CANT_VIEW_FILE_ALT                      10746
+#define IDS_CANT_EDIT_FILE                          10747
 
 // Separator
-#define IDS_SEPARATOR                10749
+#define IDS_SEPARATOR                               10749
 
 // Startup
-#define IDS_STARTUP_DATA             10750
-#define IDS_STARTUP_SHARES           10751
-#define IDS_STARTUP_CONFIG           10752
-#define IDS_STARTUP_IMPORT_CONFIG    10753
-#define IDS_STARTUP_ASSOCIATIONS     10754
-#define IDS_STARTUP_USERMENU         10755
+#define IDS_STARTUP_DATA                            10750
+#define IDS_STARTUP_SHARES                          10751
+#define IDS_STARTUP_CONFIG                          10752
+#define IDS_STARTUP_IMPORT_CONFIG                   10753
+#define IDS_STARTUP_ASSOCIATIONS                    10754
+#define IDS_STARTUP_USERMENU                        10755
 
 
 // trim path
-#define IDS_TRIM_DRAG_PATH           10759
+#define IDS_TRIM_DRAG_PATH                          10759
 
 //copy or drag item
-#define IDS_COPY_DRAG_TEXT           10760
+#define IDS_COPY_DRAG_TEXT                          10760
 
 //tip of the day
-//#define IDS_TOD_DIDYOUKNOW           10761
+//#define IDS_TOD_DIDYOUKNOW                        10761
 
 // Find Files/Log window: listview column name
-#define IDS_FINDLOG_TYPE             10762
-#define IDS_FINDLOG_TEXT             10763
-#define IDS_FINDLOG_PATH             10764
-#define IDS_FINDLOG_ERROR            10765
-#define IDS_FINDLOG_INFO             10766
-#define IDS_FINDLOG_SKIP             10767
-#define IDS_FINDLOG_IGNORE           10768
+#define IDS_FINDLOG_TYPE                            10762
+#define IDS_FINDLOG_TEXT                            10763
+#define IDS_FINDLOG_PATH                            10764
+#define IDS_FINDLOG_ERROR                           10765
+#define IDS_FINDLOG_INFO                            10766
+#define IDS_FINDLOG_SKIP                            10767
+#define IDS_FINDLOG_IGNORE                          10768
 // Find Files/Log window: Skipping %d errors...
-#define IDS_FINDERRORS_SKIPPING      10769
+#define IDS_FINDERRORS_SKIPPING                     10769
 // Find Files/Error message box/check box: Defer following error messages
-#define IDS_FINDERRORS_DEFER         10770
+#define IDS_FINDERRORS_DEFER                        10770
 
-#define IDS_CONTEXTMENU_EXIT         10771
+#define IDS_CONTEXTMENU_EXIT                        10771
 
 // Always on Top prevents other application windows from open above Open Salamander windows. You will not be able to open these windows on top until you turn off Always on Top.
-#define IDS_WANTALWAYSONTOP          10779
+#define IDS_WANTALWAYSONTOP                         10779
 
 // regular expressions menu
-#define IDS_REGEXP_ANYCHAR            10781
-#define IDS_REGEXP_SETOFCHAR          10782
-#define IDS_REGEXP_NOTSETOFCHAR       10783
-#define IDS_REGEXP_RANGEOFCHAR        10784
-#define IDS_REGEXP_BEGINOFLINE        10785
-#define IDS_REGEXP_ENDOFLINE          10786
-#define IDS_REGEXP_OR                 10787
-#define IDS_REGEXP_0ORMORE            10788
-#define IDS_REGEXP_1ORMORE            10789
-#define IDS_REGEXP_0OR1               10790
+#define IDS_REGEXP_ANYCHAR                          10781
+#define IDS_REGEXP_SETOFCHAR                        10782
+#define IDS_REGEXP_NOTSETOFCHAR                     10783
+#define IDS_REGEXP_RANGEOFCHAR                      10784
+#define IDS_REGEXP_BEGINOFLINE                      10785
+#define IDS_REGEXP_ENDOFLINE                        10786
+#define IDS_REGEXP_OR                               10787
+#define IDS_REGEXP_0ORMORE                          10788
+#define IDS_REGEXP_1ORMORE                          10789
+#define IDS_REGEXP_0OR1                             10790
 
-#define IDS_REGEXP_PARENTHESIS_L_CHAR 10791
-#define IDS_REGEXP_PARENTHESIS_R_CHAR 10792
-#define IDS_REGEXP_DOT_CHAR           10793
-#define IDS_REGEXP_PLUS_CHAR          10794
-#define IDS_REGEXP_ASTERISK_CHAR      10795
+#define IDS_REGEXP_PARENTHESIS_L_CHAR               10791
+#define IDS_REGEXP_PARENTHESIS_R_CHAR               10792
+#define IDS_REGEXP_DOT_CHAR                         10793
+#define IDS_REGEXP_PLUS_CHAR                        10794
+#define IDS_REGEXP_ASTERISK_CHAR                    10795
 
-#define IDS_REGEXP_ALPHANUMERIC_CHAR  10796
-#define IDS_REGEXP_ALPHABETIC_CHAR    10797
-#define IDS_REGEXP_DECIMAL_DIGIT      10798
+#define IDS_REGEXP_ALPHANUMERIC_CHAR                10796
+#define IDS_REGEXP_ALPHABETIC_CHAR                  10797
+#define IDS_REGEXP_DECIMAL_DIGIT                    10798
 
-#define IDS_REGEXP_DECIMAL_NUMBER     10799
-#define IDS_REGEXP_HEXADECIMAL_NUMBER 10800
-#define IDS_REGEXP_REAL_NUMBER        10801
+#define IDS_REGEXP_DECIMAL_NUMBER                   10799
+#define IDS_REGEXP_HEXADECIMAL_NUMBER               10800
+#define IDS_REGEXP_REAL_NUMBER                      10801
 
-#define IDS_REGEXP_QUOTED_STRING      10802
-#define IDS_REGEXP_ALPHABETIC_STRING  10803
-#define IDS_REGEXP_IDENTIFIER         10804
+#define IDS_REGEXP_QUOTED_STRING                    10802
+#define IDS_REGEXP_ALPHABETIC_STRING                10803
+#define IDS_REGEXP_IDENTIFIER                       10804
 
-#define IDS_REGEXP_HELP               10805
+#define IDS_REGEXP_HELP                             10805
 
 // Restrictions
 #define IDS_POLICIESRESTRICTION_TITLE 10806

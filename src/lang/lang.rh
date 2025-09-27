@@ -197,6 +197,8 @@
 #define IDC_C_ITEM3_C                   420
 #define IDC_C_ITEM4_C                   421
 #define IDC_C_ITEM5_C                   422
+#define IDC_C_ITEM6_L                   423
+#define IDC_C_ITEM6_C                   424
 #define IDC_C_ARCHIVE                   427
 #define IDC_C_READONLY                  428
 #define IDC_C_HIDDEN                    429
@@ -618,7 +620,7 @@
 #define IDC_FINDLOG_LIST                2756
 #define IDC_FINDLOG_FOCUS               2757
 #define IDC_FINDLOG_IGNORE              2758
-#define IDD_EXITINGOPENSAL             2760
+#define IDD_EXITINGOPENSAL              2760
 #define IDT_RUNNINGOPERS                2761
 #define IDB_CANCELALLOPERS              2762
 #define IDB_FOCUSNEXTOPER               2763

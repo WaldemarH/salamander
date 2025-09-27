@@ -113,7 +113,7 @@ public:
     BOOL IsGood() const { return OriginalPattern != NULL && Expression != NULL; }
     const char* GetPattern() const { return OriginalPattern; }
 
-    const char* GetLastErrorText() const { return LastErrorText; }
+    const TCHAR* GetLastErrorText() const { return LastErrorText; }
     BOOL Set(const char* pattern, WORD flags); // vraci FALSE pri chybe (volat metodu GetLastErrorText)
     BOOL SetFlags(WORD flags);                 // vraci FALSE pri chybe (volat metodu GetLastErrorText)
 

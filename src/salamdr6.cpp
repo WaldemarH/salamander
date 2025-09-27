@@ -21,7 +21,7 @@ CRITICAL_SECTION FileNamesEnumSect;
 // FileNamesEnumDone, NextRequestUID a NextSourceUID)
 CRITICAL_SECTION FileNamesEnumDataSect;
 
-// pole zdroju pro enumeraci: sude indexy (i nula): UID, liche indexy: HWND
+// source array for enumeration: even indices (even zero): UID, odd indices: HWND
 TDirectArray<HWND> FileNamesEnumSources(10, 10);
 // struktura s pozadavkem+vysledky enumerace
 CFileNamesEnumData FileNamesEnumData;
@@ -1189,7 +1189,7 @@ int CDirectorySizesHolder::GetIndex(const char* path)
     return -1;
 }
 
-BOOL CDirectorySizesHolder::Store(CFilesWindow* panel)
+BOOL CDirectorySizesHolder::Store(CPanelWindow* panel)
 {
     CDirectorySizes* item = Add(panel->GetPath());
     if (item == NULL)
@@ -1216,7 +1216,7 @@ BOOL CDirectorySizesHolder::Store(CFilesWindow* panel)
     return TRUE;
 }
 
-void CDirectorySizesHolder::Restore(CFilesWindow* panel)
+void CDirectorySizesHolder::Restore(CPanelWindow* panel)
 {
     int index = GetIndex(panel->GetPath());
     if (index == -1)
@@ -2189,83 +2189,6 @@ BOOL GetProcessIntegrityLevel(DWORD* integrityLevel)
     return ret;
 }
 
-LONG SalRegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpData, PLONG lpcbData)
-{
-    DWORD dataBufSize = lpData == NULL || lpcbData == NULL ? 0 : *lpcbData;
-    LONG ret = RegQueryValue(hKey, lpSubKey, lpData, lpcbData);
-    if (lpcbData != NULL &&
-        (ret == ERROR_MORE_DATA || lpData == NULL && ret == ERROR_SUCCESS))
-    {
-        (*lpcbData)++; // rekneme si radsi o pripadny null-terminator navic
-    }
-    if (ret == ERROR_SUCCESS && lpData != NULL)
-    {
-        if (*lpcbData < 1 || ((char*)lpData)[*lpcbData - 1] != 0)
-        {
-            if ((DWORD)*lpcbData < dataBufSize) // lezou sem jen hodnoty typu REG_SZ a REG_EXPAND_SZ, takze jeden null-terminator staci
-            {
-                ((char*)lpData)[*lpcbData] = 0;
-                (*lpcbData)++;
-            }
-            else // nedostatek mista pro null-terminator v bufferu
-            {
-                (*lpcbData)++; // rekneme si o potrebny null-terminator
-                return ERROR_MORE_DATA;
-            }
-        }
-    }
-    return ret;
-}
-
-LONG SalRegQueryValueEx(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved,
-                        LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
-{
-    DWORD dataBufSize = lpData == NULL ? 0 : *lpcbData;
-    DWORD type = REG_NONE;
-    LONG ret = RegQueryValueEx(hKey, lpValueName, lpReserved, &type, lpData, lpcbData);
-    if (lpType != NULL)
-        *lpType = type;
-    if (type == REG_SZ || type == REG_MULTI_SZ || type == REG_EXPAND_SZ)
-    {
-        if (hKey != HKEY_PERFORMANCE_DATA &&
-            lpcbData != NULL &&
-            (ret == ERROR_MORE_DATA || lpData == NULL && ret == ERROR_SUCCESS))
-        {
-            (*lpcbData) += type == REG_MULTI_SZ ? 2 : 1; // rekneme si radsi o pripadny null-terminator(y) navic
-            return ret;
-        }
-        if (ret == ERROR_SUCCESS && lpData != NULL)
-        {
-            if (*lpcbData < 1 || ((char*)lpData)[*lpcbData - 1] != 0)
-            {
-                if (*lpcbData < dataBufSize)
-                {
-                    ((char*)lpData)[*lpcbData] = 0;
-                    (*lpcbData)++;
-                }
-                else // nedostatek mista pro null-terminator v bufferu
-                {
-                    (*lpcbData) += type == REG_MULTI_SZ ? 2 : 1; // rekneme si o potrebny null-terminator(y)
-                    return ERROR_MORE_DATA;
-                }
-            }
-            if (type == REG_MULTI_SZ && (*lpcbData < 2 || ((char*)lpData)[*lpcbData - 2] != 0))
-            {
-                if (*lpcbData < dataBufSize)
-                {
-                    ((char*)lpData)[*lpcbData] = 0;
-                    (*lpcbData)++;
-                }
-                else // nedostatek mista pro druhy null-terminator v bufferu
-                {
-                    (*lpcbData)++; // rekneme si o potrebny null-terminator
-                    return ERROR_MORE_DATA;
-                }
-            }
-        }
-    }
-    return ret;
-}
 
 //******************************************************************************
 //

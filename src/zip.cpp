@@ -758,7 +758,7 @@ void RestoreFocusInSourcePanel()
 {
     if (MainWindow != NULL)
     {
-        CFilesWindow* p1 = MainWindow->GetActivePanel();
+        CPanelWindow* p1 = MainWindow->GetActivePanel();
         if (p1 != NULL)
         {
             if (!MainWindow->EditMode)
@@ -954,7 +954,7 @@ int CSalamanderGeneral::RegSetStrCmpEx(const char* s1, int l1, const char* s2, i
     return ::RegSetStrCmpEx(s1, l1, s2, l2, numericalyEqual);
 }
 
-CFilesWindow*
+CPanelWindow*
 CSalamanderGeneral::GetPanel(int panel)
 {
     return MainWindow->GetPanel(panel);
@@ -977,7 +977,7 @@ BOOL CSalamanderGeneral::GetPanelPath(int panel, char* buffer, int bufferSize, i
             *type = 0;
         return FALSE;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         char buf[2 * MAX_PATH];
@@ -1052,7 +1052,7 @@ BOOL CSalamanderGeneral::GetLastWindowsPanelPath(int panel, char* buffer, int bu
         TRACE_E("You can call CSalamanderGeneral::GetLastWindowsPanelPath() only from main thread!");
         return FALSE;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL && buffer != NULL)
     {
         int l = (int)strlen(p->GetPath()) + 1;
@@ -1073,7 +1073,7 @@ CSalamanderGeneral::GetPanelPluginData(int panel)
         TRACE_E("You can call CSalamanderGeneral::GetPanelPluginData() only from main thread!");
         return NULL;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         CPluginDataInterfaceAbstract* iface = p->PluginData.GetInterface();
@@ -1093,7 +1093,7 @@ CSalamanderGeneral::GetPanelPluginFS(int panel)
         TRACE_E("You can call CSalamanderGeneral::GetPanelPluginFS() only from main thread!");
         return NULL;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL && p->Is(ptPluginFS))
     {
         CPluginFSInterfaceAbstract* iface = p->GetPluginFS()->GetInterface();
@@ -1113,7 +1113,7 @@ CSalamanderGeneral::GetPanelFocusedItem(int panel, BOOL* isDir)
         TRACE_E("You can call CSalamanderGeneral::GetPanelFocusedItem() only from main thread!");
         return NULL;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         int caret = p->GetCaretIndex();
@@ -1136,7 +1136,7 @@ CSalamanderGeneral::GetPanelItem(int panel, int* index, BOOL* isDir)
         TRACE_E("You can call CSalamanderGeneral::GetPanelItem() only from main thread!");
         return NULL;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL && index != NULL)
     {
         int i = *index;
@@ -1166,10 +1166,10 @@ BOOL CSalamanderGeneral::GetPanelSelection(int panel, int* selectedFiles, int* s
         TRACE_E("You can call CSalamanderGeneral::GetPanelSelection() only from main thread!");
         return FALSE;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
-        int count = p->GetSelCount();
+        int count = p->GetSelectedCount();
         int selDirs = 0;
         if (count > 0)
         {
@@ -1207,7 +1207,7 @@ CSalamanderGeneral::GetPanelSelectedItem(int panel, int* index, BOOL* isDir)
         TRACE_E("You can call CSalamanderGeneral::GetPanelSelectedItem() only from main thread!");
         return NULL;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL && index != NULL)
     {
         int i = *index;
@@ -1238,7 +1238,7 @@ void CSalamanderGeneral::SelectPanelItem(int panel, const CFileData* file, BOOL 
         TRACE_E("You can call CSalamanderGeneral::SelectPanelItem() only from main thread!");
         return;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         int index = -1; // index 'file' v panelu
@@ -1257,7 +1257,7 @@ void CSalamanderGeneral::SelectPanelItem(int panel, const CFileData* file, BOOL 
                 index = p->Dirs->Count + (int)(file - first); // jde o adresar
         }
         if (index != -1)
-            p->SetSel(select, index, FALSE); // zmena oznaceni
+            p->SetSelected(select, index, FALSE); // zmena oznaceni
         else
             TRACE_E("Invalid parameter 'file' in CSalamanderGeneral::SelectPanelItem().");
     }
@@ -1271,7 +1271,7 @@ void CSalamanderGeneral::RepaintChangedItems(int panel)
         TRACE_E("You can call CSalamanderGeneral::RepaintChangedItems() only from main thread!");
         return;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         p->RepaintListBox(DRAWFLAG_DIRTY_ONLY | DRAWFLAG_SKIP_VISTEST);
@@ -1287,10 +1287,10 @@ void CSalamanderGeneral::SelectAllPanelItems(int panel, BOOL select, BOOL repain
         TRACE_E("You can call CSalamanderGeneral::SelectAllPanelItems() only from main thread!");
         return;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
-        p->SetSel(select, -1, repaint); // zmena oznaceni
+        p->SetSelected(select, -1, repaint); // zmena oznaceni
         if (repaint)
             PostMessage(p->HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
     }
@@ -1304,7 +1304,7 @@ void CSalamanderGeneral::SetPanelFocusedItem(int panel, const CFileData* file, B
         TRACE_E("You can call CSalamanderGeneral::SetPanelFocusedItem() only from main thread!");
         return;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         int index = -1; // index 'file' v panelu
@@ -1337,7 +1337,7 @@ BOOL CSalamanderGeneral::GetFilterFromPanel(int panel, char* masks, int masksBuf
         TRACE_E("You can call CSalamanderGeneral::GetFilterFromPanel() only from main thread!");
         return FALSE;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     BOOL ret = FALSE;
     if (p != NULL && p->FilterEnabled)
     {
@@ -2021,7 +2021,7 @@ void CSalamanderGeneral::FocusNameInPanel(int panel, const char* path, const cha
         TRACE_E("CSalamanderGeneral::FocusNameInPanel(): incorrect parameters (name == NULL || path == NULL)!");
         return;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     char pathBackup[MAX_PATH + 200];
     char nameBackup[MAX_PATH + 200];
     lstrcpyn(pathBackup, path, MAX_PATH + 200);
@@ -2043,7 +2043,7 @@ BOOL CSalamanderGeneral::ChangePanelPath(int panel, const char* path, int* failR
             *failReason = CHPPFR_INVALIDPATH;
         return FALSE;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         return p->ChangeDir(path, suggestedTopIndex, suggestedFocusName, 3 /*change-dir*/,
@@ -2066,7 +2066,7 @@ BOOL CSalamanderGeneral::ChangePanelPathToDisk(int panel, const char* path, int*
             *failReason = CHPPFR_INVALIDPATH;
         return FALSE;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         return p->ChangePathToDisk(GetMsgBoxParent(), path, suggestedTopIndex, suggestedFocusName,
@@ -2090,7 +2090,7 @@ BOOL CSalamanderGeneral::ChangePanelPathToArchive(int panel, const char* archive
             *failReason = CHPPFR_INVALIDPATH;
         return FALSE;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         return p->ChangePathToArchive(archive, archivePath, suggestedTopIndex, suggestedFocusName,
@@ -2116,7 +2116,7 @@ BOOL CSalamanderGeneral::ChangePanelPathToPluginFS(int panel, const char* fsName
             *failReason = CHPPFR_INVALIDPATH;
         return FALSE;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         return p->ChangePathToPluginFS(fsName, fsUserPart, suggestedTopIndex, suggestedFocusName,
@@ -2141,7 +2141,7 @@ BOOL CSalamanderGeneral::ChangePanelPathToDetachedFS(int panel, CPluginFSInterfa
             *failReason = CHPPFR_INVALIDPATH;
         return FALSE;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         int fsIndex = -1;
@@ -2180,7 +2180,7 @@ BOOL CSalamanderGeneral::ChangePanelPathToFixedDrive(int panel, int* failReason)
             *failReason = CHPPFR_INVALIDPATH;
         return FALSE;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         return p->ChangeToFixedDrive(GetMsgBoxParent(), NULL, TRUE, FALSE, failReason);
@@ -2200,7 +2200,7 @@ BOOL CSalamanderGeneral::ChangePanelPathToRescuePathOrFixedDrive(int panel, int*
             *failReason = CHPPFR_INVALIDPATH;
         return FALSE;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         return p->ChangeToRescuePathOrFixedDrive(GetMsgBoxParent(), NULL, TRUE, FALSE, FSTRYCLOSE_CHANGEPATH, failReason);
@@ -2219,7 +2219,7 @@ void CSalamanderGeneral::RefreshPanelPath(int panel, BOOL forceRefresh, BOOL foc
         TRACE_E("You can call CSalamanderGeneral::RefreshPanelPath() only from main thread!");
         return;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         if (forceRefresh && p->Is(ptZIPArchive))
@@ -2234,7 +2234,7 @@ void CSalamanderGeneral::RefreshPanelPath(int panel, BOOL forceRefresh, BOOL foc
 void CSalamanderGeneral::PostRefreshPanelPath(int panel, BOOL focusFirstNewItem)
 {
     CALL_STACK_MESSAGE3("CSalamanderGeneral::PostRefreshPanelPath(%d, %d)", panel, focusFirstNewItem);
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         // postneme tvrdy refresh
@@ -2255,7 +2255,7 @@ void CSalamanderGeneral::PostRefreshPanelFS(CPluginFSInterfaceAbstract* modified
 BOOL CSalamanderGeneral::PostRefreshPanelFS2(CPluginFSInterfaceAbstract* modifiedFS, BOOL focusFirstNewItem)
 {
     CALL_STACK_MESSAGE2("CSalamanderGeneral::PostRefreshPanelFS2(, %d)", focusFirstNewItem);
-    CFilesWindow* p = NULL;
+    CPanelWindow* p = NULL;
     if (MainWindow != NULL)
     {
         // neni synchronizacni problem, protoze PluginFS se nuluje az po CloseFS, ktere by
@@ -2660,7 +2660,7 @@ int CSalamanderGeneral::GetPanelTopIndex(int panel)
         TRACE_E("You can call CSalamanderGeneral::GetPanelTopIndex() only from main thread!");
         return 0;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
         return p->ListBox->GetTopIndex();
     return 0; // chyba, nemelo by nastat...
@@ -2684,7 +2684,7 @@ void CSalamanderGeneral::GetPanelEnumFilesParams(int panel, int* enumFilesSource
         return;
     }
 
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL && p->Is(ptDisk))
     {
         *enumFilesSourceUID = p->EnumFileNamesSourceUID;
@@ -3345,7 +3345,7 @@ void CSalamanderGeneral::CallPluginOperationFromDisk(int panel, SalPluginOperati
         TRACE_E("Unexpected value of parameter 'callback' (NULL) in CSalamanderGeneral::CallPluginOperationFromDisk().");
         return;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         if (!p->Is(ptDisk))
@@ -3361,7 +3361,7 @@ void CSalamanderGeneral::CallPluginOperationFromDisk(int panel, SalPluginOperati
         // pripravime data pro enumeraci souboru a adresaru z panelu
         CPanelTmpEnumData data;
         int oneIndex = -1;
-        int count = p->GetSelCount();
+        int count = p->GetSelectedCount();
         if (count > 0) // nejake soubory jsou oznacene
         {
             data.IndexesCount = count;
@@ -3372,7 +3372,7 @@ void CSalamanderGeneral::CallPluginOperationFromDisk(int panel, SalPluginOperati
                 return;
             }
             else
-                p->GetSelItems(count, data.Indexes);
+                p->GetSelectedItems(count, data.Indexes);
         }
         else // bereme focus
         {
@@ -3662,7 +3662,7 @@ void CSalamanderGeneral::SetUserWorkedOnPanelPath(int panel)
         TRACE_E("You can call CSalamanderGeneral::SetUserWorkedOnPanelPath() only from main thread!");
         return;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
         p->UserWorkedOnThisPath = TRUE;
 }
@@ -3675,7 +3675,7 @@ void CSalamanderGeneral::StoreSelectionOnPanelPath(int panel)
         TRACE_E("You can call CSalamanderGeneral::StoreSelectionOnPanelPath() only from main thread!");
         return;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
         p->StoreSelection();
 }
@@ -4248,7 +4248,7 @@ void CSalamanderGeneral::PanelStopMonitoring(int panel, BOOL stopMonitoring)
         TRACE_E("You can call CSalamanderGeneral::PanelStopMonitoring() only from main thread!");
         return;
     }
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
         p->HandsOff(stopMonitoring);
 }
@@ -4387,22 +4387,22 @@ CSalamanderGeneral::GetSalamanderIcon(int icon, int iconSize)
     }
     }
 
-    CIconSizeEnum salIconSize;
+    IconSize::Value salIconSize;
     switch (iconSize)
     {
     case SALICONSIZE_16:
-        salIconSize = ICONSIZE_16;
+        salIconSize = IconSize::size_16x16;
         break;
     case SALICONSIZE_32:
-        salIconSize = ICONSIZE_32;
+        salIconSize = IconSize::size_32x32;
         break;
     case SALICONSIZE_48:
-        salIconSize = ICONSIZE_48;
+        salIconSize = IconSize::size_48x48;
         break;
     default:
     {
         TRACE_E("CSalamanderGeneral::GetSalamanderIcon: invalid iconSize=" << iconSize << " forcing SALICONSIZE_16");
-        salIconSize = ICONSIZE_16;
+        salIconSize = IconSize::size_16x16;
     }
     }
 
@@ -4421,22 +4421,22 @@ BOOL CSalamanderGeneral::GetFileIcon(const char* path, BOOL pathIsPIDL, HICON* h
 {
     CALL_STACK_MESSAGE5("CSalamanderGeneral::GetFileIcon(, %d, , %d, %d, %d)",
                         pathIsPIDL, iconSize, fallbackToDefIcon, defIconIsDir);
-    CIconSizeEnum salIconSize;
+    IconSize::Value salIconSize;
     switch (iconSize)
     {
     case SALICONSIZE_16:
-        salIconSize = ICONSIZE_16;
+        salIconSize = IconSize::size_16x16;
         break;
     case SALICONSIZE_32:
-        salIconSize = ICONSIZE_32;
+        salIconSize = IconSize::size_32x32;
         break;
     case SALICONSIZE_48:
-        salIconSize = ICONSIZE_48;
+        salIconSize = IconSize::size_48x48;
         break;
     default:
     {
         TRACE_E("CSalamanderGeneral::GetFileIcon: invalid iconSize=" << iconSize << " forcing SALICONSIZE_16");
-        salIconSize = ICONSIZE_16;
+        salIconSize = IconSize::size_16x16;
     }
     }
     return ::GetFileIcon(path, pathIsPIDL, hIcon, salIconSize, fallbackToDefIcon, defIconIsDir);
@@ -4764,7 +4764,7 @@ void CSalamanderGeneral::OpenNetworkContextMenu(HWND parent, int panel, BOOL for
         return;
     }
 
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         BeginStopRefresh(); // zadne refreshe nepotrebujeme (formalita: volani jde z pluginu, takze refreshe uz jsou zakazane z EnterPlugin)
@@ -4780,11 +4780,11 @@ void CSalamanderGeneral::OpenNetworkContextMenu(HWND parent, int panel, BOOL for
             else
                 subDir = FALSE;
 
-            count = p->GetSelCount();
+            count = p->GetSelectedCount();
             if (count != 0)
             {
                 indexes = new int[count];
-                p->GetSelItems(count, indexes, TRUE); // od tohoto jsme ustoupili (viz GetSelItems): pro kontextova menu zaciname od fokusle polozky a koncime polozku pres fokusem (je tam mezilehle vraceni na zacatek seznamu jmen) (system to tak dela taky, viz Add To Windows Media Player List na MP3 souborech)
+                p->GetSelectedItems(count, indexes, TRUE); // od tohoto jsme ustoupili (viz GetSelItems): pro kontextova menu zaciname od fokusle polozky a koncime polozku pres fokusem (je tam mezilehle vraceni na zacatek seznamu jmen) (system to tak dela taky, viz Add To Windows Media Player List na MP3 souborech)
             }
             else
             {
@@ -4920,7 +4920,7 @@ int CSalamanderGeneral::StartThrobber(int panel, const char* tooltip, int delay)
         return -1;
     }
 
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL && p->DirectoryLine != NULL)
     {
         p->DirectoryLine->SetThrobber(TRUE, delay);
@@ -4967,7 +4967,7 @@ void CSalamanderGeneral::ShowSecurityIcon(int panel, BOOL showIcon, BOOL isLocke
         return;
     }
 
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL && p->DirectoryLine != NULL)
     {
         p->DirectoryLine->SetSecurity(showIcon ? (isLocked ? sisSecured : sisUnsecured) : sisNone);
@@ -4985,7 +4985,7 @@ void CSalamanderGeneral::RemoveCurrentPathFromHistory(int panel)
         return;
     }
 
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         p->RemoveCurrentPathFromHistory();
@@ -5037,7 +5037,7 @@ void CSalamanderGeneral::GetFocusedItemMenuPos(POINT* pos)
 
     if (MainWindow != NULL)
     {
-        CFilesWindow* activePanel = MainWindow->GetActivePanel();
+        CPanelWindow* activePanel = MainWindow->GetActivePanel();
         if (activePanel != NULL)
         {
             activePanel->GetContextMenuPos(pos);
@@ -5227,7 +5227,7 @@ void CSalamanderGeneral::CloseAllOwnedEnabledDialogs(HWND parent, DWORD tid)
 // CSalamanderForOperations
 //
 
-CSalamanderForOperations::CSalamanderForOperations(CFilesWindow* panel)
+CSalamanderForOperations::CSalamanderForOperations(CPanelWindow* panel)
 {
     Panel = panel;
     FocusWnd = NULL;

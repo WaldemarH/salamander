@@ -13,7 +13,6 @@
 #include "execute.h"
 #include "gui.h"
 #include "menu.h"
-#include "consts.h"
 
 CConfiguration Configuration;
 

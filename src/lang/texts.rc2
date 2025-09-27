@@ -789,6 +789,7 @@ STRINGTABLE
  IDS_TBTT_INVERTSEL,           "Invert Selection\tNum *"
  IDS_TBTT_SELECTALL,           "Select All\tCtrl+A"
  IDS_TBTT_UNSELECTALL,         "Unselect All\tCtrl+D"
+ IDS_TBTT_UNSELECTOTHERS       "Select Focused and Unselect Others"
 
  IDS_TBTT_PACK,                "Pack\tAlt+F5"
  IDS_TBTT_UNPACK,              "Unpack\tAlt+F9"
@@ -858,6 +859,7 @@ STRINGTABLE
  IDS_SETCOLOR_SYSTEM_BK, "A&utomatic color of background"
  IDS_SETCOLOR_DEFAULT_FG, "&Don't change color of text"
  IDS_SETCOLOR_DEFAULT_BK, "D&on't change color of background"
+ IDS_SETCOLOR_NOCOLOR_FG, "&Don't change the color"
 
  IDS_UNPACKCOPY, "Copy"
  IDS_PACKTITLE, "Pack"
@@ -871,7 +873,8 @@ STRINGTABLE
  IDS_CONFIGEXPORTED, "Configuration was successfully exported."
  IDS_PREDCONFIGEXPORT, "Exported configuration file will be created using configuration in registry.\nDo you want to save configuration into registry before export?"
  IDS_TEXTCOPIED, "Text was successfully copied to clipboard."
- IDS_COPYTOCLIPBOARD, "&Copy To Clipboard"
+ IDS_COPYTOCLIPBOARD, "&Copy to Clipboard"
+ IDS_TOOTHERPANEL, "&To other panel"
 
  IDS_CONFIGHOWTOIMPORT, "Importing the configuration is quite simple. Just find the file with configuration and open it (use Enter key or double-click on it). It should be opened in Registry Editor. When it shows question if you want to add information from the file to registry, you should close all running instances of Open Salamander. It will prevent overwriting of newly imported configuration by automatic save of configuration on exit of Open Salamander. When there is no running Open Salamander, press Yes in Registry Editor question message box. Then it will import the configuration from the file to registry."
 

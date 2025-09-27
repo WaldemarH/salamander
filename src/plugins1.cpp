@@ -637,7 +637,7 @@ void CSalamanderConnect::AddViewer(const char* masks, BOOL force)
     CALL_STACK_MESSAGE3("CSalamanderConnect::AddViewer(%s, %d)", masks, force);
     if (strchr(masks, '|') != NULL)
     {
-        TRACE_E("CSalamanderConnect::AddViewer(): you can not use character '|', sorry"); // '|' je negace v group-masks, slucovani masek v GetViewersAssoc na to neni pripraveno
+        TRACE_E("CSalamanderConnect::AddViewer(): you can not use character '|', sorry"); // '|' is a negation in group-masks, mask merging in GetViewersAssoc is not prepared for this
         return;
     }
     if (Viewer || force)
@@ -2972,19 +2972,21 @@ void CPluginData::CallLoadOrSaveConfiguration(BOOL load,
         if (SupportLoadSave) // jinak neni kam ukladat
         {
             LoadSaveToRegistryMutex.Enter();
-            HKEY salamander;
-            if (SALAMANDER_ROOT_REG != NULL &&
-                OpenKeyAux(NULL, HKEY_CURRENT_USER, SALAMANDER_ROOT_REG, salamander)) // test jestli vubec existuje klic Salama (jinak nic neukladame)
+            HKEY key_salamander;
+            if (
+                ( SALAMANDER_ROOT_REG != NULL )
+                &&
+                (BOOL)Registry::Silent_Key_Open(HKEY_CURRENT_USER, String_TChar_View( SALAMANDER_ROOT_REG ), key_salamander)) // test jestli vubec existuje klic Salama (jinak nic neukladame)
             {                                                                         // OpenKeyAux, protoze nechci hlasku o Load Configuration
-                CloseKeyAux(salamander);
-                if (CreateKey(HKEY_CURRENT_USER, SALAMANDER_ROOT_REG, salamander))
+                Registry::Silent_Key_Close( key_salamander);
+                if (CreateKey(HKEY_CURRENT_USER, SALAMANDER_ROOT_REG, key_salamander))
                 {
                     BOOL cfgIsOK = TRUE;
                     BOOL deleteSALAMANDER_SAVE_IN_PROGRESS = !IsSetSALAMANDER_SAVE_IN_PROGRESS;
                     if (deleteSALAMANDER_SAVE_IN_PROGRESS)
                     {
                         DWORD saveInProgress = 1;
-                        if (GetValueAux(NULL, salamander, SALAMANDER_SAVE_IN_PROGRESS, REG_DWORD, &saveInProgress, sizeof(DWORD)))
+                        if (GetValueAux(NULL, key_salamander, SALAMANDER_SAVE_IN_PROGRESS, REG_DWORD, &saveInProgress, sizeof(DWORD)))
                         {                    // GetValueAux, protoze nechci hlasku o Load Configuration
                             cfgIsOK = FALSE; // jde o poskozenou konfiguraci, ulozenim se neopravi (neuklada se komplet)
                             TRACE_E("CPluginData::CallLoadOrSaveConfiguration(): unable to save configuration, configuration key in registry is corrupted, plugin: " << Name);
@@ -2992,14 +2994,14 @@ void CPluginData::CallLoadOrSaveConfiguration(BOOL load,
                         else
                         {
                             saveInProgress = 1;
-                            SetValue(salamander, SALAMANDER_SAVE_IN_PROGRESS, REG_DWORD, &saveInProgress, sizeof(DWORD));
+                            SetValue(key_salamander, SALAMANDER_SAVE_IN_PROGRESS, REG_DWORD, &saveInProgress, sizeof(DWORD));
                             IsSetSALAMANDER_SAVE_IN_PROGRESS = TRUE;
                         }
                     }
                     if (cfgIsOK)
                     {
                         HKEY actKey;
-                        if (CreateKey(salamander, SALAMANDER_PLUGINSCONFIG, actKey))
+                        if (CreateKey(key_salamander, SALAMANDER_PLUGINSCONFIG, actKey))
                         {
                             HKEY regKey;
                             if (CreateKey(actKey, RegKeyName, regKey))
@@ -3015,11 +3017,11 @@ void CPluginData::CallLoadOrSaveConfiguration(BOOL load,
                         }
                         if (deleteSALAMANDER_SAVE_IN_PROGRESS)
                         {
-                            DeleteValue(salamander, SALAMANDER_SAVE_IN_PROGRESS);
+                            DeleteValue(key_salamander, SALAMANDER_SAVE_IN_PROGRESS);
                             IsSetSALAMANDER_SAVE_IN_PROGRESS = FALSE;
                         }
                     }
-                    CloseKey(salamander);
+                    CloseKey(key_salamander);
                 }
             }
             LoadSaveToRegistryMutex.Leave();
@@ -3044,19 +3046,21 @@ BOOL CPluginData::Unload(HWND parent, BOOL ask)
                 {
                     LoadSaveToRegistryMutex.Enter();
                     BOOL salKeyDoesNotExist = FALSE;
-                    HKEY salamander;
-                    if (SALAMANDER_ROOT_REG != NULL &&
-                        OpenKeyAux(NULL, HKEY_CURRENT_USER, SALAMANDER_ROOT_REG, salamander)) // test jestli vubec existuje klic Salama (jinak nic neukladame)
+                    HKEY key_salamander;
+                    if (
+                        ( SALAMANDER_ROOT_REG != NULL )
+                        &&
+                        (BOOL)Registry::Silent_Key_Open( HKEY_CURRENT_USER, String_TChar_View( SALAMANDER_ROOT_REG ), key_salamander)) // test jestli vubec existuje klic Salama (jinak nic neukladame)
                     {                                                                         // OpenKeyAux, protoze nechci hlasku o Load Configuration
-                        CloseKeyAux(salamander);
-                        if (CreateKey(HKEY_CURRENT_USER, SALAMANDER_ROOT_REG, salamander))
+                        Registry::Silent_Key_Close(key_salamander);
+                        if (CreateKey(HKEY_CURRENT_USER, SALAMANDER_ROOT_REG, key_salamander))
                         {
                             BOOL cfgIsOK = TRUE;
                             BOOL deleteSALAMANDER_SAVE_IN_PROGRESS = !IsSetSALAMANDER_SAVE_IN_PROGRESS;
                             if (deleteSALAMANDER_SAVE_IN_PROGRESS)
                             {
                                 DWORD saveInProgress = 1;
-                                if (GetValueAux(NULL, salamander, SALAMANDER_SAVE_IN_PROGRESS, REG_DWORD, &saveInProgress, sizeof(DWORD)))
+                                if (GetValueAux(NULL, key_salamander, SALAMANDER_SAVE_IN_PROGRESS, REG_DWORD, &saveInProgress, sizeof(DWORD)))
                                 {                    // GetValueAux, protoze nechci hlasku o Load Configuration
                                     cfgIsOK = FALSE; // jde o poskozenou konfiguraci, ulozenim se neopravi (neuklada se komplet)
                                     salKeyDoesNotExist = TRUE;
@@ -3065,25 +3069,25 @@ BOOL CPluginData::Unload(HWND parent, BOOL ask)
                                 else
                                 {
                                     saveInProgress = 1;
-                                    SetValue(salamander, SALAMANDER_SAVE_IN_PROGRESS, REG_DWORD, &saveInProgress, sizeof(DWORD));
+                                    SetValue(key_salamander, SALAMANDER_SAVE_IN_PROGRESS, REG_DWORD, &saveInProgress, sizeof(DWORD));
                                     IsSetSALAMANDER_SAVE_IN_PROGRESS = TRUE;
                                 }
                             }
                             if (cfgIsOK)
                             {
                                 HKEY actKey;
-                                if (CreateKey(salamander, SALAMANDER_PLUGINSCONFIG, actKey))
+                                if (CreateKey(key_salamander, SALAMANDER_PLUGINSCONFIG, actKey))
                                 {
                                     Save(parent, actKey);
                                     CloseKey(actKey);
                                 }
                                 if (deleteSALAMANDER_SAVE_IN_PROGRESS)
                                 {
-                                    DeleteValue(salamander, SALAMANDER_SAVE_IN_PROGRESS);
+                                    DeleteValue(key_salamander, SALAMANDER_SAVE_IN_PROGRESS);
                                     IsSetSALAMANDER_SAVE_IN_PROGRESS = FALSE;
                                 }
                             }
-                            CloseKey(salamander);
+                            CloseKey(key_salamander);
                         }
                         else
                             salKeyDoesNotExist = TRUE;
@@ -3467,7 +3471,7 @@ void CPluginData::InitMenuItems(HWND parent, int index, CMenuPopup* menu)
     }
 }
 
-BOOL CPluginData::ExecuteMenuItem(CFilesWindow* panel, HWND parent, int index, int suid, BOOL& unselect)
+BOOL CPluginData::ExecuteMenuItem(CPanelWindow* panel, HWND parent, int index, int suid, BOOL& unselect)
 {
     CALL_STACK_MESSAGE5("CPluginData::ExecuteMenuItem(, , %d, %d, ) (%s v. %s)", index, suid, DLLName, Version);
     unselect = FALSE;
@@ -3491,7 +3495,7 @@ BOOL CPluginData::ExecuteMenuItem(CFilesWindow* panel, HWND parent, int index, i
     return FALSE;
 }
 
-BOOL CPluginData::ExecuteMenuItem2(CFilesWindow* panel, HWND parent, int index, int id, BOOL& unselect)
+BOOL CPluginData::ExecuteMenuItem2(CPanelWindow* panel, HWND parent, int index, int id, BOOL& unselect)
 {
     CALL_STACK_MESSAGE5("CPluginData::ExecuteMenuItem2(, , %d, %d, ) (%s v. %s)", index, id, DLLName, Version);
     unselect = FALSE;
@@ -3569,7 +3573,7 @@ BOOL CPluginData::BuildMenu(HWND parent, BOOL force)
     return GetLoaded() && (!SupportDynMenuExt || PluginIfaceForMenuExt.NotEmpty());
 }
 
-BOOL CPluginData::ListArchive(CFilesWindow* panel, const char* archiveFileName, CSalamanderDirectory& dir,
+BOOL CPluginData::ListArchive(CPanelWindow* panel, const char* archiveFileName, CSalamanderDirectory& dir,
                               CPluginDataInterfaceAbstract*& pluginData)
 {
     CALL_STACK_MESSAGE4("CPluginData::ListArchive(, %s, ,) (%s v. %s)", archiveFileName, DLLName, Version);
@@ -3586,7 +3590,7 @@ BOOL CPluginData::ListArchive(CFilesWindow* panel, const char* archiveFileName, 
     return ret;
 }
 
-BOOL CPluginData::UnpackArchive(CFilesWindow* panel, const char* archiveFileName,
+BOOL CPluginData::UnpackArchive(CPanelWindow* panel, const char* archiveFileName,
                                 CPluginDataInterfaceAbstract* pluginData,
                                 const char* targetDir, const char* archiveRoot,
                                 SalEnumSelection nextName, void* param)
@@ -3603,7 +3607,7 @@ BOOL CPluginData::UnpackArchive(CFilesWindow* panel, const char* archiveFileName
     return ret;
 }
 
-BOOL CPluginData::UnpackOneFile(CFilesWindow* panel, const char* archiveFileName,
+BOOL CPluginData::UnpackOneFile(CPanelWindow* panel, const char* archiveFileName,
                                 CPluginDataInterfaceAbstract* pluginData, const char* nameInArchive,
                                 const CFileData* fileData, const char* targetDir,
                                 const char* newFileName, BOOL* renamingNotSupported)
@@ -3622,7 +3626,7 @@ BOOL CPluginData::UnpackOneFile(CFilesWindow* panel, const char* archiveFileName
     return ret;
 }
 
-BOOL CPluginData::PackToArchive(CFilesWindow* panel, const char* archiveFileName,
+BOOL CPluginData::PackToArchive(CPanelWindow* panel, const char* archiveFileName,
                                 const char* archiveRoot, BOOL move, const char* sourceDir,
                                 SalEnumSelection2 nextName, void* param)
 {
@@ -3637,7 +3641,7 @@ BOOL CPluginData::PackToArchive(CFilesWindow* panel, const char* archiveFileName
     return ret;
 }
 
-BOOL CPluginData::DeleteFromArchive(CFilesWindow* panel, const char* archiveFileName,
+BOOL CPluginData::DeleteFromArchive(CPanelWindow* panel, const char* archiveFileName,
                                     CPluginDataInterfaceAbstract* pluginData, const char* archiveRoot,
                                     SalEnumSelection nextName, void* param)
 {
@@ -3652,7 +3656,7 @@ BOOL CPluginData::DeleteFromArchive(CFilesWindow* panel, const char* archiveFile
     return ret;
 }
 
-BOOL CPluginData::UnpackWholeArchive(CFilesWindow* panel, const char* archiveFileName, const char* mask,
+BOOL CPluginData::UnpackWholeArchive(CPanelWindow* panel, const char* archiveFileName, const char* mask,
                                      const char* targetDir, BOOL delArchiveWhenDone, CDynamicString* archiveVolumes)
 {
     CALL_STACK_MESSAGE7("CPluginData::UnpackWholeArchive(, %s, %s, %s, %d,) (%s v. %s)", archiveFileName,
@@ -3667,7 +3671,7 @@ BOOL CPluginData::UnpackWholeArchive(CFilesWindow* panel, const char* archiveFil
     return ret;
 }
 
-BOOL CPluginData::CanCloseArchive(CFilesWindow* panel, const char* archiveFileName, BOOL force)
+BOOL CPluginData::CanCloseArchive(CPanelWindow* panel, const char* archiveFileName, BOOL force)
 {
     CALL_STACK_MESSAGE5("CPluginData::CanCloseArchive(, %s, %d) (%s v. %s)", archiveFileName,
                         force, DLLName, Version);

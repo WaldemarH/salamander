@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "usermenu.h"
+
 //******************************************************************************
 //
 // CComboboxEdit
@@ -91,17 +93,39 @@ extern CExecuteItem RegularExpressionItems[];
 
 struct CUserMenuValidationData // extra data pro validaci User Menu: pole Arguments
 {
-    BOOL UsesListOfSelNames;     // TRUE = tento parametr se pouziva (musime overit jestli neni prilis dlouhy)
-    BOOL UsesListOfSelFullNames; // TRUE = tento parametr se pouziva (musime overit jestli neni prilis dlouhy)
-    BOOL UsesFullPathLeft;       // TRUE = tento parametr se pouziva (musime overit jestli je definovan)
-    BOOL UsesFullPathRight;      // TRUE = tento parametr se pouziva (musime overit jestli je definovan)
-    BOOL UsesFullPathInactive;   // TRUE = tento parametr se pouziva (musime overit jestli je definovan)
+//Defines
+    public: struct Type
+    {
+        public: enum Value : unsigned char
+        {
+            not_set                 = 0,            //zatim zadny,
 
-    BOOL MustHandleItemsAsGroup;     // TRUE = s polozkami se musi pracovat jako se skupinou: ListOfSelectedNames, ListOfSelectedFullNames, FileToCompareXXX, DirToCompareXXX
-    BOOL MustHandleItemsOneByOne;    // TRUE = s polozkami se musi pracovat samostatne: FullName, Name, NamePart, ExtPart, DOSFullName, DOSName, DOSNamePart, DOSExtPart
-    int UsedCompareType;             // 0 = zatim zadny, 1 = file-left-right, 2 = file-active-inactive, 3 = dir-left-right, 4 = dir-active-inactive, 5 = kolize vice typu (nepripustne), 6 = file-or-dir-left-right, 7 = file-or-dir-active-inactive
-    BOOL UsedCompareLeftOrActive;    // TRUE = pouzita aspon jedna promenna compare-left nebo compare-active (testujeme jestli se pouzivaji oba parametry, jinak je to nesmysl)
-    BOOL UsedCompareRightOrInactive; // TRUE = pouzita aspon jedna promenna compare-right nebo compare-inactive (testujeme jestli se pouzivaji oba parametry, jinak je to nesmysl)
+            dir_activeInactive,
+            dir_leftRight,
+
+            file_activeInactive,
+            file_leftRight,
+
+            fileOrDir_activeInactive,
+            fileOrDir_leftRight,
+
+            multipleCollisionTypes                  //kolize vice typu (nepripustne), [W: have no clue if the name is at all valid]
+        };
+    };
+
+//Variables
+    BOOL UsesListOfSelNames;            // TRUE = tento parametr se pouziva (musime overit jestli neni prilis dlouhy)
+    BOOL UsesListOfSelFullNames;        // TRUE = tento parametr se pouziva (musime overit jestli neni prilis dlouhy)
+    BOOL UsesFullPathLeft;              // TRUE = tento parametr se pouziva (musime overit jestli je definovan)
+    BOOL UsesFullPathRight;             // TRUE = tento parametr se pouziva (musime overit jestli je definovan)
+    BOOL UsesFullPathInactive;          // TRUE = tento parametr se pouziva (musime overit jestli je definovan)
+
+    BOOL MustHandleItemsAsGroup;        // TRUE = s polozkami se musi pracovat jako se skupinou: ListOfSelectedNames, ListOfSelectedFullNames, FileToCompareXXX, DirToCompareXXX
+    BOOL MustHandleItemsOneByOne;       // TRUE = s polozkami se musi pracovat samostatne: FullName, Name, NamePart, ExtPart, DOSFullName, DOSName, DOSNamePart, DOSExtPart
+
+    Type::Value UsedCompareType;        // 0 = zatim zadny, 1 = file-left-right, 2 = file-active-inactive, 3 = dir-left-right, 4 = dir-active-inactive, 5 = kolize vice typu (nepripustne), 6 = file-or-dir-left-right, 7 = file-or-dir-active-inactive
+    BOOL UsedCompareLeftOrActive;       // TRUE = pouzita aspon jedna promenna compare-left nebo compare-active (testujeme jestli se pouzivaji oba parametry, jinak je to nesmysl)
+    BOOL UsedCompareRightOrInactive;    // TRUE = pouzita aspon jedna promenna compare-right nebo compare-inactive (testujeme jestli se pouzivaji oba parametry, jinak je to nesmysl)
 };
 
 struct CUserMenuAdvancedData // extra data jen pro User Menu: pole Arguments
@@ -135,8 +159,7 @@ struct CUserMenuAdvancedData // extra data jen pro User Menu: pole Arguments
 // filterResID:      text do browse okna otevreneho ve specialnim pripade z menu
 // replaceWholeText: pokud je TRUE, cely obsah editlineResID bude zmenen; jinak
 //                   se nahradi pouze selection
-const CExecuteItem* TrackExecuteMenu(HWND hParent, int buttonResID, int editlineResID,
-                                     BOOL combobox, CExecuteItem* executeItems, int filterResID = 0);
+const CExecuteItem* TrackExecuteMenu(HWND hParent, int buttonResID, int editlineResID, BOOL combobox, CExecuteItem* executeItems, int filterResID = 0);
 
 // vybali FileOpen dialog pro *.exe
 // vybrany soubor vlozi do editliny
@@ -145,16 +168,12 @@ BOOL BrowseCommand(HWND hParent, int editlineResID, int filterResID);
 
 // kontroluje varText obsahujici promenne z pole UserMenuArgsExecutes
 // msgParent - parent message-boxu s chybou, je-li NULL, chyby se nevypisuji
-BOOL ValidateUserMenuArguments(HWND msgParent, const char* varText, int& errorPos1, int& errorPos2,
-                               CUserMenuValidationData* userMenuValidationData);
+BOOL ValidateUserMenuArguments(HWND msgParent, const char* varText, int& errorPos1, int& errorPos2, CUserMenuValidationData* userMenuValidationData);
 
 // expanduje varText obsahujici promenne z pole UserMenuArgsExecutes, vysledek ulozi do bufferu
 // msgParent - parent message-boxu s chybou, je-li NULL, chyby se nevypisuji; neni-li
 // 'fileNameUsed' NULL, prirazuje se do nej TRUE pokud se pouzije cesta nebo jmeno souboru
-BOOL ExpandUserMenuArguments(HWND msgParent, const char* name, const char* dosName, const char* varText,
-                             char* buffer, int bufferLen, BOOL* fileNameUsed,
-                             CUserMenuAdvancedData* userMenuAdvancedData,
-                             BOOL ignoreEnvVarNotFoundOrTooLong);
+BOOL ExpandUserMenuArguments(HWND msgParent, const char* name, const char* dosName, const char* varText, char* buffer, int bufferLen, BOOL* fileNameUsed, CUserMenuAdvancedData* userMenuAdvancedData, BOOL ignoreEnvVarNotFoundOrTooLong);
 
 // kontroluje varText obsahujici promenne z pole Command
 // msgParent - parent message-boxu s chybou, je-li NULL, chyby se nevypisuji
@@ -171,8 +190,7 @@ BOOL ValidateArguments(HWND msgParent, const char* varText, int& errorPos1, int&
 // expanduje varText obsahujici promenne z pole ArgumentsExecutes, vysledek ulozi do bufferu
 // msgParent - parent message-boxu s chybou, je-li NULL, chyby se nevypisuji; neni-li
 // 'fileNameUsed' NULL, prirazuje se do nej TRUE pokud se pouzije cesta nebo jmeno souboru
-BOOL ExpandArguments(HWND msgParent, const char* name, const char* dosName, const char* varText,
-                     char* buffer, int bufferLen, BOOL* fileNameUsed);
+BOOL ExpandArguments(HWND msgParent, const char* name, const char* dosName, const char* varText, char* buffer, int bufferLen, BOOL* fileNameUsed);
 
 // kontroluje varText obsahujici promenne z pole InfoLineContentItems
 // msgParent - parent message-boxu s chybou, je-li NULL, chyby se nevypisuji
@@ -183,9 +201,7 @@ BOOL ValidateInfoLineItems(HWND msgParent, const char* varText, int& errorPos1, 
 // varPlacements: pole o [varPlacementsCount] polozkach, bude naplneno pozicema promennych
 //                ve vystupnim bufferu (LOWORD) a jejim poctu znaku (HIWORD)
 
-BOOL ExpandInfoLineItems(HWND msgParent, const char* varText, CPluginDataInterfaceEncapsulation* pluginData,
-                         CFileData* fData, BOOL isDir, char* buffer, int bufferLen, DWORD* varPlacements,
-                         int* varPlacementsCount, DWORD validFileData, BOOL isDisk);
+BOOL ExpandInfoLineItems(HWND msgParent, const char* varText, CPluginDataInterfaceEncapsulation* pluginData, CFileData* fData, BOOL isDir, char* buffer, int bufferLen, DWORD* varPlacements, int* varPlacementsCount, DWORD validFileData, BOOL isDisk);
 
 // kontroluje varText obsahujici promenne z pole MakeFileListItems
 // msgParent - parent message-boxu s chybou, je-li NULL, chyby se nevypisuji
@@ -197,10 +213,7 @@ BOOL ValidateMakeFileList(HWND msgParent, const char* varText, int& errorPos1, i
 //              modifikator ":max" a zaroven jeji delka bude vetsi nez polozka v poli,
 //              bude do pole prirazena delka;
 //              pokud bude detectMaxVarSizes==TRUE, pouzije se maximalni delka pro format sloupce
-BOOL ExpandMakeFileList(HWND msgParent, const char* varText, CPluginDataInterfaceEncapsulation* pluginData,
-                        CFileData* fData, BOOL isDir, char* buffer, int bufferLen, BOOL detectMaxVarSizes,
-                        int* maxVarSizes, int maxVarSizesCount, DWORD validFileData, const char* path,
-                        BOOL ignoreEnvVarNotFoundOrTooLong);
+BOOL ExpandMakeFileList(HWND msgParent, const char* varText, CPluginDataInterfaceEncapsulation* pluginData, CFileData* fData, BOOL isDir, char* buffer, int bufferLen, BOOL detectMaxVarSizes, int* maxVarSizes, int maxVarSizesCount, DWORD validFileData, const char* path, BOOL ignoreEnvVarNotFoundOrTooLong);
 
 // kontroluje varText obsahujici promenne z pole InitDirExecutes
 // msgParent - parent message-boxu s chybou, je-li NULL, chyby se nevypisuji
@@ -213,10 +226,8 @@ BOOL ExpandInitDir(HWND msgParent, const char* name, const char* dosName, const 
 
 // expanduje varText obsahujici environment promenne , vysledek ulozi do bufferu
 // msgParent - parent message-boxu s chybou, je-li NULL, chyby se nevypisuji
-BOOL ExpandCommand(HWND msgParent, const char* varText, char* buffer, int bufferLen,
-                   BOOL ignoreEnvVarNotFoundOrTooLong);
+BOOL ExpandCommand(HWND msgParent, const char* varText, char* buffer, int bufferLen, BOOL ignoreEnvVarNotFoundOrTooLong);
 
 // expanduje varText obsahujici environment promenne, vysledek ulozi do bufferu
 // msgParent - parent message-boxu s chybou, je-li NULL, chyby se nevypisuji
-BOOL ExpandHotPath(HWND msgParent, const char* varText, char* buffer, int bufferLen,
-                   BOOL ignoreEnvVarNotFoundOrTooLong);
+BOOL ExpandHotPath(HWND msgParent, const char* varText, char* buffer, int bufferLen, BOOL ignoreEnvVarNotFoundOrTooLong);

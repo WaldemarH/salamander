@@ -1,6 +1,9 @@
 ﻿// SPDX-FileCopyrightText: 2023 Open Salamander Authors
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+//[W: remove whole this ARRAY stuff it's very sensitive or completelly redesign it as a vector or something]
+
+
 #pragma once
 
 // Use the _DEBUG or __ARRAY_DEBUG defines to enable various error state checking. Errors
@@ -71,7 +74,7 @@ public:
     TDirectArray<DATA_TYPE>(int base, int delta);
     virtual ~TDirectArray() { Destroy(); }
 
-    BOOL IsGood() const { return State == etNone; }
+    bool IsGood() const { return ( State == etNone ); }
     void ResetState()
     {
         State = etNone;
@@ -218,8 +221,7 @@ template <class DATA_TYPE>
 class TIndirectArray : public CArray
 {
 public:
-    TIndirectArray(int base, int delta, CDeleteType dt = dtDelete)
-        : CArray(base, delta, dt) {}
+    TIndirectArray(int base, int delta, CDeleteType dt = dtDelete) : CArray(base, delta, dt) {}
     DATA_TYPE*& At(int index)
     {
         return (DATA_TYPE*&)(CArray::operator[](index));

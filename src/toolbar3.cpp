@@ -404,7 +404,7 @@ CTBCustomizeDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         EnableControls();
 
         // napocitame vysku radku
-        int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+        int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
         int minHeight = max(iconSize, ToolBar->ImageHeight);
         HFONT hFont = (HFONT)SendMessage(HAvailableLB, WM_GETFONT, 0, 0);
         HDC hDC = HANDLES(GetDC(HWindow));
@@ -480,7 +480,7 @@ CTBCustomizeDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         else
             text = AllItems[index].Name;
 
-        int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+        int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
         int imageWidth = max(iconSize, ToolBar->ImageWidth);
         imageWidth += 5;
         if (!separator)

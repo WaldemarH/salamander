@@ -4,6 +4,7 @@
 #include "precomp.h"
 
 #include "menu.h"
+#include "menu_queue.h"
 #include "mainwnd.h"
 
 //*****************************************************************************
@@ -14,8 +15,7 @@
 #define MENUBAR_LR_MARGIN 8 // pocet bodu pred a za textem, vcetne svisle cary
 #define MENUBAR_TB_MARGIN 4 // pocet bodu nad a pod textem, vcetne vodorovne cary
 
-CMenuBar::CMenuBar(CMenuPopup* menu, HWND hNotifyWindow, CObjectOrigin origin)
-    : CWindow(origin)
+CMenuBar::CMenuBar(CMenuPopup* menu, HWND hNotifyWindow, CObjectOrigin origin) : CWindow(origin)
 {
     CALL_STACK_MESSAGE_NONE
     Menu = menu;
@@ -314,7 +314,7 @@ void CMenuBar::EnterMenuInternal(int index, BOOL openWidthSelect, BOOL byMouse)
     // zahakujeme tento thread
     HHOOK hOldHookProc = OldMenuHookTlsAllocator.HookThread();
     // pridame se do monitoringu zaviracich zprav
-    MenuWindowQueue.Add(HWindow);
+    MenuQueue.Menu_Add(HWindow);
 
     if (GetCapture() != NULL)
         ReleaseCapture();
@@ -554,7 +554,7 @@ void CMenuBar::EnterMenuInternal(int index, BOOL openWidthSelect, BOOL byMouse)
     }
 
     // vyhodime se z monitoringu zaviracich zprav
-    MenuWindowQueue.Remove(HWindow);
+    MenuQueue.Menu_Remove(HWindow);
     // pokud jsme hookovali, budeme take uvolnovat
     if (hOldHookProc != NULL)
         OldMenuHookTlsAllocator.UnhookThread(hOldHookProc);

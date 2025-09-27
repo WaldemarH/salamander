@@ -28,7 +28,7 @@ CToolTip::CToolTip(CObjectOrigin origin)
     LastID = 0xFFFFFFFF;
     Text[0] = 0;
     TextLen = 0;
-    WaitingMode = ttmNone;
+    WaitingMode = TooltipTimerMode::none;
     HideCounter = 0;
     IsModal = FALSE;
     ExitASAP = FALSE;
@@ -438,9 +438,9 @@ void CToolTip::SetCurrentToolTip(HWND hNotifyWindow, DWORD id, int showDelay)
 
     if (HNotifyWindow == NULL)
     {
-        if (WaitingMode != ttmNone)
+        if (WaitingMode != TooltipTimerMode::none)
         {
-            WaitingMode = ttmNone;
+            WaitingMode = TooltipTimerMode::none;
             MyKillTimer();
             Hide();
         }
@@ -449,9 +449,9 @@ void CToolTip::SetCurrentToolTip(HWND hNotifyWindow, DWORD id, int showDelay)
     if (hOldNotifyWindow != HNotifyWindow)
     {
         // zmenilo se okno - sestrelim casovac a zhasnu
-        if (WaitingMode != ttmNone)
+        if (WaitingMode != TooltipTimerMode::none)
         {
-            WaitingMode = ttmNone;
+            WaitingMode = TooltipTimerMode::none;
             MyKillTimer();
             Hide();
         }
@@ -460,7 +460,7 @@ void CToolTip::SetCurrentToolTip(HWND hNotifyWindow, DWORD id, int showDelay)
     if (sameCursorPos)
         return;
 
-    if (HWindow != NULL || WaitingMode == ttmWaitingKill)
+    if (HWindow != NULL || WaitingMode == TooltipTimerMode::waitingDestroy)
     {
         if (HNotifyWindow == hOldNotifyWindow && LastID == oldLastID)
             return;
@@ -468,30 +468,39 @@ void CToolTip::SetCurrentToolTip(HWND hNotifyWindow, DWORD id, int showDelay)
         if (Show(GET_X_LPARAM(pos), GET_Y_LPARAM(pos), TRUE, FALSE, HNotifyWindow))
         {
             // pokud se podarilo text zobrazit, zacneme cekat na jeho zhasnuti
-            WaitingMode = ttmWaitingClose;
+            WaitingMode = TooltipTimerMode::waitingClose;
             MySetTimer(GetTime(FALSE));
             HideCounter = 0;
         }
         else
         {
-            if (WaitingMode != ttmWaitingKill)
+            if (WaitingMode != TooltipTimerMode::waitingDestroy)
             {
                 // text nebyl dodan - nahodime cekani na KILL
-                WaitingMode = ttmWaitingKill;
+                WaitingMode = TooltipTimerMode::waitingDestroy;
                 MySetTimer(TOOLTIP_KILLDELAY);
             }
         }
     }
     else
     {
-        if (HNotifyWindow == hOldNotifyWindow && LastID == oldLastID && WaitingMode == ttmNone)
+        if (
+            ( HNotifyWindow == hOldNotifyWindow )
+            &&
+            ( LastID == oldLastID )
+            &&
+            ( WaitingMode == TooltipTimerMode::none )
+        )
+        {
             return;
-        // jinak nahodim (pripadne znovu nastavime) casovac
+        }
+
+        //otherwise I will start (or reset) the timer
         if (showDelay >= 0)
         {
             if (showDelay == 0)
                 showDelay = GetTime(TRUE);
-            WaitingMode = ttmWaitingOpen;
+            WaitingMode = TooltipTimerMode::waitingOpen;
             MySetTimer(showDelay);
         }
     }
@@ -515,20 +524,20 @@ BOOL HasActiveParent(HWND hWindow)
 void CToolTip::OnTimer()
 {
     CALL_STACK_MESSAGE1("CToolTip::OnTimer()");
-    if (WaitingMode != ttmWaitingClose)
+    if (WaitingMode != TooltipTimerMode::waitingClose)
         MyKillTimer();
     switch (WaitingMode)
     {
-    case ttmNone:
+    case TooltipTimerMode::none:
     {
         // jak je mozne, ze nam prisel timer, kdyz podle stavove promenne nema zadny bezet
-        TRACE_E("WaitingMode == ttmNone");
+        TRACE_E("WaitingMode == TooltipTimerMode::none");
         break;
     }
 
-    case ttmWaitingOpen:
+    case TooltipTimerMode::waitingOpen:
     {
-        WaitingMode = ttmNone;
+        WaitingMode = TooltipTimerMode::none;
         POINT p;
         GetCursorPos(&p);
         HWND hWnd = WindowFromPoint(p);
@@ -539,14 +548,14 @@ void CToolTip::OnTimer()
                 if (Show(p.x, p.y, TRUE, FALSE, HNotifyWindow))
                 {
                     // pokud se podarilo text zobrazit, zacneme cekat na jeho zhasnuti
-                    WaitingMode = ttmWaitingClose;
+                    WaitingMode = TooltipTimerMode::waitingClose;
                     MySetTimer(GetTime(FALSE));
                     HideCounter = 0;
                 }
                 else
                 {
                     // text nebyl dodan - nahodime cekani na KILL
-                    WaitingMode = ttmWaitingKill;
+                    WaitingMode = TooltipTimerMode::waitingDestroy;
                     MySetTimer(TOOLTIP_KILLDELAY);
                 }
             }
@@ -559,7 +568,7 @@ void CToolTip::OnTimer()
         break;
     }
 
-    case ttmWaitingClose:
+    case TooltipTimerMode::waitingClose:
     {
         // zkontroluju, jestli neni treba zhasnout tooltip
         POINT p;
@@ -574,7 +583,7 @@ void CToolTip::OnTimer()
             // po dobu, nez mys opusti okno nebo dojde k voalni SetCurrentToolTip
             if (hWnd != HNotifyWindow)
             {
-                WaitingMode = ttmNone;
+                WaitingMode = TooltipTimerMode::none;
                 MyKillTimer();
                 POINT p2;
                 GetCursorPos(&p2);
@@ -590,9 +599,9 @@ void CToolTip::OnTimer()
         break;
     }
 
-    case ttmWaitingKill:
+    case TooltipTimerMode::waitingDestroy:
     {
-        WaitingMode = ttmNone;
+        WaitingMode = TooltipTimerMode::none;
         break;
     }
 
@@ -661,10 +670,10 @@ CToolTip::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_DESTROY:
     {
-        if (WaitingMode != ttmNone)
+        if (WaitingMode != TooltipTimerMode::none)
         {
             MyKillTimer();
-            WaitingMode = ttmNone;
+            WaitingMode = TooltipTimerMode::none;
         }
         break;
     }

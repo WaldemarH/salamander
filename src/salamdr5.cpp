@@ -258,7 +258,7 @@ DWORD SalCheckPath(BOOL echo, const char* path, DWORD err, BOOL postRefresh, HWN
     static BOOL called = FALSE;
     if (called)
     {
-        // znamy je zatim jen pripad deaktivace/aktivace po ESC v CheckPath(), jsou i dalsi?
+        // So far, we only know of the case of deactivation/activation after ESC in CheckPath(), are there others?
         HANDLES(LeaveCriticalSection(&CheckPathCS));
         TRACE_I("SalCheckPath: recursive call (in one thread) is not allowed!");
         return 666;
@@ -1299,27 +1299,29 @@ void CSystemPolicies::EnableAll()
     NoDotBreakInLogicalCompare = 0;
 
     // uvolnim seznamy alokovanych string
-
-    int i;
-    for (i = 0; i < RestrictRunList.Count; i++)
+    for ( int i = 0; i < RestrictRunList.Count; i++)
+    {
         if (RestrictRunList[i] != NULL)
             free(RestrictRunList[i]);
+    }
     RestrictRunList.DetachMembers();
 
-    for (i = 0; i < DisallowRunList.Count; i++)
+    for ( int i = 0; i < DisallowRunList.Count; i++)
+    {
         if (DisallowRunList[i] != NULL)
             free(DisallowRunList[i]);
+    }
     DisallowRunList.DetachMembers();
 }
 
-BOOL CSystemPolicies::LoadList(TDirectArray<char*>* list, HKEY hRootKey, const char* keyName)
+BOOL CSystemPolicies::LoadList(TDirectArray<char*>* list, HKEY hRootKey, const String_TChar_View keyName)
 {
     HKEY hKey;
-    if (OpenKeyAux(NULL, hRootKey, keyName, hKey))
+    if (Registry::Silent_Key_Open( hRootKey, keyName, hKey))
     {
         DWORD values;
-        DWORD res = RegQueryInfoKey(hKey, NULL, 0, 0, NULL, NULL, NULL, &values, NULL,
-                                    NULL, NULL, NULL);
+        DWORD res = RegQueryInfoKey(hKey, NULL, 0, 0, NULL, NULL, NULL, &values, NULL, NULL, NULL, NULL);
+
         if (res == ERROR_SUCCESS)
         {
             int i;
@@ -1331,13 +1333,14 @@ BOOL CSystemPolicies::LoadList(TDirectArray<char*>* list, HKEY hRootKey, const c
                 char data[2 * MAX_PATH];
                 DWORD dataLen = 2 * MAX_PATH;
                 res = RegEnumValue(hKey, i, valueName, &valueNameLen, 0, &type, (BYTE*)data, &dataLen);
+
                 if (res == ERROR_SUCCESS && type == REG_SZ)
                 {
                     int len = lstrlen(data);
                     char* appName = (char*)malloc(len + 1);
                     if (appName == NULL)
                     {
-                        CloseKeyAux(hKey);
+                        Registry::Silent_Key_Close(hKey);
                         return FALSE;
                     }
                     list->Add(appName);
@@ -1345,14 +1348,14 @@ BOOL CSystemPolicies::LoadList(TDirectArray<char*>* list, HKEY hRootKey, const c
                     {
                         list->ResetState();
                         free(appName);
-                        CloseKeyAux(hKey);
+                        Registry::Silent_Key_Close(hKey);
                         return FALSE;
                     }
                     memcpy(appName, data, len + 1);
                 }
             }
         }
-        CloseKeyAux(hKey);
+        Registry::Silent_Key_Close(hKey);
     }
     return TRUE;
 }
@@ -1402,47 +1405,74 @@ BOOL CSystemPolicies::GetMyCanRun(const char* fileName)
 
 void CSystemPolicies::LoadFromRegistry()
 {
-    // vsechno povolime
+//Remove all restrictions.
     EnableAll();
 
-    // vytahneme restrikce
-    HKEY hKey;
-    if (OpenKeyAux(NULL, HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer", hKey))
+//Load system restrictions.
+//
+//Notice:
+//According to MSDN the these values can have a REG_DWORD or '4-byte REG_BINARY' data types.
+    HKEY    hKey_opened = NULL;
+
+    if ( Registry::Silent_Key_Open( HKEY_CURRENT_USER, TEXT_VIEW( "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer" ), hKey_opened ) == true )
     {
-        // podle MSDN muzou byt hodnoty typu DWORD i BINARY:
-        // It is a REG_DWORD or 4-byte REG_BINARY data value, found under the same key.
-        GetValueDontCheckTypeAux(hKey, "NoRun", /*REG_DWORD,*/ &NoRun, sizeof(DWORD));
-        GetValueDontCheckTypeAux(hKey, "NoDrives", /*REG_DWORD,*/ &NoDrives, sizeof(DWORD));
-        //GetValueDontCheckTypeAux(hKey, "NoViewOnDrive", /*REG_DWORD,*/ &NoViewOnDrive, sizeof(DWORD));
-        GetValueDontCheckTypeAux(hKey, "NoFind", /*REG_DWORD,*/ &NoFind, sizeof(DWORD));
-        GetValueDontCheckTypeAux(hKey, "NoShellSearchButton", /*REG_DWORD,*/ &NoShellSearchButton, sizeof(DWORD));
-        GetValueDontCheckTypeAux(hKey, "NoNetHood", /*REG_DWORD,*/ &NoNetHood, sizeof(DWORD));
-        //GetValueDontCheckTypeAux(hKey, "NoComputersNearMe", /*REG_DWORD,*/ &NoComputersNearMe, sizeof(DWORD));
-        GetValueDontCheckTypeAux(hKey, "NoNetConnectDisconnect", /*REG_DWORD,*/ &NoNetConnectDisconnect, sizeof(DWORD));
-        GetValueDontCheckTypeAux(hKey, "RestrictRun", /*REG_DWORD,*/ &RestrictRun, sizeof(DWORD));
-        if (RestrictRun && !LoadList(&RestrictRunList, HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\RestrictRun"))
-            RestrictRun = 0; // malo pameti; zrusime tento option
-        GetValueDontCheckTypeAux(hKey, "DisallowRun", /*REG_DWORD,*/ &DisallowRun, sizeof(DWORD));
-        if (DisallowRun && !LoadList(&DisallowRunList, HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisallowRun"))
-            DisallowRun = 0; // malo pameti; zrusime tento option
-        CloseKeyAux(hKey);
+    //Read values.
+        Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "NoRun" ), (BYTE*)&NoRun, sizeof( NoRun ) );
+        Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "NoDrives" ), (BYTE*)&NoDrives, sizeof( NoDrives ) );
+        //Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "NoViewOnDrive" ), (BYTE*)&NoViewOnDrive, sizeof( NoViewOnDrive ) );
+        Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "NoFind" ), (BYTE*)&NoFind, sizeof( NoFind ) );
+        Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "NoShellSearchButton" ), (BYTE*)&NoShellSearchButton, sizeof( NoShellSearchButton ) );
+        Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "NoNetHood" ), (BYTE*)&NoNetHood, sizeof( NoNetHood ) );
+        //Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "NoComputersNearMe" ), (BYTE*)&NoComputersNearMe, sizeof( NoComputersNearMe ) );
+        Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "NoNetConnectDisconnect" ), (BYTE*)&NoNetConnectDisconnect, sizeof( NoNetConnectDisconnect ) );
+
+        Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "RestrictRun" ), (BYTE*)&RestrictRun, sizeof( RestrictRun ) );
+        if ( RestrictRun )
+        {
+            if ( !LoadList( &RestrictRunList, HKEY_CURRENT_USER, TEXT_VIEW( "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\RestrictRun" ) ) )
+            {
+                RestrictRun = 0; // A little wisdom; let's destroy this option
+            }
+        }
+
+        Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "DisallowRun" ), (BYTE*)&DisallowRun, sizeof( DisallowRun ) );
+        if ( DisallowRun )
+        {
+            if ( !LoadList( &DisallowRunList, HKEY_CURRENT_USER, TEXT_VIEW( "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisallowRun" ) ) )
+            {
+                DisallowRun = 0; // A little wisdom; let's destroy this option
+            }
+        }
+
+    //Close opened hKey.
+        Registry::Silent_Key_Close( hKey_opened );
+        hKey_opened = NULL;
     }
 
-    //  if (OpenKeyAux(NULL, HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Network", hKey))
-    //  {
-    //GetValueDontCheckTypeAux(hKey, "NoEntireNetwork", /*REG_DWORD,*/ &NoEntireNetwork, sizeof(DWORD));
-    //    CloseKeyAux(hKey);
-    //  }
+    //if (Registry::Silent_Key_Open( HKEY_CURRENT_USER, TEXT_VIEW("Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Network"), hKey))
+    //{
+    //  Registry::Silent_Value_Get( hKey_opened, "NoEntireNetwork", /*REG_DWORD,*/ &NoEntireNetwork, sizeof(DWORD));
+    //  Registry::Silent_Key_Close(hKey);
+    //  hKey_opened = NULL;
+    //}
 
-    if (OpenKeyAux(NULL, HKEY_CURRENT_USER, "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer", hKey))
+    if ( Registry::Silent_Key_Open( HKEY_CURRENT_USER, TEXT_VIEW( "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer" ), hKey_opened ) == true )
     {
-        GetValueDontCheckTypeAux(hKey, "NoDotBreakInLogicalCompare", /*REG_DWORD,*/ &NoDotBreakInLogicalCompare, sizeof(DWORD));
-        CloseKeyAux(hKey);
+    //Read values.
+        Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "NoDotBreakInLogicalCompare" ), (BYTE*)&NoDotBreakInLogicalCompare, sizeof( NoDotBreakInLogicalCompare ) );
+
+    //Close opened key.
+        Registry::Silent_Key_Close( hKey_opened );
+        hKey_opened = NULL;
     }
-    if (OpenKeyAux(NULL, HKEY_LOCAL_MACHINE, "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer", hKey))
+    if ( Registry::Silent_Key_Open( HKEY_LOCAL_MACHINE, TEXT_VIEW( "SOFTWARE\\Policies\\Microsoft\\Windows\\Explorer" ), hKey_opened ) == true )
     {
-        GetValueDontCheckTypeAux(hKey, "NoDotBreakInLogicalCompare", /*REG_DWORD,*/ &NoDotBreakInLogicalCompare, sizeof(DWORD));
-        CloseKeyAux(hKey);
+    //Read values.
+        Registry::Silent_Value_Get( hKey_opened, TEXT_VIEW( "NoDotBreakInLogicalCompare" ), (BYTE*)&NoDotBreakInLogicalCompare, sizeof( NoDotBreakInLogicalCompare ) );
+
+    //Close opened key.
+        Registry::Silent_Key_Close( hKey_opened );
+        hKey_opened = NULL;
     }
 }
 

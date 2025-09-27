@@ -14,15 +14,13 @@
 // CComboboxEdit
 //
 
-CComboboxEdit::CComboboxEdit()
-    : CWindow(ooAllocated)
+CComboboxEdit::CComboboxEdit() : CWindow(ooAllocated)
 {
     SelStart = 0;
     SelEnd = -1;
 }
 
-LRESULT
-CComboboxEdit::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CComboboxEdit::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     CALL_STACK_MESSAGE4("CComboboxEdit::WindowProc(0x%X, 0x%IX, 0x%IX)", uMsg, wParam, lParam);
     switch (uMsg)
@@ -1293,28 +1291,33 @@ const char* WINAPI ExecuteValFullPathRight(HWND msgParent, void* param)
 const char* WINAPI ExecuteValCompFileLeft(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 1 /* file-left-right */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 1)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::file_leftRight;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::file_leftRight )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareLeftOrActive = TRUE;
     return "";
 }
-
 const char* WINAPI ExecuteValCompFileRight(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 1 /* file-left-right */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 1)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::file_leftRight;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::file_leftRight )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareRightOrInactive = TRUE;
     return "";
@@ -1323,28 +1326,33 @@ const char* WINAPI ExecuteValCompFileRight(HWND msgParent, void* param)
 const char* WINAPI ExecuteValCompDirLeft(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 3 /* dir-left-right */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 3)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::dir_leftRight;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::dir_leftRight )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareLeftOrActive = TRUE;
     return "";
 }
-
 const char* WINAPI ExecuteValCompDirRight(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 3 /* dir-left-right */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 3)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::dir_leftRight;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::dir_leftRight )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareRightOrInactive = TRUE;
     return "";
@@ -1353,28 +1361,33 @@ const char* WINAPI ExecuteValCompDirRight(HWND msgParent, void* param)
 const char* WINAPI ExecuteValCompLeft(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 6 /* file-or-dir-left-right */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 6)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::fileOrDir_leftRight;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::fileOrDir_leftRight )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareLeftOrActive = TRUE;
     return "";
 }
-
 const char* WINAPI ExecuteValCompRight(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 6 /* file-or-dir-left-right */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 6)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::fileOrDir_leftRight;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::fileOrDir_leftRight )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareRightOrInactive = TRUE;
     return "";
@@ -1383,28 +1396,33 @@ const char* WINAPI ExecuteValCompRight(HWND msgParent, void* param)
 const char* WINAPI ExecuteValCompFileActive(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 2 /* file-active-inactive */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 2)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::file_activeInactive;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::file_activeInactive )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareLeftOrActive = TRUE;
     return "";
 }
-
 const char* WINAPI ExecuteValCompFileInact(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 2 /* file-active-inactive */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 2)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::file_activeInactive;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::file_activeInactive )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareRightOrInactive = TRUE;
     return "";
@@ -1413,28 +1431,33 @@ const char* WINAPI ExecuteValCompFileInact(HWND msgParent, void* param)
 const char* WINAPI ExecuteValCompDirActive(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 4 /* dir-active-inactive */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 4)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::dir_activeInactive;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::dir_activeInactive )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareLeftOrActive = TRUE;
     return "";
 }
-
 const char* WINAPI ExecuteValCompDirInact(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 4 /* dir-active-inactive */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 4)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::dir_activeInactive;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::dir_activeInactive )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareRightOrInactive = TRUE;
     return "";
@@ -1443,28 +1466,33 @@ const char* WINAPI ExecuteValCompDirInact(HWND msgParent, void* param)
 const char* WINAPI ExecuteValCompActive(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 7 /* file-or-dir-active-inactive */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 7)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::fileOrDir_activeInactive;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::fileOrDir_activeInactive )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareLeftOrActive = TRUE;
     return "";
 }
-
 const char* WINAPI ExecuteValCompInact(HWND msgParent, void* param)
 {
     CUserMenuValidationData* data = (CUserMenuValidationData*)param;
+
     data->MustHandleItemsAsGroup = TRUE;
-    if (data->UsedCompareType == 0)
-        data->UsedCompareType = 7 /* file-or-dir-active-inactive */;
-    else
+
+    if ( data->UsedCompareType == CUserMenuValidationData::Type::not_set )
     {
-        if (data->UsedCompareType != 7)
-            data->UsedCompareType = 5 /* kolize vice typu */;
+        data->UsedCompareType = CUserMenuValidationData::Type::fileOrDir_activeInactive;
+    }
+    else if ( data->UsedCompareType != CUserMenuValidationData::Type::fileOrDir_activeInactive )
+    {
+        data->UsedCompareType = CUserMenuValidationData::Type::multipleCollisionTypes;     /* kolize vice typu */;
     }
     data->UsedCompareRightOrInactive = TRUE;
     return "";
@@ -1701,8 +1729,7 @@ BOOL BrowseDirCommand(HWND hParent, int editlineResID, int filterResID)
 {
     CALL_STACK_MESSAGE2("BrowseDirCommand(, %d)", editlineResID);
     char path[MAX_PATH];
-    SendMessage(GetDlgItem(hParent, editlineResID), WM_GETTEXT,
-                MAX_PATH, (LPARAM)path);
+    SendMessage(GetDlgItem(hParent, editlineResID), WM_GETTEXT, MAX_PATH, (LPARAM)path);
 
     CALL_STACK_MESSAGE1("BrowseDirCommand::GetOpenFileName");
     if (GetTargetDirectory(hParent, hParent, LoadStr(IDS_BROWSEDIRECTORY_TITLE), LoadStr(IDS_BROWSEDIRECTORY_TEXT), path, FALSE, path))
@@ -1726,8 +1753,7 @@ BOOL ValidateUserMenuArguments(HWND msgParent, const char* varText, int& errorPo
         return FALSE; // pokud jde o syntaktickou chybu, nahlasime ji zde (vcetne pozice pro editaci)
     errorPos1 = errorPos2 = 0;
     char dummyBuffer[USRMNUARGS_MAXLEN];
-    ExpandVarString(msgParent, varText, dummyBuffer, USRMNUARGS_MAXLEN, UserMenuArgsValidationArray,
-                    userMenuValidationData, TRUE);
+    ExpandVarString(msgParent, varText, dummyBuffer, USRMNUARGS_MAXLEN, UserMenuArgsValidationArray, userMenuValidationData, TRUE);
 
     if (userMenuValidationData->MustHandleItemsAsGroup &&
         userMenuValidationData->MustHandleItemsOneByOne)
@@ -1736,27 +1762,39 @@ BOOL ValidateUserMenuArguments(HWND msgParent, const char* varText, int& errorPo
                       LoadStr(IDS_ERRORTITLE), MB_OK | MB_ICONEXCLAMATION);
         return FALSE;
     }
-    if (userMenuValidationData->UsedCompareType == 5)
-    { // kolize vice typu Compare parametru
-        SalMessageBox(msgParent, LoadStr(IDS_COMPAREARGSCOLISION),
-                      LoadStr(IDS_ERRORTITLE), MB_OK | MB_ICONEXCLAMATION);
+    if ( userMenuValidationData->UsedCompareType == CUserMenuValidationData::Type::multipleCollisionTypes )
+    {
+    // kolize vice typu Compare parametru
+        SalMessageBox(msgParent, LoadStr(IDS_COMPAREARGSCOLISION), LoadStr(IDS_ERRORTITLE), MB_OK | MB_ICONEXCLAMATION);
         return FALSE;
     }
-    if (userMenuValidationData->UsedCompareType != 0 &&
-        (!userMenuValidationData->UsedCompareLeftOrActive ||
-         !userMenuValidationData->UsedCompareRightOrInactive))
+    if (
+        ( userMenuValidationData->UsedCompareType != CUserMenuValidationData::Type::not_set )
+        &&
+        (
+            !userMenuValidationData->UsedCompareLeftOrActive
+            ||
+            !userMenuValidationData->UsedCompareRightOrInactive
+        )
+    )
     { // nepouzivaji se oba Compare parametry -> nesmysl
-        SalMessageBox(msgParent, LoadStr(IDS_COMPARENEEDSBOTHARGS),
-                      LoadStr(IDS_ERRORTITLE), MB_OK | MB_ICONEXCLAMATION);
+        SalMessageBox(msgParent, LoadStr(IDS_COMPARENEEDSBOTHARGS), LoadStr(IDS_ERRORTITLE), MB_OK | MB_ICONEXCLAMATION);
         return FALSE;
     }
     return TRUE;
 }
 
-BOOL ExpandUserMenuArguments(HWND msgParent, const char* name, const char* dosName, const char* varText,
-                             char* buffer, int bufferLen, BOOL* fileNameUsed,
-                             CUserMenuAdvancedData* userMenuAdvancedData,
-                             BOOL ignoreEnvVarNotFoundOrTooLong)
+BOOL ExpandUserMenuArguments(
+    HWND msgParent,
+    const char* name,
+    const char* dosName,
+    const char* varText,
+    char* buffer,
+    int bufferLen,
+    BOOL* fileNameUsed,
+    CUserMenuAdvancedData* userMenuAdvancedData,
+    BOOL ignoreEnvVarNotFoundOrTooLong
+)
 {
     CALL_STACK_MESSAGE4("ExpandUserMenuArguments(, %s, %s, %s, , ,)", name, dosName,
                         strlen(varText) > 300 ? "(too long)" : varText);
@@ -1766,8 +1804,7 @@ BOOL ExpandUserMenuArguments(HWND msgParent, const char* name, const char* dosNa
     data.DosName = dosName;
     data.FileNameUsed = fileNameUsed;
     data.UserMenuAdvancedData = userMenuAdvancedData;
-    return ExpandVarString(msgParent, varText, buffer, bufferLen, UserMenuArgsExpArray,
-                           &data, ignoreEnvVarNotFoundOrTooLong);
+    return ExpandVarString(msgParent, varText, buffer, bufferLen, UserMenuArgsExpArray, &data, ignoreEnvVarNotFoundOrTooLong);
 }
 
 BOOL ValidateCommandFile(HWND msgParent, const char* varText, int& errorPos1, int& errorPos2)
@@ -1832,13 +1869,28 @@ BOOL ValidateInitDir(HWND msgParent, const char* varText, int& errorPos1, int& e
 BOOL ValidateInfoLineItems(HWND msgParent, const char* varText, int& errorPos1, int& errorPos2)
 {
     CALL_STACK_MESSAGE2("ValidateInfoLineItems(, %s, ,)", varText);
-    return ValidateVarString(msgParent, varText, errorPos1, errorPos2,
-                             GetInfoLineExpArray(TRUE /* pro validaci neni rozdil mezi TRUE a FALSE */));
+    return ValidateVarString(
+        msgParent,
+        varText,
+        errorPos1,
+        errorPos2,
+        GetInfoLineExpArray(TRUE /* pro validaci neni rozdil mezi TRUE a FALSE */)
+    );
 }
 
-BOOL ExpandInfoLineItems(HWND msgParent, const char* varText, CPluginDataInterfaceEncapsulation* pluginData,
-                         CFileData* fData, BOOL isDir, char* buffer, int bufferLen, DWORD* varPlacements,
-                         int* varPlacementsCount, DWORD validFileData, BOOL isDisk)
+BOOL ExpandInfoLineItems(
+    HWND msgParent,
+    const char* varText,
+    CPluginDataInterfaceEncapsulation* pluginData,
+    CFileData* fData,
+    BOOL isDir,
+    char* buffer,
+    int bufferLen,
+    DWORD* varPlacements,
+    int* varPlacementsCount,
+    DWORD validFileData,
+    BOOL isDisk
+)
 {
     CALL_STACK_MESSAGE1("ExpandInfoLineItems()");
     CFileDataExpData data;
@@ -1847,8 +1899,7 @@ BOOL ExpandInfoLineItems(HWND msgParent, const char* varText, CPluginDataInterfa
     data.IsDir = isDir;
     data.ValidFileData = validFileData;
     data.Path[0] = 0;
-    return ExpandVarString(msgParent, varText, buffer, bufferLen, GetInfoLineExpArray(isDisk),
-                           &data, TRUE, varPlacements, varPlacementsCount);
+    return ExpandVarString(msgParent, varText, buffer, bufferLen, GetInfoLineExpArray(isDisk), &data, TRUE, varPlacements, varPlacementsCount);
 }
 
 BOOL ValidateMakeFileList(HWND msgParent, const char* varText, int& errorPos1, int& errorPos2)
@@ -1857,10 +1908,21 @@ BOOL ValidateMakeFileList(HWND msgParent, const char* varText, int& errorPos1, i
     return ValidateVarString(msgParent, varText, errorPos1, errorPos2, MakeFileListExpArray);
 }
 
-BOOL ExpandMakeFileList(HWND msgParent, const char* varText, CPluginDataInterfaceEncapsulation* pluginData,
-                        CFileData* fData, BOOL isDir, char* buffer, int bufferLen, BOOL detectMaxVarSizes,
-                        int* maxVarSizes, int maxVarSizesCount, DWORD validFileData, const char* path,
-                        BOOL ignoreEnvVarNotFoundOrTooLong)
+BOOL ExpandMakeFileList(
+    HWND msgParent,
+    const char* varText,
+    CPluginDataInterfaceEncapsulation* pluginData,
+    CFileData* fData,
+    BOOL isDir,
+    char* buffer,
+    int bufferLen,
+    BOOL detectMaxVarSizes,
+    int* maxVarSizes,
+    int maxVarSizesCount,
+    DWORD validFileData,
+    const char* path,
+    BOOL ignoreEnvVarNotFoundOrTooLong
+)
 {
     CALL_STACK_MESSAGE1("ExpandMakeFileList()");
     CFileDataExpData data;
@@ -1869,9 +1931,20 @@ BOOL ExpandMakeFileList(HWND msgParent, const char* varText, CPluginDataInterfac
     data.IsDir = isDir;
     data.ValidFileData = validFileData;
     strcpy(data.Path, path);
-    return ExpandVarString(msgParent, varText, buffer, bufferLen, MakeFileListExpArray, &data,
-                           ignoreEnvVarNotFoundOrTooLong, NULL, NULL, detectMaxVarSizes,
-                           maxVarSizes, maxVarSizesCount);
+    return ExpandVarString(
+        msgParent,
+        varText,
+        buffer,
+        bufferLen,
+        MakeFileListExpArray,
+        &data,
+        ignoreEnvVarNotFoundOrTooLong,
+        NULL,
+        NULL,
+        detectMaxVarSizes,
+        maxVarSizes,
+        maxVarSizesCount
+    );
 }
 
 BOOL RemoveDoubleBackslahesFromPath(char* text)
@@ -1898,16 +1971,14 @@ BOOL RemoveDoubleBackslahesFromPath(char* text)
     return TRUE;
 }
 
-BOOL ExpandInitDir(HWND msgParent, const char* name, const char* dosName, const char* varText,
-                   char* buffer, int bufferLen, BOOL ignoreEnvVarNotFoundOrTooLong)
+BOOL ExpandInitDir(HWND msgParent, const char* name, const char* dosName, const char* varText, char* buffer, int bufferLen, BOOL ignoreEnvVarNotFoundOrTooLong)
 {
     CALL_STACK_MESSAGE4("ExpandInitDir(, %s, %s, %s, ,)", name, dosName, varText);
     CExecuteExpData data;
     data.Name = name;
     data.DosName = dosName;
     data.FileNameUsed = NULL;
-    if (ExpandVarString(msgParent, varText, buffer, bufferLen, InitDirExpArray,
-                        &data, ignoreEnvVarNotFoundOrTooLong))
+    if (ExpandVarString(msgParent, varText, buffer, bufferLen, InitDirExpArray, &data, ignoreEnvVarNotFoundOrTooLong))
     {
         // promenne $() z Initial Directory sice normalne nejsou zakonceny zpetnym lomitkem,
         // ale pokud vedou do rootu, pak jsou; potom se cesta "$(SalDir)\Editor" prevede na
@@ -1919,8 +1990,7 @@ BOOL ExpandInitDir(HWND msgParent, const char* name, const char* dosName, const 
         return FALSE;
 }
 
-BOOL ExpandCommand(HWND msgParent, const char* varText, char* buffer, int bufferLen,
-                   BOOL ignoreEnvVarNotFoundOrTooLong)
+BOOL ExpandCommand(HWND msgParent, const char* varText, char* buffer, int bufferLen, BOOL ignoreEnvVarNotFoundOrTooLong)
 {
     CALL_STACK_MESSAGE2("ExpandCommand(, %s, , ,)", varText);
     CExecuteExpData data;
@@ -1928,8 +1998,7 @@ BOOL ExpandCommand(HWND msgParent, const char* varText, char* buffer, int buffer
     data.DosName = NULL;
     data.FileNameUsed = NULL;
     data.UserMenuAdvancedData = NULL;
-    if (ExpandVarString(msgParent, varText, buffer, bufferLen, CommandExpArray, &data,
-                        ignoreEnvVarNotFoundOrTooLong))
+    if (ExpandVarString(msgParent, varText, buffer, bufferLen, CommandExpArray, &data, ignoreEnvVarNotFoundOrTooLong))
     {
         // promenne EXECUTE_WINDIR, EXECUTE_SYSDIR a EXECUTE_SALDIR jsou zakonceny zpetnym lomitkem
         // uzivatel doplni vlastni zpetne lomitko, takze jsou ve vysledku v ceste dve
@@ -1940,8 +2009,7 @@ BOOL ExpandCommand(HWND msgParent, const char* varText, char* buffer, int buffer
         return FALSE;
 }
 
-BOOL ExpandHotPath(HWND msgParent, const char* varText, char* buffer, int bufferLen,
-                   BOOL ignoreEnvVarNotFoundOrTooLong)
+BOOL ExpandHotPath(HWND msgParent, const char* varText, char* buffer, int bufferLen, BOOL ignoreEnvVarNotFoundOrTooLong)
 {
     CALL_STACK_MESSAGE2("ExpandHotPath(, %s, , ,)", varText);
     CExecuteExpData data;
@@ -1949,8 +2017,7 @@ BOOL ExpandHotPath(HWND msgParent, const char* varText, char* buffer, int buffer
     data.DosName = NULL;
     data.FileNameUsed = NULL;
     data.UserMenuAdvancedData = NULL;
-    if (ExpandVarString(msgParent, varText, buffer, bufferLen, HotPathExpArray, &data,
-                        ignoreEnvVarNotFoundOrTooLong))
+    if (ExpandVarString(msgParent, varText, buffer, bufferLen, HotPathExpArray, &data, ignoreEnvVarNotFoundOrTooLong))
     {
         // promenne EXECUTE_WINDIR, EXECUTE_SYSDIR a EXECUTE_SALDIR jsou zakonceny zpetnym lomitkem
         // uzivatel doplni vlastni zpetne lomitko, takze jsou ve vysledku v ceste dve
@@ -1962,8 +2029,7 @@ BOOL ExpandHotPath(HWND msgParent, const char* varText, char* buffer, int buffer
 }
 
 const CExecuteItem*
-TrackExecuteMenu(HWND hParent, int buttonResID, int editlineResID,
-                 BOOL combobox, CExecuteItem* executeItems, int filterResID)
+TrackExecuteMenu(HWND hParent, int buttonResID, int editlineResID, BOOL combobox, CExecuteItem* executeItems, int filterResID)
 {
     CALL_STACK_MESSAGE4("TrackExecuteMenu(, %d, %d, %d)", buttonResID, editlineResID, filterResID);
     HWND hButton = GetDlgItem(hParent, buttonResID);
@@ -2012,20 +2078,17 @@ TrackExecuteMenu(HWND hParent, int buttonResID, int editlineResID,
                 if (item[i].Keyword == EXECUTE_SEPARATOR)
                     InsertMenu(hSubMenu, 0xFFFFFFFF, MF_BYPOSITION | MF_SEPARATOR, 1, NULL);
                 else
-                    InsertMenu(hSubMenu, 0xFFFFFFFF, MF_BYPOSITION | MF_STRING, (UINT_PTR)i + 1,
-                               LoadStr(item[i].NameResID));
+                    InsertMenu(hSubMenu, 0xFFFFFFFF, MF_BYPOSITION | MF_STRING, (UINT_PTR)i + 1, LoadStr(item[i].NameResID));
                 i++;
             }
-            InsertMenu(hMenu, 0xFFFFFFFF, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSubMenu,
-                       LoadStr(item[subMenuIndex].NameResID));
+            InsertMenu(hMenu, 0xFFFFFFFF, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hSubMenu, LoadStr(item[subMenuIndex].NameResID));
         }
         else
         {
             if (item[i].Keyword == EXECUTE_SEPARATOR)
                 InsertMenu(hMenu, 0xFFFFFFFF, MF_BYPOSITION | MF_SEPARATOR, 1, NULL);
             else
-                InsertMenu(hMenu, 0xFFFFFFFF, MF_BYPOSITION | MF_STRING, (UINT_PTR)i + 1,
-                           LoadStr(item[i].NameResID));
+                InsertMenu(hMenu, 0xFFFFFFFF, MF_BYPOSITION | MF_STRING, (UINT_PTR)i + 1, LoadStr(item[i].NameResID));
         }
         i++;
     }
@@ -2033,8 +2096,7 @@ TrackExecuteMenu(HWND hParent, int buttonResID, int editlineResID,
     TPMPARAMS tpmPar;
     tpmPar.cbSize = sizeof(tpmPar);
     tpmPar.rcExclude = r;
-    DWORD cmd = TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON,
-                                 p.x, p.y, hParent, &tpmPar);
+    DWORD cmd = TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, p.x, p.y, hParent, &tpmPar);
     DestroyMenu(hMenu);
     item = NULL;
     if (cmd != 0)

@@ -4,38 +4,28 @@
 #include "precomp.h"
 
 #include "cfgdlg.h"
-#include "find.h"
+#include "find.old.h"
+#include "find_data_grep.h"
+#include "find_dialog.h"
+#include "find_filesList_item.h"
+#include "find_filesList.h"
+#include "find_log_item.h"
+#include "find_options.h"
+#include "find_string_search.h"
 #include "md5.h"
 
 char* FindNamedHistory[FIND_NAMED_HISTORY_SIZE];
 char* FindLookInHistory[FIND_LOOKIN_HISTORY_SIZE];
 char* FindGrepHistory[FIND_GREP_HISTORY_SIZE];
 
-CFindOptions FindOptions;
-CFindIgnore FindIgnore;
+FindIgnore FindIgnore;
 CFindDialogQueue FindDialogQueue("Find Dialogs");
 
 HANDLE FindDialogContinue = NULL;
 
 HACCEL FindDialogAccelTable = NULL;
 
-const char* FINDOPTIONSITEM_ITEMNAME_REG = "ItemName";
-const char* FINDOPTIONSITEM_SUBDIRS_REG = "SubDirectories";
-const char* FINDOPTIONSITEM_WHOLEWORDS_REG = "WholeWords";
-const char* FINDOPTIONSITEM_CASESENSITIVE_REG = "CaseSensitive";
-const char* FINDOPTIONSITEM_HEXMODE_REG = "HexMode";
-const char* FINDOPTIONSITEM_REGULAR_REG = "RegularExpresions";
-const char* FINDOPTIONSITEM_AUTOLOAD_REG = "AutoLoad";
-const char* FINDOPTIONSITEM_NAMED_REG = "Named";
-const char* FINDOPTIONSITEM_LOOKIN_REG = "LookIn";
-const char* FINDOPTIONSITEM_GREP_REG = "Grep";
 
-const char* FINDIGNOREITEM_PATH_REG = "Path";
-const char* FINDIGNOREITEM_ENABLED_REG = "Enabled";
-
-// nasledujici promennou jsme pouzivali do Altap Salamander 2.5,
-// kde jsme presli na CFilterCriteria a jeho Save/Load
-const char* OLD_FINDOPTIONSITEM_EXCLUDEMASK_REG = "ExcludeMask";
 
 //*********************************************************************************
 //
@@ -112,389 +102,6 @@ void ReleaseFind()
         HANDLES(CloseHandle(FindDialogContinue));
 }
 
-//*********************************************************************************
-//
-// CFindOptionsItem
-//
-
-CFindOptionsItem::CFindOptionsItem()
-{
-    // Internal
-    ItemName[0] = 0;
-
-    // Find dialog
-    SubDirectories = TRUE;
-    WholeWords = FALSE;
-    CaseSensitive = FALSE;
-    HexMode = FALSE;
-    RegularExpresions = FALSE;
-
-    AutoLoad = FALSE;
-
-    NamedText[0] = 0;
-    LookInText[0] = 0;
-    GrepText[0] = 0;
-}
-
-CFindOptionsItem&
-CFindOptionsItem::operator=(const CFindOptionsItem& s)
-{
-    // Internal
-    lstrcpy(ItemName, s.ItemName);
-
-    memmove(&Criteria, &s.Criteria, sizeof(Criteria));
-
-    // Find dialog
-    SubDirectories = s.SubDirectories;
-    WholeWords = s.WholeWords;
-    CaseSensitive = s.CaseSensitive;
-    HexMode = s.HexMode;
-    RegularExpresions = s.RegularExpresions;
-
-    AutoLoad = s.AutoLoad;
-
-    lstrcpy(NamedText, s.NamedText);
-    lstrcpy(LookInText, s.LookInText);
-    lstrcpy(GrepText, s.GrepText);
-
-    return *this;
-}
-
-void CFindOptionsItem::BuildItemName()
-{
-    sprintf(ItemName, "\"%s\" %s \"%s\"",
-            NamedText, LoadStr(IDS_FF_IN), LookInText);
-}
-
-BOOL CFindOptionsItem::Save(HKEY hKey)
-{
-    // optimalizace na velikost v Registry: ukladame pouze "non-default hodnoty";
-    // pred ukladanim je proto treba promazat klic, do ktereho se budeme ukladat
-    CFindOptionsItem def;
-
-    if (strcmp(ItemName, def.ItemName) != 0)
-        SetValue(hKey, FINDOPTIONSITEM_ITEMNAME_REG, REG_SZ, ItemName, -1);
-    if (SubDirectories != def.SubDirectories)
-        SetValue(hKey, FINDOPTIONSITEM_SUBDIRS_REG, REG_DWORD, &SubDirectories, sizeof(DWORD));
-    if (WholeWords != def.WholeWords)
-        SetValue(hKey, FINDOPTIONSITEM_WHOLEWORDS_REG, REG_DWORD, &WholeWords, sizeof(DWORD));
-    if (CaseSensitive != def.CaseSensitive)
-        SetValue(hKey, FINDOPTIONSITEM_CASESENSITIVE_REG, REG_DWORD, &CaseSensitive, sizeof(DWORD));
-    if (HexMode != def.HexMode)
-        SetValue(hKey, FINDOPTIONSITEM_HEXMODE_REG, REG_DWORD, &HexMode, sizeof(DWORD));
-    if (RegularExpresions != def.RegularExpresions)
-        SetValue(hKey, FINDOPTIONSITEM_REGULAR_REG, REG_DWORD, &RegularExpresions, sizeof(DWORD));
-    if (AutoLoad != def.AutoLoad)
-        SetValue(hKey, FINDOPTIONSITEM_AUTOLOAD_REG, REG_DWORD, &AutoLoad, sizeof(DWORD));
-    if (strcmp(NamedText, def.NamedText) != 0)
-        SetValue(hKey, FINDOPTIONSITEM_NAMED_REG, REG_SZ, NamedText, -1);
-    if (strcmp(LookInText, def.LookInText) != 0)
-        SetValue(hKey, FINDOPTIONSITEM_LOOKIN_REG, REG_SZ, LookInText, -1);
-    if (strcmp(GrepText, def.GrepText) != 0)
-        SetValue(hKey, FINDOPTIONSITEM_GREP_REG, REG_SZ, GrepText, -1);
-
-    // advanced options
-    Criteria.Save(hKey);
-    return TRUE;
-}
-
-BOOL CFindOptionsItem::Load(HKEY hKey, DWORD cfgVersion)
-{
-    GetValue(hKey, FINDOPTIONSITEM_ITEMNAME_REG, REG_SZ, ItemName, ITEMNAME_TEXT_LEN);
-    GetValue(hKey, FINDOPTIONSITEM_SUBDIRS_REG, REG_DWORD, &SubDirectories, sizeof(DWORD));
-    GetValue(hKey, FINDOPTIONSITEM_WHOLEWORDS_REG, REG_DWORD, &WholeWords, sizeof(DWORD));
-    GetValue(hKey, FINDOPTIONSITEM_CASESENSITIVE_REG, REG_DWORD, &CaseSensitive, sizeof(DWORD));
-    GetValue(hKey, FINDOPTIONSITEM_HEXMODE_REG, REG_DWORD, &HexMode, sizeof(DWORD));
-    GetValue(hKey, FINDOPTIONSITEM_REGULAR_REG, REG_DWORD, &RegularExpresions, sizeof(DWORD));
-    GetValue(hKey, FINDOPTIONSITEM_AUTOLOAD_REG, REG_DWORD, &AutoLoad, sizeof(DWORD));
-    GetValue(hKey, FINDOPTIONSITEM_NAMED_REG, REG_SZ, NamedText, NAMED_TEXT_LEN);
-    GetValue(hKey, FINDOPTIONSITEM_LOOKIN_REG, REG_SZ, LookInText, LOOKIN_TEXT_LEN);
-    GetValue(hKey, FINDOPTIONSITEM_GREP_REG, REG_SZ, GrepText, GREP_TEXT_LEN);
-
-    if (cfgVersion <= 13)
-    {
-        // konverze starych hodnot
-
-        // exclude mask
-        BOOL excludeMask = FALSE;
-        GetValue(hKey, OLD_FINDOPTIONSITEM_EXCLUDEMASK_REG, REG_DWORD, &excludeMask, sizeof(DWORD));
-        if (excludeMask)
-        {
-            memmove(NamedText + 1, NamedText, NAMED_TEXT_LEN - 1);
-            NamedText[0] = '|';
-        }
-
-        Criteria.LoadOld(hKey);
-    }
-    else
-        Criteria.Load(hKey);
-
-    return TRUE;
-}
-
-//*********************************************************************************
-//
-// CFindOptions
-//
-
-CFindOptions::CFindOptions()
-    : Items(20, 10)
-{
-}
-
-BOOL CFindOptions::Save(HKEY hKey)
-{
-    ClearKey(hKey);
-
-    HKEY subKey;
-    char buf[30];
-    int i;
-    for (i = 0; i < Items.Count; i++)
-    {
-        itoa(i + 1, buf, 10);
-        if (CreateKey(hKey, buf, subKey))
-        {
-            Items[i]->Save(subKey);
-            CloseKey(subKey);
-        }
-        else
-            break;
-    }
-    return TRUE;
-}
-
-BOOL CFindOptions::Load(HKEY hKey, DWORD cfgVersion)
-{
-    HKEY subKey;
-    char buf[30];
-    int i = 1;
-    strcpy(buf, "1");
-    Items.DestroyMembers();
-    while (OpenKey(hKey, buf, subKey))
-    {
-        CFindOptionsItem* item = new CFindOptionsItem();
-        if (item == NULL)
-        {
-            TRACE_E(LOW_MEMORY);
-            break;
-        }
-        item->Load(subKey, cfgVersion);
-        Items.Add(item);
-        if (!Items.IsGood())
-        {
-            Items.ResetState();
-            delete item;
-            break;
-        }
-        itoa(++i, buf, 10);
-        CloseKey(subKey);
-    }
-
-    return TRUE;
-}
-
-BOOL CFindOptions::Load(CFindOptions& source)
-{
-    CFindOptionsItem* item;
-    Items.DestroyMembers();
-    int i;
-    for (i = 0; i < source.Items.Count; i++)
-    {
-        item = new CFindOptionsItem();
-        if (item == NULL)
-        {
-            TRACE_E(LOW_MEMORY);
-            return FALSE;
-        }
-        *item = *source.Items[i];
-        Items.Add(item);
-        if (!Items.IsGood())
-        {
-            delete item;
-            Items.ResetState();
-            return FALSE;
-        }
-    }
-    return TRUE;
-}
-
-BOOL CFindOptions::Add(CFindOptionsItem* item)
-{
-    Items.Add(item);
-    if (!Items.IsGood())
-    {
-        Items.ResetState();
-        return FALSE;
-    }
-    return TRUE;
-}
-
-//*********************************************************************************
-//
-// CFindIgnoreItem
-//
-
-CFindIgnoreItem::CFindIgnoreItem()
-{
-    Enabled = TRUE;
-    Path = NULL;
-    Type = fiitUnknow;
-}
-
-CFindIgnoreItem::~CFindIgnoreItem()
-{
-    if (Path != NULL)
-        free(Path);
-}
-
-//*********************************************************************************
-//
-// CFindIgnore
-//
-
-CFindIgnore::CFindIgnore()
-    : Items(5, 5)
-{
-    Reset();
-}
-
-void CFindIgnore::Reset()
-{
-    Items.DestroyMembers();
-
-    Add(TRUE, "\\System Volume Information");
-    Add(FALSE, "Local Settings\\Temporary Internet Files");
-}
-
-BOOL CFindIgnore::Save(HKEY hKey)
-{
-    ClearKey(hKey);
-
-    HKEY subKey;
-    char buf[30];
-    int i;
-    for (i = 0; i < Items.Count; i++)
-    {
-        itoa(i + 1, buf, 10);
-        if (CreateKey(hKey, buf, subKey))
-        {
-            SetValue(subKey, FINDIGNOREITEM_PATH_REG, REG_SZ, Items[i]->Path, -1);
-            if (!Items[i]->Enabled) // ukladame pouze je-li FALSE
-                SetValue(subKey, FINDIGNOREITEM_ENABLED_REG, REG_DWORD, &Items[i]->Enabled, sizeof(DWORD));
-            CloseKey(subKey);
-        }
-        else
-            break;
-    }
-    return TRUE;
-}
-
-BOOL CFindIgnore::Load(HKEY hKey, DWORD cfgVersion)
-{
-    HKEY subKey;
-    char buf[30];
-    int i = 1;
-    strcpy(buf, "1");
-    Items.DestroyMembers();
-    while (OpenKey(hKey, buf, subKey))
-    {
-        CFindIgnoreItem* item = new CFindIgnoreItem;
-        if (item == NULL)
-        {
-            TRACE_E(LOW_MEMORY);
-            break;
-        }
-        char path[MAX_PATH];
-        if (!GetValue(subKey, FINDIGNOREITEM_PATH_REG, REG_SZ, path, MAX_PATH))
-            path[0] = 0;
-        item->Path = DupStr(path);
-        if (!GetValue(subKey, FINDIGNOREITEM_ENABLED_REG, REG_DWORD, &item->Enabled, sizeof(DWORD)))
-            item->Enabled = TRUE; // ulozeno pouze je-li FALSE
-        if (Configuration.ConfigVersion < 32)
-        {
-            // uzivatele byli zmateni, ze jim neprohledavame tento adresar
-            // takze ho sice nechame v seznamu, ale vypneme checkbox
-            // kdo chce, muze si ho zapnout
-            if (strcmp(item->Path, "Local Settings\\Temporary Internet Files") == 0)
-                item->Enabled = FALSE;
-        }
-        Items.Add(item);
-        if (!Items.IsGood())
-        {
-            Items.ResetState();
-            delete item;
-            break;
-        }
-        itoa(++i, buf, 10);
-        CloseKey(subKey);
-    }
-
-    return TRUE;
-}
-
-BOOL CFindIgnore::Load(CFindIgnore* source)
-{
-    Items.DestroyMembers();
-    int i;
-    for (i = 0; i < source->Items.Count; i++)
-    {
-        CFindIgnoreItem* item = source->At(i);
-        if (!Add(item->Enabled, item->Path))
-            return FALSE;
-    }
-    return TRUE;
-}
-
-BOOL CFindIgnore::Prepare(CFindIgnore* source)
-{
-    Items.DestroyMembers();
-    int i;
-    for (i = 0; i < source->Items.Count; i++)
-    {
-        CFindIgnoreItem* item = source->At(i);
-        if (item->Enabled) // zajimaji nas pouze enabled polozky
-        {
-            const char* path = item->Path;
-            while (*path == ' ')
-                path++;
-            CFindIgnoreItemType type = fiitRelative;
-            if (path[0] == '\\' && path[1] != '\\')
-                type = fiitRooted;
-            else if ((path[0] == '\\' && path[1] == '\\') ||
-                     LowerCase[path[0]] >= 'a' && LowerCase[path[0]] <= 'z' && path[1] == ':')
-                type = fiitFull;
-
-            char buff[3 * MAX_PATH];
-            if (strlen(path) >= 2 * MAX_PATH)
-            {
-                TRACE_E("CFindIgnore::Prepare() Path too long!");
-                return FALSE;
-            }
-            if (type == fiitFull)
-            {
-                strcpy(buff, path);
-            }
-            else
-            {
-                if (path[0] == '\\')
-                    strcpy(buff, path);
-                else
-                {
-                    buff[0] = '\\';
-                    strcpy(buff + 1, path);
-                }
-            }
-            if (buff[strlen(buff) - 1] != '\\')
-                strcat(buff, "\\");
-            if (!Add(TRUE, buff))
-                return FALSE;
-            item = Items[Items.Count - 1];
-            item->Type = type;
-            item->Len = (int)strlen(buff);
-        }
-    }
-    return TRUE;
-}
 
 const char* SkipRoot(const char* path)
 {
@@ -515,151 +122,12 @@ const char* SkipRoot(const char* path)
     }
 }
 
-BOOL CFindIgnore::Contains(const char* path, int startPathLen)
-{
-    // plna cesta
-    int i;
-    for (i = 0; i < Items.Count; i++)
-    {
-        // startPathLen - delka cesty zadane ve Find okne (root hledani), ignoruji se jen jeho
-        //                podcesty, viz https://forum.altap.cz/viewtopic.php?f=7&t=7434
-        CFindIgnoreItem* item = Items[i];
-        switch (item->Type)
-        {
-        case fiitFull:
-        {
-            if (item->Len > startPathLen && StrNICmp(path, item->Path, item->Len) == 0)
-                return TRUE;
-            break;
-        }
-
-        case fiitRooted:
-        {
-            const char* noRoot = SkipRoot(path);
-            if ((noRoot - path) + item->Len > startPathLen && StrNICmp(noRoot, item->Path, item->Len) == 0)
-                return TRUE;
-            break;
-        }
-
-        case fiitRelative:
-        {
-            const char* m = path;
-            while (m != NULL)
-            {
-                m = StrIStr(m, item->Path);
-                if (m != NULL) // nalezeno
-                {
-                    if ((m - path) + item->Len > startPathLen) // je to podcesta = ignorovat
-                        return TRUE;
-                    m++; // jdeme hledat dalsi vyskyt, treba uz bude v podceste
-                }
-            }
-            break;
-        }
-        }
-    }
-    return FALSE;
-}
-
-BOOL CFindIgnore::Move(int srcIndex, int dstIndex)
-{
-    CFindIgnoreItem* tmp = Items[srcIndex];
-    if (srcIndex < dstIndex)
-    {
-        int i;
-        for (i = srcIndex; i < dstIndex; i++)
-            Items[i] = Items[i + 1];
-    }
-    else
-    {
-        int i;
-        for (i = srcIndex; i > dstIndex; i--)
-            Items[i] = Items[i - 1];
-    }
-    Items[dstIndex] = tmp;
-    return TRUE;
-}
-
-BOOL CFindIgnore::Add(BOOL enabled, const char* path)
-{
-    CFindIgnoreItem* item = new CFindIgnoreItem;
-    if (item == NULL)
-    {
-        TRACE_E(LOW_MEMORY);
-        return FALSE;
-    }
-    item->Enabled = enabled;
-    item->Path = DupStr(path);
-    if (item->Path == NULL)
-    {
-        TRACE_E(LOW_MEMORY);
-        delete item;
-        return FALSE;
-    }
-    Items.Add(item);
-    if (!Items.IsGood())
-    {
-        Items.ResetState();
-        delete item;
-        return FALSE;
-    }
-    return TRUE;
-}
-
-BOOL CFindIgnore::AddUnique(BOOL enabled, const char* path)
-{
-    int len = (int)strlen(path);
-    if (len < 1)
-        return FALSE;
-    if (path[len - 1] == '\\') // budeme porovnavat bez koncovych lomitek
-        len--;
-    int i;
-    for (i = 0; i < Items.Count; i++)
-    {
-        CFindIgnoreItem* item = Items[i];
-        int itemLen = (int)strlen(item->Path);
-        if (itemLen < 1)
-            continue;
-        if (item->Path[itemLen - 1] == '\\') // budeme porovnavat bez koncovych lomitek
-            itemLen--;
-        if (len != itemLen)
-            continue;
-        if (StrNICmp(path, item->Path, len) == 0)
-        {
-            item->Enabled = TRUE; // v kazdem pripade polozku povolime
-            return TRUE;
-        }
-    }
-    // nenasli jsme -- pridame
-    return Add(enabled, path);
-}
-
-BOOL CFindIgnore::Set(int index, BOOL enabled, const char* path)
-{
-    if (index < 0 || index >= Items.Count)
-    {
-        TRACE_E("Index is out of range");
-        return FALSE;
-    }
-    char* p = DupStr(path);
-    if (p == NULL)
-    {
-        TRACE_E(LOW_MEMORY);
-        return FALSE;
-    }
-    CFindIgnoreItem* item = Items[index];
-    if (item->Path != NULL)
-        free(item->Path);
-    item->Path = p;
-    item->Enabled = enabled;
-    return TRUE;
-}
 
 //*********************************************************************************
 //
 // CDuplicateCandidates
 //
-// Drzak CFoundFilesData pri hledani duplicitnich souboru.
+// Drzak Find_FileList_Item pri hledani duplicitnich souboru.
 // 1) V prvni fazi se do objektu CDuplicateCandidates pridaji metodou Add
 //    vsechny soubory odpovidajici kriteriim Findu.
 // 2) Zavola se metoda Examine(), ktera pole seradi podle kriterii
@@ -671,21 +139,21 @@ BOOL CFindIgnore::Set(int index, BOOL enabled, const char* path)
 //    ve vysledkovem okne odlisit.
 //
 
-class CDuplicateCandidates : public TIndirectArray<CFoundFilesData>
+class CDuplicateCandidates : public TIndirectArray<Find_FileList_Item>
 {
 public:
-    CDuplicateCandidates() : TIndirectArray<CFoundFilesData>(2000, 4000) {}
+    CDuplicateCandidates() : TIndirectArray<Find_FileList_Item>(2000, 4000) {}
 
     // - [nacteni/vypocet MD5 digestu]
     // - vyrazeni single souboru
     // - nastaveni promenne Group
     // - nastaveni promenne Different
-    void Examine(CGrepData* data);
+    void Examine(Find_Data_Grep* data);
 
 protected:
     // porovna dva zaznamy podle kriterii byName, bySize a byMD5
     // byPath je kriterium s nejnnizsi prioritou, slouzi pouze pro prehledny vystup
-    int CompareFunc(CFoundFilesData* f1, CFoundFilesData* f2, BOOL byName, BOOL bySize, BOOL byMD5, BOOL byPath);
+    int CompareFunc(Find_FileList_Item* f1, Find_FileList_Item* f2, BOOL byName, BOOL bySize, BOOL byMD5, BOOL byPath);
 
     // seradi drzene soubory podle kriterii byName, bySize a byMD5
     void QuickSort(int left, int right, BOOL byName, BOOL bySize, BOOL byMD5);
@@ -711,11 +179,11 @@ protected:
     // metoda vraci TRUE, pokud se podarilo nacist MD5; na ukazatel (BYTE*)data->Group se zapise MD5 digest
     // metoda vraci FALSE pri chybe cteni nebo pri preruseni operace uzivatelem (pak je nastavena
     // promenna data->StopSearch na TRUE
-    BOOL GetMD5Digest(CGrepData* data, CFoundFilesData* file,
+    BOOL GetMD5Digest(Find_Data_Grep* data, Find_FileList_Item* file,
                       int* progress, CQuadWord* readSize, const CQuadWord* totalSize);
 };
 
-int CDuplicateCandidates::CompareFunc(CFoundFilesData* f1, CFoundFilesData* f2,
+int CDuplicateCandidates::CompareFunc(Find_FileList_Item* f1, Find_FileList_Item* f2,
                                       BOOL byName, BOOL bySize, BOOL byMD5, BOOL byPath)
 {
     int res;
@@ -759,7 +227,7 @@ void CDuplicateCandidates::QuickSort(int left, int right, BOOL byName, BOOL bySi
 LABEL_QuickSort:
 
     int i = left, j = right;
-    CFoundFilesData* pivot = At((i + j) / 2);
+    Find_FileList_Item* pivot = At((i + j) / 2);
 
     do
     {
@@ -770,7 +238,7 @@ LABEL_QuickSort:
 
         if (i <= j)
         {
-            CFoundFilesData* swap = At(i);
+            Find_FileList_Item* swap = At(i);
             At(i) = At(j);
             At(j) = swap;
             i++;
@@ -817,15 +285,14 @@ LABEL_QuickSort:
 
 #define DUPLICATES_BUFFER_SIZE 16384 // velikost bufferu pro vypocet MD5
 
-BOOL CDuplicateCandidates::GetMD5Digest(CGrepData* data, CFoundFilesData* file,
-                                        int* progress, CQuadWord* readSize, const CQuadWord* totalSize)
+BOOL CDuplicateCandidates::GetMD5Digest(Find_Data_Grep* data, Find_FileList_Item* file, int* progress, CQuadWord* readSize, const CQuadWord* totalSize)
 {
     // sestavime plnou cestu k souboru
     char fullPath[MAX_PATH];
     lstrcpyn(fullPath, file->Path, MAX_PATH);
     SalPathAppend(fullPath, file->Name, MAX_PATH);
 
-    data->SearchingText->Set(fullPath); // nastavime aktualni soubor
+    data->SearchingText->String_Set( fullPath ); // nastavime aktualni soubor
 
     // otevreme soubor pro cteni a sekvencni pristup
     HANDLE hFile = HANDLES_Q(CreateFile(fullPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -846,10 +313,7 @@ BOOL CDuplicateCandidates::GetMD5Digest(CGrepData* data, CFoundFilesData* file,
 
                 char buf[MAX_PATH + 100];
                 sprintf(buf, LoadStr(IDS_ERROR_READING_FILE2), GetErrorText(err));
-                FIND_LOG_ITEM log;
-                log.Flags = FLI_ERROR;
-                log.Text = buf;
-                log.Path = fullPath;
+                Find_Log_Item_VM   log( Find_Log_Item::Flags::type_error, fullPath, buf );
                 SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
 
                 return FALSE;
@@ -876,7 +340,7 @@ BOOL CDuplicateCandidates::GetMD5Digest(CGrepData* data, CFoundFilesData* file,
                     *progress = newProgress;
                     buff[0] = (BYTE)newProgress; // misto retezce predame primo hodnotu
                     buff[1] = 0;
-                    data->SearchingText2->Set(buff); // nastavime total
+                    data->SearchingText2->String_Set(buff); // nastavime total
                 }
             }
 
@@ -898,10 +362,7 @@ BOOL CDuplicateCandidates::GetMD5Digest(CGrepData* data, CFoundFilesData* file,
 
         char buf[MAX_PATH + 100];
         sprintf(buf, LoadStr(IDS_ERROR_OPENING_FILE2), GetErrorText(err));
-        FIND_LOG_ITEM log;
-        log.Flags = FLI_ERROR;
-        log.Text = buf;
-        log.Path = fullPath;
+        Find_Log_Item_VM   log( Find_Log_Item::Flags::type_error, fullPath, buf );
         SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
 
         return FALSE;
@@ -913,7 +374,7 @@ void CDuplicateCandidates::RemoveSingleFiles(BOOL byName, BOOL bySize, BOOL byMD
     if (Count == 0)
         return;
 
-    CFoundFilesData* lastData = Count > 0 ? At(Count - 1) : NULL;
+    Find_FileList_Item* lastData = Count > 0 ? At(Count - 1) : NULL;
     int lastDataIndex = Count - 1;
     BOOL lastIsSingle = TRUE;
     int i;
@@ -947,7 +408,7 @@ void CDuplicateCandidates::SetDifferentFlag(BOOL byName, BOOL bySize, BOOL byMD5
     if (Count == 0)
         return;
 
-    CFoundFilesData* lastData = NULL;
+    Find_FileList_Item* lastData = NULL;
     int different = 0;
     if (Count > 0)
     {
@@ -957,7 +418,7 @@ void CDuplicateCandidates::SetDifferentFlag(BOOL byName, BOOL bySize, BOOL byMD5
     int i;
     for (i = 1; i < Count; i++)
     {
-        CFoundFilesData* data = At(i);
+        Find_FileList_Item* data = At(i);
         if (CompareFunc(data, lastData, byName, bySize, byMD5, FALSE) == 0)
         {
             data->Different = different;
@@ -978,7 +439,7 @@ void CDuplicateCandidates::SetGroupByDifferentFlag()
     if (Count == 0)
         return;
 
-    CFoundFilesData* lastData = NULL;
+    Find_FileList_Item* lastData = NULL;
     DWORD custom = 0;
     if (Count > 0)
     {
@@ -988,7 +449,7 @@ void CDuplicateCandidates::SetGroupByDifferentFlag()
     int i;
     for (i = 1; i < Count; i++)
     {
-        CFoundFilesData* data = At(i);
+        Find_FileList_Item* data = At(i);
         if (data->Different == lastData->Different)
         {
             data->Group = custom;
@@ -1002,7 +463,7 @@ void CDuplicateCandidates::SetGroupByDifferentFlag()
     }
 }
 
-void CDuplicateCandidates::Examine(CGrepData* data)
+void CDuplicateCandidates::Examine(Find_Data_Grep* data)
 {
     if (Count == 0)
         return;
@@ -1015,7 +476,7 @@ void CDuplicateCandidates::Examine(CGrepData* data)
     BOOL byContent = bySize && (data->FindDupFlags & FIND_DUPLICATES_CONTENT) != 0;
 
     // dohledali jsme, pripravujeme vysledky (muze jeste prijit hledani MD5)
-    data->SearchingText->Set(LoadStr(IDS_FIND_DUPS_RESULTS));
+    data->SearchingText->String_Set(LoadStr(IDS_FIND_DUPS_RESULTS));
 
     // seradime je podle zvolenych kriterii
     QuickSort(0, Count - 1, byName, bySize, FALSE);
@@ -1034,7 +495,7 @@ void CDuplicateCandidates::Examine(CGrepData* data)
         int i;
         for (i = 0; i < Count; i++)
         {
-            CFoundFilesData* file = At(i);
+            Find_FileList_Item* file = At(i);
             if (file->Size > CQuadWord(0, 0))
                 count++;
         }
@@ -1053,7 +514,7 @@ void CDuplicateCandidates::Examine(CGrepData* data)
             CMD5Digest* iterator = digest;
             for (i = 0; i < Count; i++)
             {
-                CFoundFilesData* file = At(i);
+                Find_FileList_Item* file = At(i);
                 if (file->Size > CQuadWord(0, 0))
                 {
                     file->Group = (DWORD_PTR)iterator;
@@ -1073,7 +534,7 @@ void CDuplicateCandidates::Examine(CGrepData* data)
             int progress = -1;
             for (i = Count - 1; i >= 0; i--)
             {
-                CFoundFilesData* file = At(i);
+                Find_FileList_Item* file = At(i);
                 if (file->Size > CQuadWord(0, 0))
                 {
                     if (!GetMD5Digest(data, file, &progress, &readSize, &totalSize))
@@ -1095,7 +556,7 @@ void CDuplicateCandidates::Examine(CGrepData* data)
             }
 
             // dohledali jsme, pripravujeme vysledky
-            data->SearchingText->Set(LoadStr(IDS_FIND_DUPS_RESULTS));
+            data->SearchingText->String_Set(LoadStr(IDS_FIND_DUPS_RESULTS));
 
             // znovu seradime soubory
             if (Count > 0)
@@ -1120,7 +581,7 @@ void CDuplicateCandidates::Examine(CGrepData* data)
     int i;
     for (i = 0; i < Count; i++)
     {
-        data->FoundFilesListView->Add(At(i));
+        data->FoundFilesListView->Items_Add(At(i));
         if (!data->FoundFilesListView->IsGood())
         {
             TRACE_E(LOW_MEMORY);
@@ -1138,17 +599,6 @@ void CDuplicateCandidates::Examine(CGrepData* data)
     return;
 }
 
-//*********************************************************************************
-//
-// CSearchForData
-//
-
-void CSearchForData::Set(const char* dir, const char* masksGroup, BOOL includeSubDirs)
-{
-    strcpy(Dir, dir);
-    MasksGroup.SetMasksString(masksGroup);
-    IncludeSubDirs = includeSubDirs;
-}
 
 //*********************************************************************************
 //
@@ -1157,7 +607,7 @@ void CSearchForData::Set(const char* dir, const char* masksGroup, BOOL includeSu
 
 #define SEARCH_SIZE 10000 // musi byt > nez max. delka retezce
 
-int SearchForward(CGrepData* data, char* txt, int size, int off)
+int SearchForward(Find_Data_Grep* data, char* txt, int size, int off)
 {
     if (size < 0)
         return -1;
@@ -1184,7 +634,7 @@ int SearchForward(CGrepData* data, char* txt, int size, int off)
 // ****************************************************************************
 
 BOOL TestFileContentAux(BOOL& ok, CQuadWord& fileOffset, const CQuadWord& totalSize,
-                        DWORD viewSize, const char* path, char* txt, CGrepData* data)
+                        DWORD viewSize, const char* path, char* txt, Find_Data_Grep* data)
 {
     __try
     {
@@ -1283,10 +733,8 @@ BOOL TestFileContentAux(BOOL& ok, CQuadWord& fileOffset, const CQuadWord& totalS
                 }
                 else
                 {
-                    FIND_LOG_ITEM log;
-                    log.Flags = FLI_ERROR;
-                    log.Text = data->RegExp.GetLastErrorText();
-                    log.Path = NULL;
+                    Find_Log_Item_VM   log( Find_Log_Item::Flags::type_error, NULL, data->RegExp.GetLastErrorText() );
+
                     SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
                     return FALSE; // dal soubor neprohledavej
                 }
@@ -1344,17 +792,15 @@ BOOL TestFileContentAux(BOOL& ok, CQuadWord& fileOffset, const CQuadWord& totalS
     __except (HandleFileException(GetExceptionInformation(), txt, viewSize))
     {
         // chyba v souboru
-        FIND_LOG_ITEM log;
-        log.Flags = FLI_ERROR;
-        log.Text = LoadStr(IDS_FILEREADERROR2);
-        log.Path = path;
+        Find_Log_Item_VM   log( Find_Log_Item::Flags::type_error, path, LoadStr(IDS_FILEREADERROR2) );
+
         SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
         ok = FALSE;   // nenasel
         return FALSE; // nepokracovat v hledani
     }
 }
 
-BOOL TestFileContent(DWORD sizeLow, DWORD sizeHigh, const char* path, CGrepData* data, BOOL isLink)
+BOOL TestFileContent(DWORD sizeLow, DWORD sizeHigh, const char* path, Find_Data_Grep* data, BOOL isLink)
 {
     CQuadWord totalSize(sizeLow, sizeHigh);
     CQuadWord fileOffset(0, 0);
@@ -1364,7 +810,7 @@ BOOL TestFileContent(DWORD sizeLow, DWORD sizeHigh, const char* path, CGrepData*
     if (totalSize > CQuadWord(0, 0) || isLink)
     {
         DWORD err = ERROR_SUCCESS;
-        data->SearchingText->Set(path); // nastavime aktualni soubor
+        data->SearchingText->String_Set(path); // nastavime aktualni soubor
         HANDLE hFile = HANDLES_Q(CreateFile(path, GENERIC_READ,
                                             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                                             OPEN_EXISTING,
@@ -1426,12 +872,10 @@ BOOL TestFileContent(DWORD sizeLow, DWORD sizeHigh, const char* path, CGrepData*
         if (err != ERROR_SUCCESS || getLinkFileSizeErr)
         {
             char buf[MAX_PATH + 100];
-            sprintf(buf, LoadStr(getLinkFileSizeErr ? IDS_GETLINKTGTFILESIZEERROR : IDS_ERROR_OPENING_FILE2),
-                    GetErrorText(err));
-            FIND_LOG_ITEM log;
-            log.Flags = FLI_ERROR;
-            log.Text = buf;
-            log.Path = path;
+            sprintf(buf, LoadStr(getLinkFileSizeErr ? IDS_GETLINKTGTFILESIZEERROR : IDS_ERROR_OPENING_FILE2), GetErrorText(err));
+
+            Find_Log_Item_VM   log( Find_Log_Item::Flags::type_error, path, buf );
+
             SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
         }
     }
@@ -1440,16 +884,16 @@ BOOL TestFileContent(DWORD sizeLow, DWORD sizeHigh, const char* path, CGrepData*
 }
 
 BOOL AddFoundItem(const char* path, const char* name, DWORD sizeLow, DWORD sizeHigh,
-                  DWORD attr, const FILETIME* lastWrite, BOOL isDir, CGrepData* data,
+                  DWORD attr, const FILETIME* lastWrite, BOOL isDir, Find_Data_Grep* data,
                   CDuplicateCandidates* duplicateCandidates)
 {
     if (duplicateCandidates != NULL && isDir) // adresare nas pri hledani duplicit nezajimaji
         return TRUE;
 
-    CFoundFilesData* foundData = new CFoundFilesData;
+    Find_FileList_Item* foundData = new Find_FileList_Item;
     if (foundData != NULL)
     {
-        BOOL good = foundData->Set(path, name,
+        BOOL good = foundData->Text_Set(path, name,
                                    CQuadWord(sizeLow, sizeHigh),
                                    attr, lastWrite, isDir);
         if (good)
@@ -1457,7 +901,7 @@ BOOL AddFoundItem(const char* path, const char* name, DWORD sizeLow, DWORD sizeH
             if (duplicateCandidates == NULL)
             {
                 // duplicateCandidates == NULL, pridavame polozku do data->FoundFilesListView
-                data->FoundFilesListView->Add(foundData);
+                data->FoundFilesListView->Items_Add(foundData);
                 if (!data->FoundFilesListView->IsGood())
                 {
                     data->FoundFilesListView->ResetState();
@@ -1469,7 +913,7 @@ BOOL AddFoundItem(const char* path, const char* name, DWORD sizeLow, DWORD sizeH
                     // po kazdych 100 pridanych polozkach pozadam listview o prekresleni
                     // take po uplynuti 0.5 vteriny o posledniho prekresleni
                     // zaroven volame update v pripade grepovani pro kazdou polozku
-                    if (data->FoundFilesListView->GetCount() >= data->FoundVisibleCount + 100 ||
+                    if (data->FoundFilesListView->Items_Count() >= data->FoundVisibleCount + 100 ||
                         GetTickCount() - data->FoundVisibleTick >= 500
                         /* || data->Grep*/) // po pul vterine update staci bohate i pro grepovani
                     {
@@ -1499,10 +943,7 @@ BOOL AddFoundItem(const char* path, const char* name, DWORD sizeLow, DWORD sizeH
     }
     if (foundData == NULL)
     {
-        FIND_LOG_ITEM log;
-        log.Flags = FLI_ERROR;
-        log.Text = LoadStr(IDS_CANTSHOWRESULTS);
-        log.Path = NULL;
+        Find_Log_Item_VM   log( Find_Log_Item::Flags::type_error, NULL, LoadStr(IDS_CANTSHOWRESULTS) );
         SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
 
         data->StopSearch = TRUE;
@@ -1525,20 +966,18 @@ BOOL AddFoundItem(const char* path, const char* name, DWORD sizeLow, DWORD sizeH
 // Pokud je 'duplicateCandidates' != NULL, budou se nalezene polozky
 // pridavat do tohoto pole misto do data->FoundFilesListView
 void SearchDirectory(char (&path)[MAX_PATH], char* end, int startPathLen,
-                     CMaskGroup* masksGroup, BOOL includeSubDirs, CGrepData* data,
+                     CMaskGroup* masksGroup, BOOL includeSubDirs, Find_Data_Grep* data,
                      TDirectArray<char*>* dirStack, int dirStackCount,
                      CDuplicateCandidates* duplicateCandidates,
-                     CFindIgnore* ignoreList, char (&message)[2 * MAX_PATH])
+                     FindIgnore* ignoreList, char (&message)[2 * MAX_PATH])
 {
     SLOW_CALL_STACK_MESSAGE6("SearchDirectory(%s, , %d, %s, %d, , , %d, , )", path, startPathLen,
                              masksGroup->GetMasksString(), includeSubDirs, dirStackCount);
 
     if (ignoreList != NULL && ignoreList->Contains(path, startPathLen))
     {
-        FIND_LOG_ITEM log;
-        log.Flags = FLI_INFO;
-        log.Text = LoadStr(IDS_FINDLOG_SKIP);
-        log.Path = path;
+        Find_Log_Item_VM   log( Find_Log_Item::Flags::type_info, path, LoadStr(IDS_FINDLOG_SKIP) );
+
         SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
         return;
     }
@@ -1547,10 +986,8 @@ void SearchDirectory(char (&path)[MAX_PATH], char* end, int startPathLen,
         strcpy_s(end, _countof(path) - (end - path), "*");
     else
     {
-        FIND_LOG_ITEM log;
-        log.Flags = FLI_ERROR;
-        log.Text = LoadStr(IDS_TOOLONGNAME);
-        log.Path = path;
+        Find_Log_Item_VM log( Find_Log_Item::Flags::type_error, path, LoadStr(IDS_TOOLONGNAME) );
+
         SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
         return;
     }
@@ -1563,7 +1000,7 @@ void SearchDirectory(char (&path)[MAX_PATH], char* end, int startPathLen,
             *(end - 1) = 0;
         else
             *end = 0;
-        data->SearchingText->Set(path); // nastavime aktualni cestu
+        data->SearchingText->String_Set(path); // nastavime aktualni cestu
         if (end - path > 3)
             *(end - 1) = '\\';
         else
@@ -1691,24 +1128,21 @@ void SearchDirectory(char (&path)[MAX_PATH], char* end, int startPathLen,
                     }
                     else
                     {
-                        FIND_LOG_ITEM log;
-                        log.Flags = FLI_ERROR;
-                        log.Text = LoadStr(IDS_TOOLONGNAME);
                         strcpy_s(end, _countof(path) - (end - path), file.cFileName);
-                        log.Path = path;
+
+                        Find_Log_Item_VM   log( Find_Log_Item::Flags::type_error, path, LoadStr(IDS_TOOLONGNAME) );
                         SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
                     }
                 }
             }
             else // too long file-name
             {
-                FIND_LOG_ITEM log;
-                log.Flags = FLI_ERROR;
-                log.Text = LoadStr(IDS_TOOLONGNAME);
                 *end = 0;
                 strcpy_s(message, path);
                 strcat_s(message, file.cFileName);
-                log.Path = message;
+
+                Find_Log_Item_VM   log( Find_Log_Item::Flags::type_error, message, LoadStr(IDS_TOOLONGNAME) );
+
                 SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
             }
             if (data->StopSearch)
@@ -1728,10 +1162,7 @@ void SearchDirectory(char (&path)[MAX_PATH], char* end, int startPathLen,
                 *end = 0;
 
             sprintf(message, LoadStr(IDS_DIRERRORFORMAT), GetErrorText(err));
-            FIND_LOG_ITEM log;
-            log.Flags = FLI_ERROR;
-            log.Text = message;
-            log.Path = path;
+            Find_Log_Item_VM   log( Find_Log_Item::Flags::type_error, path, message );
             SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
 
             if (end - path > 3)
@@ -1772,10 +1203,8 @@ void SearchDirectory(char (&path)[MAX_PATH], char* end, int startPathLen,
 
             sprintf(message, LoadStr(IDS_DIRERRORFORMAT), GetErrorText(err));
 
-            FIND_LOG_ITEM log;
-            log.Flags = FLI_ERROR | FLI_IGNORE;
-            log.Text = message;
-            log.Path = path;
+            Find_Log_Item_VM   log( (Find_Log_Item::Flags::Value)( Find_Log_Item::Flags::type_error | Find_Log_Item::Flags::button_ignore ), path, message );
+
             SendMessage(data->HWindow, WM_USER_ADDLOG, (WPARAM)&log, 0);
 
             if (end - path > 3)
@@ -1787,7 +1216,7 @@ void SearchDirectory(char (&path)[MAX_PATH], char* end, int startPathLen,
     *end = 0;
 }
 
-void RefineData(CMaskGroup* masksGroup, CGrepData* data)
+void RefineData(CMaskGroup* masksGroup, Find_Data_Grep* data)
 {
     int refineCount = data->FoundFilesListView->GetDataForRefineCount();
     int oldProgress = -1;
@@ -1803,12 +1232,12 @@ void RefineData(CMaskGroup* masksGroup, CGrepData* data)
             {
                 char buf[20];
                 sprintf(buf, "%d%%", progress);
-                data->SearchingText->Set(buf); // nastavime aktualni cestu
+                data->SearchingText->String_Set(buf); // nastavime aktualni cestu
                 oldProgress = progress;
             }
         }
 
-        CFoundFilesData* refineData = data->FoundFilesListView->GetDataForRefine(i);
+        Find_FileList_Item* refineData = data->FoundFilesListView->GetDataForRefine(i);
 
         // otestujeme kriteria
         BOOL ok = TRUE;
@@ -1860,7 +1289,7 @@ unsigned GrepThreadFBody(void* ptr)
     SetThreadNameInVCAndTrace("Grep");
     TRACE_I("Begin");
     //  Sleep(200);  // trochu casu pro prekresleni dialogu...
-    CGrepData* data = (CGrepData*)ptr;
+    Find_Data_Grep* data = (Find_Data_Grep*)ptr;
     data->NeedRefresh = FALSE;
     data->Criteria.PrepareForTest();
     char path[MAX_PATH];
@@ -1940,7 +1369,7 @@ unsigned GrepThreadFBody(void* ptr)
 
                 // udelame si lokalni kopii ignore listu, stejne je treba ho predkousat
                 // a jako bonus muzeme uzivatele ignore list nechat editovat v prubehu hledani
-                CFindIgnore* ignoreList = new CFindIgnore;
+                FindIgnore* ignoreList = new FindIgnore;
                 if (ignoreList == NULL)
                     TRACE_E(LOW_MEMORY); // algoritmus pobezi i bez ignore listu
                 else
@@ -2007,62 +1436,6 @@ DWORD WINAPI GrepThreadF(void* param)
     return GrepThreadFEH(param);
 }
 
-//*********************************************************************************
-//
-// CSearchingString
-//
-
-CSearchingString::CSearchingString()
-{
-    HANDLES(InitializeCriticalSection(&Section));
-    Buffer[0] = 0;
-    BaseLen = 0;
-    Dirty = FALSE;
-}
-
-CSearchingString::~CSearchingString()
-{
-    HANDLES(DeleteCriticalSection(&Section));
-}
-
-void CSearchingString::SetBase(const char* buf)
-{
-    HANDLES(EnterCriticalSection(&Section));
-    lstrcpyn(Buffer, buf, MAX_PATH + 50);
-    BaseLen = (int)strlen(Buffer);
-    HANDLES(LeaveCriticalSection(&Section));
-}
-
-void CSearchingString::Set(const char* buf)
-{
-    HANDLES(EnterCriticalSection(&Section));
-    lstrcpyn(Buffer + BaseLen, buf, MAX_PATH + 50 - BaseLen);
-    Dirty = TRUE;
-    HANDLES(LeaveCriticalSection(&Section));
-}
-
-void CSearchingString::Get(char* buf, int bufSize)
-{
-    HANDLES(EnterCriticalSection(&Section));
-    lstrcpyn(buf, Buffer, bufSize);
-    HANDLES(LeaveCriticalSection(&Section));
-}
-
-void CSearchingString::SetDirty(BOOL dirty)
-{
-    HANDLES(EnterCriticalSection(&Section));
-    Dirty = dirty;
-    HANDLES(LeaveCriticalSection(&Section));
-}
-
-BOOL CSearchingString::GetDirty()
-{
-    BOOL r;
-    HANDLES(EnterCriticalSection(&Section));
-    r = Dirty;
-    HANDLES(LeaveCriticalSection(&Section));
-    return r;
-}
 
 //*********************************************************************************
 //
@@ -2071,7 +1444,7 @@ BOOL CSearchingString::GetDirty()
 
 struct CTFDData
 {
-    CFindDialog* FindDialog;
+    Find_Dialog* FindDialog;
     BOOL Success;
 };
 
@@ -2084,7 +1457,7 @@ unsigned ThreadFindDialogMessageLoopBody(void* parameter)
         SetThreadNameInVCAndTrace("FindDialog");
         TRACE_I("Begin");
         CTFDData* data = (CTFDData*)parameter;
-        CFindDialog* findDialog = data->FindDialog;
+        Find_Dialog* findDialog = data->FindDialog;
         findDialog->SetZeroOnDestroy(&findDialog); // pri WM_DESTROY bude ukazatel vynulovan
                                                    // obrana pred pristupem na neplatny ukazatel
                                                    // z message loopy po destrukci okna
@@ -2190,10 +1563,14 @@ BOOL OpenFindDialog(HWND hCenterAgainst, const char* initPath)
 
     HCURSOR hOldCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 
-    CFindDialog* findDlg = new CFindDialog(hCenterAgainst, initPath);
-    if (findDlg != NULL && findDlg->IsGood())
+    Find_Dialog* findDlg = new Find_Dialog(hCenterAgainst, initPath);
+    if (
+        ( findDlg != NULL )
+        &&
+        findDlg->IsGood()
+    )
     {
-        CTFDData data;
+        CTFDData    data;
         data.FindDialog = findDlg;
 
         DWORD ThreadID;

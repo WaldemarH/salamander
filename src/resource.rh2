@@ -232,6 +232,8 @@
 
 #define CM_AFOCUSSHORTCUT      838
 
+#define CM_ACTIVEUNSELECTOTHERS  839
+
 #define CM_ACTIVESELECT        841
 #define CM_ACTIVESELECTALL     842
 
@@ -354,8 +356,7 @@
 #define IDB_EDTLBTB         996        // EditListBox - bitmapy pro toolbaru JRYFIXME: TOOLBARHDR_USE_SVG
 #define IDB_FILTER          997
 #define IDB_UPDOWN          999        // Menu popup/Up Down arrow
-#define IDB_ZOOM           1000        // Zoom Panel
-//#define IDB_WORKER         1001        // worker bitmap
+
 #define IDB_THROBBER       1001
 #define IDB_MENUITEMS      1003
 #define IDB_LOGO_HAND      1004
@@ -366,10 +367,18 @@
 
 #define IDB_ABOUT_GRAD     1010
 
-#define IDV_ARROW_RIGHT    1020
-#define IDV_ARROW_DOWN     1021
-#define IDV_ARROW_MORE     1030
-#define IDV_ARROW_LESS     1031
+#define IDV_ARROW_RIGHT             1020
+#define IDV_ARROW_DOWN              1021
+#define IDV_ARROW_MORE              1030
+#define IDV_ARROW_LESS              1031
+
+#define IDV_CAPTION_PANEL_FILTER                    1032
+#define IDV_CAPTION_PANEL_HISTORY                   1033
+#define IDV_CAPTION_PANEL_LOADING                   1034
+#define IDV_CAPTION_PANEL_SECURITY_LOCKED           1035
+#define IDV_CAPTION_PANEL_SECURITY_UNLOCKED         1036
+#define IDV_CAPTION_PANEL_ZOOM_IN                   1037
+#define IDV_CAPTION_PANEL_ZOOM_OUT                  1038
 
 #define CM_NEWMENU_MIN          1200     // interval vyhrazeny pro prikazy menu New
 #define CM_NEWMENU_MAX          2200

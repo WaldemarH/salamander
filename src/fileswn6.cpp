@@ -34,16 +34,16 @@ BOOL ErrGetFileSizeOfLnkTgtIgnAll = FALSE;
 
 //
 // ****************************************************************************
-// CFilesWindow
+// CPanelWindow
 //
 
 // pomocne promenne pro testy pokusu o preruseni stavby scriptu
 DWORD LastTickCount;
 
-void CFilesWindow::Activate(BOOL shares)
+void CPanelWindow::Activate(BOOL shares)
 {
     CALL_STACK_MESSAGE_NONE
-    //  TRACE_I("CFilesWindow::Activate");
+    //  TRACE_I("CPanelWindow::Activate");
     LastInactiveRefreshStart = LastInactiveRefreshEnd; // aktivaci se rusi udaje o poslednim refreshi v neaktivnim okne
     BOOL needToRefreshIcons = InactWinOptimizedReading;
     if (Is(ptDisk) || Is(ptZIPArchive)) // disky a archivy
@@ -120,7 +120,7 @@ void CFilesWindow::Activate(BOOL shares)
     }
 }
 
-BOOL CFilesWindow::MakeFileList(HANDLE hFile)
+BOOL CPanelWindow::MakeFileList(HANDLE hFile)
 {
     CALL_STACK_MESSAGE_NONE
     BOOL ret = TRUE;
@@ -132,7 +132,7 @@ BOOL CFilesWindow::MakeFileList(HANDLE hFile)
 
     int focusIndex = 0;
     int alloc;
-    int count = GetSelCount();
+    int count = GetSelectedCount();
     if (count == 0)
     {
         focusIndex = GetCaretIndex();
@@ -152,7 +152,7 @@ BOOL CFilesWindow::MakeFileList(HANDLE hFile)
     else
     {
         if (count > 0)
-            GetSelItems(count, indexes);
+            GetSelectedItems(count, indexes);
         else
             indexes[0] = focusIndex;
 
@@ -241,10 +241,10 @@ DWORD GetPathFlagsForCopyOp(const char* path, DWORD netFlag, DWORD fixedFlag)
     return 0;
 }
 
-BOOL CFilesWindow::MoveFiles(const char* source, const char* target, const char* remapNameFrom,
+BOOL CPanelWindow::MoveFiles(const char* source, const char* target, const char* remapNameFrom,
                              const char* remapNameTo)
 {
-    CALL_STACK_MESSAGE5("CFilesWindow::MoveFiles(%s, %s, %s, %s)",
+    CALL_STACK_MESSAGE5("CPanelWindow::MoveFiles(%s, %s, %s, %s)",
                         source, target, remapNameFrom, remapNameTo);
     if (!FilesActionInProgress)
     {
@@ -507,10 +507,10 @@ void AddStringToNames(TIndirectArray<char>* usedNames, const char* txt)
     }
 }
 
-BOOL CFilesWindow::BuildScriptMain2(COperations* script, BOOL copy, char* targetDir,
+BOOL CPanelWindow::BuildScriptMain2(COperations* script, BOOL copy, char* targetDir,
                                     CCopyMoveData* data)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::BuildScriptMain2(, %d, %s, )", copy, targetDir);
+    CALL_STACK_MESSAGE3("CPanelWindow::BuildScriptMain2(, %d, %s, )", copy, targetDir);
     if (!script->IsGood())
         return FALSE;
     script->CompressedSize = CQuadWord(0, 0);
@@ -999,9 +999,9 @@ BOOL CFilesWindow::BuildScriptMain2(COperations* script, BOOL copy, char* target
     return TRUE;
 }
 
-void CFilesWindow::DropCopyMove(BOOL copy, char* targetPath, CCopyMoveData* data)
+void CPanelWindow::DropCopyMove(BOOL copy, char* targetPath, CCopyMoveData* data)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::DropCopyMove(%d, %s, )", copy, targetPath);
+    CALL_STACK_MESSAGE3("CPanelWindow::DropCopyMove(%d, %s, )", copy, targetPath);
     if (!FilesActionInProgress)
     {
         FilesActionInProgress = TRUE;
@@ -1116,13 +1116,13 @@ void CFilesWindow::DropCopyMove(BOOL copy, char* targetPath, CCopyMoveData* data
     }
 }
 
-BOOL CFilesWindow::BuildScriptMain(COperations* script, CActionType type,
+BOOL CPanelWindow::BuildScriptMain(COperations* script, CActionType type,
                                    char* targetPath, char* mask, int selCount,
                                    int* selection, CFileData* oneFile,
                                    CAttrsData* attrsData, CChangeCaseData* chCaseData,
                                    BOOL onlySize, CCriteriaData* filterCriteria)
 {
-    CALL_STACK_MESSAGE5("CFilesWindow::BuildScriptMain(, %d, %s, %s, %d, , , , , ,)",
+    CALL_STACK_MESSAGE5("CPanelWindow::BuildScriptMain(, %d, %s, %s, %d, , , , , ,)",
                         type, targetPath, mask, selCount);
     // count == 0, selection == NULL => oneFile ukazuje na aktualni soubor
     // jinak selection obsahuje indexy oznacenych count polozek ve fileboxu
@@ -1498,7 +1498,7 @@ void GetADSStreamsNames(char* listBuf, int bufSize, char* fileName, BOOL isDir)
     }
 }
 
-BOOL CFilesWindow::BuildScriptDir(COperations* script, CActionType type, char* sourcePath,
+BOOL CPanelWindow::BuildScriptDir(COperations* script, CActionType type, char* sourcePath,
                                   BOOL sourcePathSupADS, char* targetPath,
                                   CTargetPathState targetPathState, BOOL targetPathSupADS,
                                   BOOL targetPathIsFAT32, char* mask, char* dirName,
@@ -1508,7 +1508,7 @@ BOOL CFilesWindow::BuildScriptDir(COperations* script, CActionType type, char* s
                                   BOOL* canDelUpperDirAfterMove, FILETIME* sourceDirTime,
                                   DWORD srcAndTgtPathsFlags)
 {
-    SLOW_CALL_STACK_MESSAGE16("CFilesWindow::BuildScriptDir(, %d, %s, %d, %s, %d, %d, %d, %s, %s, , , %s, 0x%X, , %d, %d, %d, , , , 0x%X)",
+    SLOW_CALL_STACK_MESSAGE16("CPanelWindow::BuildScriptDir(, %d, %s, %d, %s, %d, %d, %d, %s, %s, , , %s, 0x%X, , %d, %d, %d, , , , 0x%X)",
                               type, sourcePath, sourcePathSupADS, targetPath,
                               targetPathState, targetPathSupADS, targetPathIsFAT32,
                               mask, dirName, mapName, sourceDirAttr, firstLevelDir, onlySize,
@@ -2464,7 +2464,7 @@ READLINKTGTSIZE_AGAIN:
     }
 }
 
-BOOL CFilesWindow::BuildScriptFile(COperations* script, CActionType type, char* sourcePath,
+BOOL CPanelWindow::BuildScriptFile(COperations* script, CActionType type, char* sourcePath,
                                    BOOL sourcePathSupADS, char* targetPath,
                                    CTargetPathState targetPathState, BOOL targetPathSupADS,
                                    BOOL targetPathIsFAT32, char* mask, char* fileName,
@@ -2473,7 +2473,7 @@ BOOL CFilesWindow::BuildScriptFile(COperations* script, CActionType type, char* 
                                    CChangeCaseData* chCaseData, BOOL onlySize,
                                    FILETIME* fileLastWriteTime, DWORD srcAndTgtPathsFlags)
 {
-    SLOW_CALL_STACK_MESSAGE14("CFilesWindow::BuildScriptFile(, %d, %s, %d, %s, %d, %d, %d, %s, %s, , , , %s, 0x%X, , %d, , 0x%X)",
+    SLOW_CALL_STACK_MESSAGE14("CPanelWindow::BuildScriptFile(, %d, %s, %d, %s, %d, %d, %d, %s, %s, , , , %s, 0x%X, , %d, , 0x%X)",
                               type, sourcePath, sourcePathSupADS, targetPath, targetPathState, targetPathSupADS,
                               targetPathIsFAT32, mask, fileName, mapName, sourceFileAttr, onlySize, srcAndTgtPathsFlags);
 
@@ -3038,9 +3038,9 @@ MENU_TEMPLATE_ITEM MsgBoxButtons[] =
     return FALSE; // nic jineho neumi
 }
 
-void CFilesWindow::CalculateDirSizes()
+void CPanelWindow::CalculateDirSizes()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::CalculateDirSizes()");
+    CALL_STACK_MESSAGE1("CPanelWindow::CalculateDirSizes()");
     if (Is(ptDisk))
     {
         FilesAction(atCountSize, MainWindow->GetNonActivePanel(), 2);
@@ -3054,10 +3054,10 @@ void CFilesWindow::CalculateDirSizes()
     }
 }
 
-void CFilesWindow::ExecuteFromArchive(int index, BOOL edit, HWND editWithMenuParent,
+void CPanelWindow::ExecuteFromArchive(int index, BOOL edit, HWND editWithMenuParent,
                                       const POINT* editWithMenuPoint)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::ExecuteFromArchive(%d, %d)", index, edit);
+    CALL_STACK_MESSAGE3("CPanelWindow::ExecuteFromArchive(%d, %d)", index, edit);
     if (CheckPath(TRUE) != ERROR_SUCCESS)
         return;
 

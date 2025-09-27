@@ -622,7 +622,7 @@ void CSalShExtPastedData::DoPasteOperation(BOOL copy, const char* tgtPath)
     CPluginDataInterfaceAbstract* pluginData = NULL;
     for (int j = 0; j < 2; j++)
     {
-        CFilesWindow* panel = j == 0 ? MainWindow->GetActivePanel() : MainWindow->GetNonActivePanel();
+        CPanelWindow* panel = j == 0 ? MainWindow->GetActivePanel() : MainWindow->GetNonActivePanel();
         if (panel->Is(ptZIPArchive) && StrICmp(ArchiveFileName, panel->GetZIPArchive()) == 0)
         { // panel obsahuje nas archiv
             BOOL archMaybeUpdated;

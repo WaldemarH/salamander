@@ -20,13 +20,13 @@ public:
     const CFileData* FSFileData; // ukazatel na CFileData souboru (jen u FS s typem ikon pitFromPlugin), jinak NULL
 
 private:
-    DWORD Index : 28;      // >= 0 index do cache ikon nebo thumbnailu (index musi byt < 134217728); -1 -> nenactene;
-                           //   pri Flag==0,1,2,3 jde o index do cache ikon;
-                           //   pri Flag==4,5,6 jde o index do cache thumbnailu
-    DWORD ReadingDone : 1; // 1 = uz jsme se pokouseli nacist (i neuspesne), 0 = jeste jsme nenacitali
-    DWORD Flag : 3;        // flag k danemu typu, v CIconCache:
-                           //   ikony: 0 - nenactene, 1 - o.k., 2 - stara verze, 3 - ikona zadana pomoci icon-location
-                           //   thumbnaily: 4 - nenactene, 5 - o.k., 6 - stara verze (nebo nekvalitni/mensi)
+    DWORD Index : 28;       // >= 0 index to icon or thumbnail cache (index must be < 134217728); -1 -> not loaded;
+                            // if Flag==0,1,2,3 it is the index to icon cache;
+                            // if Flag==4,5,6 it is the index to thumbnail cache
+    DWORD ReadingDone : 1;  // 1 = we have already tried to load (even unsuccessfully), 0 = we have not loaded yet
+    DWORD Flag : 3;         // flag for the given type, in CIconCache:
+                            //   icons: 0 - not loaded, 1 - ok, 2 - old version, 3 - icon specified using icon-location
+                            // thumbnails: 4 - not loaded, 5 - ok, 6 - old version (or poor quality/smaller)
 
 public:
     int GetIndex()
@@ -83,7 +83,7 @@ protected:
     //
     TIndirectArray<CIconList> IconsCache; // pole bitmap slouzici jako cache na ikonky
     int IconsCount;                       // pocet zaplnenych mist v bitmapach (ikon)
-    CIconSizeEnum IconSize;               // jakou velikost ikonek drzime?
+    IconSize::Value IconSize;               // jakou velikost ikonek drzime?
 
     //
     // Thumbnails
@@ -153,8 +153,8 @@ public:
     // 'index' (vracena z AllocThumbnail);
     BOOL GetThumbnail(int index, CThumbnailData** thumbnailData);
 
-    void SetIconSize(CIconSizeEnum iconSize);
-    CIconSizeEnum GetIconSize() { return IconSize; }
+    void SetIconSize(IconSize::Value iconSize);
+    IconSize::Value GetIconSize() { return IconSize; }
 
 protected:
     // jen pro interni pouziti
@@ -183,15 +183,15 @@ public:
 
 private:
     // pro kazdy rozmer ikon potrebujeme par Index+Flag
-    CAssociationIndexAndFlag IndexAndFlag[ICONSIZE_COUNT];
+    CAssociationIndexAndFlag IndexAndFlag[IconSize::nItems];
 
 public:
-    int GetIndex(CIconSizeEnum iconSize)
+    int GetIndex(IconSize::Value iconSize)
     {
-        if (iconSize >= ICONSIZE_COUNT)
+        if (iconSize >= IconSize::nItems)
         {
             TRACE_E("CAssociationData::GetIndex() unexpected iconSize=" << iconSize);
-            iconSize = ICONSIZE_16;
+            iconSize = IconSize::size_16x16;
         }
         DWORD index = IndexAndFlag[iconSize].Index;
         if (index & 0x40000000)
@@ -199,12 +199,12 @@ public:
         return index;
     }
 
-    int SetIndex(int index, CIconSizeEnum iconSize)
+    int SetIndex(int index, IconSize::Value iconSize)
     {
-        if (iconSize >= ICONSIZE_COUNT)
+        if (iconSize >= IconSize::nItems)
         {
             TRACE_E("CAssociationData::SetIndex() unexpected iconSize=" << iconSize);
-            iconSize = ICONSIZE_16;
+            iconSize = IconSize::size_16x16;
         }
         return IndexAndFlag[iconSize].Index = index;
     }
@@ -212,7 +212,7 @@ public:
     int SetIndexAll(int index)
     {
         int i;
-        for (i = 0; i < ICONSIZE_COUNT; i++)
+        for (i = 0; i < IconSize::nItems; i++)
             IndexAndFlag[i].Index = index;
         return index;
     }
@@ -248,7 +248,7 @@ public:
 class CAssociations : public TDirectArray<CAssociationData>
 {
 protected:
-    CAssociationsIcons Icons[ICONSIZE_COUNT];
+    CAssociationsIcons Icons[IconSize::nItems];
 
 public:
     CAssociations();
@@ -271,11 +271,11 @@ public:
     // promenne 'iconList' a 'iconListIndex' mohou byt NULL (pak nejsou nastavovany)
     // jinak 'iconList' vraci ukazatel na CIconList, ktery nese ikonu a 'iconListIndex'
     // je index v ramci tohoto imagelistu.
-    int AllocIcon(CIconList** iconList, int* imageIconIndex, CIconSizeEnum iconSize);
+    int AllocIcon(CIconList** iconList, int* imageIconIndex, IconSize::Value iconSize);
 
     // vrati v 'iconList' ukazatel na IconList a v 'iconListIndex' pozici ikonky
     // 'iconIndex' (vracene z AllocIcon);
-    BOOL GetIcon(int iconIndex, CIconList** iconList, int* iconListIndex, CIconSizeEnum iconSize);
+    BOOL GetIcon(int iconIndex, CIconList** iconList, int* iconListIndex, IconSize::Value iconSize);
 
     // musi prekreslit zakladni sadu ikon s novym pozadim
     void ColorsChanged();
@@ -283,8 +283,8 @@ public:
     void ReadAssociations(BOOL showWaitWnd);
 
     // ext musi byt zarovnan po DWORDech
-    BOOL IsAssociated(char* ext, BOOL& addtoIconCache, CIconSizeEnum iconSize);
-    BOOL IsAssociatedStatic(char* ext, const char*& iconLocation, CIconSizeEnum iconSize);
+    BOOL IsAssociated(char* ext, BOOL& addtoIconCache, IconSize::Value iconSize);
+    BOOL IsAssociatedStatic(char* ext, const char*& iconLocation, IconSize::Value iconSize);
     BOOL IsAssociated(char* ext);
 
 protected:

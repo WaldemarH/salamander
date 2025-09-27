@@ -20,7 +20,7 @@ const char* CFILESBOX_CLASSNAME = "SalamanderItemsBox";
 // CFilesBox
 //
 
-CFilesBox::CFilesBox(CFilesWindow* parent)
+CFilesBox::CFilesBox(CPanelWindow* parent)
     : CWindow(ooStatic)
 {
     BottomBar.RelayWindow = this;
@@ -36,7 +36,7 @@ CFilesBox::CFilesBox(CFilesWindow* parent)
     ItemsCount = 0;
     TopIndex = 0;
     XOffset = 0;
-    ViewMode = vmDetailed;
+    ViewMode = ViewMode::detailed;
     HeaderLineVisible = TRUE;
 
     OldVertSI.cbSize = 0;
@@ -78,7 +78,7 @@ void CFilesBox::SetItemsCount2(int count)
     UpdateInternalData();
 }
 
-void CFilesBox::SetMode(CViewModeEnum mode, BOOL headerLine)
+void CFilesBox::SetMode(ViewMode::Value mode, BOOL headerLine)
 {
     ViewMode = mode;
     HeaderLineVisible = headerLine;
@@ -120,7 +120,7 @@ void CFilesBox::UpdateInternalData()
         EntireItemsInColumn = 1;
     switch (ViewMode)
     {
-    case vmDetailed:
+    case ViewMode::detailed:
     {
         ColumnsCount = 1;
         EntireColumnsCount = 1;
@@ -128,7 +128,7 @@ void CFilesBox::UpdateInternalData()
         break;
     }
 
-    case vmBrief:
+    case ViewMode::brief:
     {
         ColumnsCount = (ItemsCount + (EntireItemsInColumn - 1)) / EntireItemsInColumn;
         EntireColumnsCount = (FilesRect.right - FilesRect.left) / ItemWidth;
@@ -140,9 +140,9 @@ void CFilesBox::UpdateInternalData()
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         ColumnsCount = (FilesRect.right - FilesRect.left) / ItemWidth;
         if (ColumnsCount < 1)
@@ -198,9 +198,9 @@ void CFilesBox::PaintAllItems(HRGN hUpdateRgn, DWORD drawFlags)
 
     switch (ViewMode)
     {
-    case vmDetailed:
+    case ViewMode::detailed:
     {
-        // vmDetailed mode
+        // ViewMode::detailed mode
         int y = FilesRect.top;
         int yMax = FilesRect.bottom;
         RECT r;
@@ -243,9 +243,9 @@ void CFilesBox::PaintAllItems(HRGN hUpdateRgn, DWORD drawFlags)
         break;
     }
 
-    case vmBrief:
+    case ViewMode::brief:
     {
-        // vmBrief mode
+        // ViewMode::brief mode
         int x = FilesRect.left;
         int y = FilesRect.top;
         int yMax = FilesRect.bottom;
@@ -319,11 +319,11 @@ void CFilesBox::PaintAllItems(HRGN hUpdateRgn, DWORD drawFlags)
         break;
     }
 
-    case vmThumbnails:
-    case vmIcons:
-    case vmTiles:
+    case ViewMode::thumbnails:
+    case ViewMode::icons:
+    case ViewMode::tiles:
     {
-        // vmIcons || vmThumbnails mode
+        // ViewMode::icons || ViewMode::thumbnails mode
         RECT r;
 
         // napocitame hranice kresleni
@@ -360,8 +360,8 @@ void CFilesBox::PaintAllItems(HRGN hUpdateRgn, DWORD drawFlags)
             r.left = x;
             r.right = x + ItemWidth;
             // nakreslim vlastni polozku
-            CIconSizeEnum iconSize = (ViewMode == vmIcons) ? ICONSIZE_32 : ICONSIZE_48;
-            if (ViewMode == vmTiles)
+            IconSize::Value iconSize = (ViewMode == ViewMode::icons) ? IconSize::size_32x32 : IconSize::size_48x48;
+            if (ViewMode == ViewMode::tiles)
                 Parent->DrawTileItem(HPrivateDC, index2, &r, drawFlags, iconSize);
             else
                 Parent->DrawIconThumbnailItem(HPrivateDC, index2, &r, drawFlags, iconSize);
@@ -471,27 +471,27 @@ void CFilesBox::PaintItem(int index, DWORD drawFlags)
         }
         switch (ViewMode)
         {
-        case vmBrief:
-        case vmDetailed:
+        case ViewMode::brief:
+        case ViewMode::detailed:
         {
             // nebudeme testovat viditelnost - jde nam o rychlost
             Parent->DrawBriefDetailedItem(HPrivateDC, index, &r, drawFlags | DRAWFLAG_SKIP_VISTEST);
             break;
         }
 
-        case vmIcons:
-        case vmThumbnails:
+        case ViewMode::icons:
+        case ViewMode::thumbnails:
         {
             // nebudeme testovat viditelnost - jde nam o rychlost
-            CIconSizeEnum iconSize = (ViewMode == vmIcons) ? ICONSIZE_32 : ICONSIZE_48;
+            IconSize::Value iconSize = (ViewMode == ViewMode::icons) ? IconSize::size_32x32 : IconSize::size_48x48;
             Parent->DrawIconThumbnailItem(HPrivateDC, index, &r, drawFlags | DRAWFLAG_SKIP_VISTEST, iconSize);
             break;
         }
 
-        case vmTiles:
+        case ViewMode::tiles:
         {
             // nebudeme testovat viditelnost - jde nam o rychlost
-            CIconSizeEnum iconSize = ICONSIZE_48;
+            IconSize::Value iconSize = IconSize::size_48x48;
             Parent->DrawTileItem(HPrivateDC, index, &r, drawFlags | DRAWFLAG_SKIP_VISTEST, iconSize);
             break;
         }
@@ -507,7 +507,7 @@ BOOL CFilesBox::GetItemRect(int index, RECT* rect)
 {
     switch (ViewMode)
     {
-    case vmDetailed:
+    case ViewMode::detailed:
     {
         rect->left = FilesRect.left;
         rect->right = FilesRect.right;
@@ -516,7 +516,7 @@ BOOL CFilesBox::GetItemRect(int index, RECT* rect)
         break;
     }
 
-    case vmBrief:
+    case ViewMode::brief:
     {
         int leftColumn = TopIndex / ItemWidth;
         int col = (index - TopIndex) / EntireItemsInColumn;
@@ -528,9 +528,9 @@ BOOL CFilesBox::GetItemRect(int index, RECT* rect)
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         int row = index / ColumnsCount;
         int col = index % ColumnsCount;
@@ -555,9 +555,9 @@ void CFilesBox::EnsureItemVisible(int index, BOOL forcePaint, BOOL scroll, BOOL 
 
     switch (ViewMode)
     {
-    case vmDetailed:
+    case ViewMode::detailed:
     {
-        // vmDetailed
+        // ViewMode::detailed
         int newTopIndex = TopIndex;
         if (index < TopIndex)
             newTopIndex = index;
@@ -601,9 +601,9 @@ void CFilesBox::EnsureItemVisible(int index, BOOL forcePaint, BOOL scroll, BOOL 
         break;
     }
 
-    case vmBrief:
+    case ViewMode::brief:
     {
-        // vmBrief
+        // ViewMode::brief
         int leftCol = TopIndex / EntireItemsInColumn;
         int newLeftCol = leftCol;
 
@@ -655,9 +655,9 @@ void CFilesBox::EnsureItemVisible(int index, BOOL forcePaint, BOOL scroll, BOOL 
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         // Icons || Thumbnails
         int newTopIndex = TopIndex;
@@ -718,27 +718,27 @@ void CFilesBox::GetVisibleItems(int* firstIndex, int* count)
     *firstIndex = *count = 0;
     switch (ViewMode)
     {
-    case vmDetailed:
+    case ViewMode::detailed:
     {
-        // vmDetailed
+        // ViewMode::detailed
         *firstIndex = TopIndex;
         *count = EntireItemsInColumn +
                  (ItemHeight * EntireItemsInColumn < FilesRect.bottom - FilesRect.top ? 1 : 0);
         break;
     }
 
-    case vmBrief:
+    case ViewMode::brief:
     {
-        // vmBrief
+        // ViewMode::brief
         *firstIndex = TopIndex;
         *count = (EntireColumnsCount + (ItemWidth * EntireColumnsCount < FilesRect.right - FilesRect.left ? 1 : 0)) *
                  EntireItemsInColumn;
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         // Icons || Thumbnails
         if (ItemHeight != 0)
@@ -765,9 +765,9 @@ BOOL CFilesBox::IsItemVisible(int index, BOOL* isFullyVisible)
         *isFullyVisible = FALSE;
     switch (ViewMode)
     {
-    case vmDetailed:
+    case ViewMode::detailed:
     {
-        // vmDetailed
+        // ViewMode::detailed
         if (index < TopIndex)
             return FALSE; // moc nahore
         else
@@ -786,9 +786,9 @@ BOOL CFilesBox::IsItemVisible(int index, BOOL* isFullyVisible)
         break;
     }
 
-    case vmBrief:
+    case ViewMode::brief:
     {
-        // vmBrief
+        // ViewMode::brief
         int leftCol = TopIndex / EntireItemsInColumn;
         int col = index / EntireItemsInColumn;
         if (col < leftCol)
@@ -809,9 +809,9 @@ BOOL CFilesBox::IsItemVisible(int index, BOOL* isFullyVisible)
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         // Icons || Thumbnails
         int itemTop = FilesRect.top + (index / ColumnsCount) * ItemHeight;
@@ -834,9 +834,9 @@ int CFilesBox::PredictTopIndex(int index)
     int newTopIndex = TopIndex;
     switch (ViewMode)
     {
-    case vmDetailed:
+    case ViewMode::detailed:
     {
-        // vmDetailed
+        // ViewMode::detailed
         if (index < TopIndex)
             newTopIndex = index;
         else
@@ -847,9 +847,9 @@ int CFilesBox::PredictTopIndex(int index)
         break;
     }
 
-    case vmBrief:
+    case ViewMode::brief:
     {
-        // vmBrief
+        // ViewMode::brief
         int leftCol = TopIndex / EntireItemsInColumn;
         int newLeftCol = leftCol;
 
@@ -870,9 +870,9 @@ int CFilesBox::PredictTopIndex(int index)
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         // Icons || Thumbnails
 
@@ -946,7 +946,7 @@ void CFilesBox::OnHScroll(int scrollCode, int pos)
 {
     if (Parent->DragBox && !Parent->ScrollingWindow) // tahneme klec - zatluceme rolovani od mousewheel
         return;
-    if (ViewMode == vmDetailed)
+    if (ViewMode == ViewMode::detailed)
     {
         if (FilesRect.right - FilesRect.left + 1 > ItemWidth)
             return;
@@ -1020,7 +1020,7 @@ void CFilesBox::OnHScroll(int scrollCode, int pos)
     }
     else
     {
-        // vmBrief
+        // ViewMode::brief
         if (EntireColumnsCount >= ColumnsCount)
             return;
         int leftColumn = TopIndex / EntireItemsInColumn;
@@ -1094,7 +1094,7 @@ void CFilesBox::OnVScroll(int scrollCode, int pos)
     if (Parent->DragBox && !Parent->ScrollingWindow) // tahneme klec - zatluceme rolovani od mousewheel
         return;
     int newTopIndex = TopIndex;
-    if (ViewMode == vmDetailed)
+    if (ViewMode == ViewMode::detailed)
     {
         // Detailed
         if (EntireItemsInColumn + 1 > ItemsCount)
@@ -1586,7 +1586,7 @@ CFilesBox::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         if (MainWindow->HasLockedUI())
             break;
-        if (ViewMode == vmDetailed || ViewMode == vmBrief)
+        if (ViewMode == ViewMode::detailed || ViewMode == ViewMode::brief)
         {
             short zDelta = (short)HIWORD(wParam);
             if ((zDelta < 0 && MouseHWheelAccumulator > 0) || (zDelta > 0 && MouseHWheelAccumulator < 0))
@@ -1598,7 +1598,7 @@ CFilesBox::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
             GetScrollInfo(HHScrollBar, SB_CTL, &si);
 
             DWORD wheelScroll = 1;
-            if (ViewMode == vmDetailed)
+            if (ViewMode == ViewMode::detailed)
             {
                 wheelScroll = ItemHeight * GetMouseWheelScrollChars();
                 wheelScroll = max(1, min(wheelScroll, si.nPage - 1)); // omezime maximalne na delku stranky
@@ -1675,7 +1675,7 @@ CFilesBox::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
             si.cbSize = sizeof(si);
             si.fMask = SIF_POS | SIF_RANGE | SIF_PAGE;
 
-            if (ViewMode == vmBrief)
+            if (ViewMode == ViewMode::brief)
             {
                 GetScrollInfo(HHScrollBar, SB_CTL, &si);
                 MouseWheelAccumulator += 1000 * zDelta;
@@ -1692,7 +1692,7 @@ CFilesBox::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 GetScrollInfo(HVScrollBar, SB_CTL, &si);
 
                 DWORD wheelScroll = max(1, ItemHeight);
-                if (ViewMode == vmDetailed)
+                if (ViewMode == ViewMode::detailed)
                 {
                     wheelScroll = GetMouseWheelScrollLines();             // muze byt az WHEEL_PAGESCROLL(0xffffffff)
                     wheelScroll = max(1, min(wheelScroll, si.nPage - 1)); // omezime maximalne na delku stranky
@@ -1714,7 +1714,7 @@ CFilesBox::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         // SHIFT: horizontalni rolovani
         if (!controlPressed && !altPressed && shiftPressed &&
-            (ViewMode == vmDetailed || ViewMode == vmBrief))
+            (ViewMode == ViewMode::detailed || ViewMode == ViewMode::brief))
         {
             SCROLLINFO si;
             si.cbSize = sizeof(si);
@@ -1722,7 +1722,7 @@ CFilesBox::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
             GetScrollInfo(HHScrollBar, SB_CTL, &si);
 
             DWORD wheelScroll = 1;
-            if (ViewMode == vmDetailed)
+            if (ViewMode == ViewMode::detailed)
             {
                 wheelScroll = ItemHeight * GetMouseWheelScrollLines(); // 'delta' muze byt az WHEEL_PAGESCROLL(0xffffffff)
                 wheelScroll = max(1, min(wheelScroll, si.nPage));      // omezime maximalne na sirku stranky
@@ -1754,7 +1754,7 @@ CFilesBox::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         // CTRL: zoomovani thumbnailu
         if (controlPressed && !altPressed && !shiftPressed &&
-            ViewMode == vmThumbnails)
+            ViewMode == ViewMode::thumbnails)
         {
             DWORD wheelScroll = 15;
             MouseWheelAccumulator += 1000 * zDelta;
@@ -1772,9 +1772,9 @@ CFilesBox::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                     Configuration.ThumbnailSize = size;
                     MainWindow->LeftPanel->SetThumbnailSize(size);
                     MainWindow->RightPanel->SetThumbnailSize(size);
-                    if (MainWindow->LeftPanel->GetViewMode() == vmThumbnails)
+                    if (MainWindow->LeftPanel->GetViewMode() == ViewMode::thumbnails)
                         MainWindow->LeftPanel->RefreshForConfig();
-                    if (MainWindow->RightPanel->GetViewMode() == vmThumbnails)
+                    if (MainWindow->RightPanel->GetViewMode() == ViewMode::thumbnails)
                         MainWindow->RightPanel->RefreshForConfig();
                 }
             }
@@ -1836,7 +1836,7 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
     int itemIndex = INT_MAX;
     switch (ViewMode)
     {
-    case vmBrief:
+    case ViewMode::brief:
     {
         int itemY = y / ItemHeight;
         if (itemY <= EntireItemsInColumn - 1)
@@ -1853,12 +1853,12 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
 
         labelR.top = itemY * ItemHeight;
         labelR.bottom = labelR.top + ItemHeight;
-        labelR.left = (x / ItemWidth) * ItemWidth + IconSizes[ICONSIZE_16] + 2 - XOffset;
-        labelR.right = labelR.left + ItemWidth - 10 - IconSizes[ICONSIZE_16] - 2;
+        labelR.left = (x / ItemWidth) * ItemWidth + IconSizes[IconSize::size_16x16] + 2 - XOffset;
+        labelR.right = labelR.left + ItemWidth - 10 - IconSizes[IconSize::size_16x16] - 2;
         break;
     }
 
-    case vmDetailed:
+    case ViewMode::detailed:
     {
         int itemY = y / ItemHeight;
         if (x + XOffset < ItemWidth || nearest)
@@ -1866,14 +1866,14 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
 
         labelR.top = itemY * ItemHeight;
         labelR.bottom = labelR.top + ItemHeight;
-        labelR.left = IconSizes[ICONSIZE_16] + 2 - XOffset;
-        labelR.right = labelR.left + ItemWidth - IconSizes[ICONSIZE_16] - 2;
+        labelR.left = IconSizes[IconSize::size_16x16] + 2 - XOffset;
+        labelR.right = labelR.left + ItemWidth - IconSizes[IconSize::size_16x16] - 2;
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         int itemY = (y + TopIndex) / ItemHeight;
         int itemX = x / ItemWidth;
@@ -1892,11 +1892,11 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
 
     if (itemIndex != INT_MAX)
     {
-        // (vmBrief+vmDetailed) pokud neni FullRowSelect, omerime skutecnou delku polozky
-        if ((ViewMode == vmBrief || ViewMode == vmDetailed) &&
+        // (ViewMode::brief+ViewMode::detailed) pokud neni FullRowSelect, omerime skutecnou delku polozky
+        if ((ViewMode == ViewMode::brief || ViewMode == ViewMode::detailed) &&
             !nearest && !Configuration.FullRowSelect)
         {
-            if (ViewMode == vmDetailed)
+            if (ViewMode == ViewMode::detailed)
                 x += XOffset;
             char formatedFileName[MAX_PATH];
             CFileData* f;
@@ -1910,11 +1910,11 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
 
             const char* s = formatedFileName;
 
-            int width = IconSizes[ICONSIZE_16] + 2;
+            int width = IconSizes[IconSize::size_16x16] + 2;
 
             SIZE sz;
             int len;
-            if ((!isDir || Configuration.SortDirsByExt) && ViewMode == vmDetailed &&
+            if ((!isDir || Configuration.SortDirsByExt) && ViewMode == ViewMode::detailed &&
                 Parent->IsExtensionInSeparateColumn() && f->Ext[0] != 0 && f->Ext > f->Name + 1) // vyjimka pro jmena jako ".htaccess", ukazuji se ve sloupci Name i kdyz jde o pripony
             {
                 len = (int)(f->Ext - f->Name - 1);
@@ -1923,7 +1923,7 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
             {
                 if (*s == '.' && *(s + 1) == '.' && *(s + 2) == 0)
                 {
-                    if (ViewMode == vmBrief)
+                    if (ViewMode == ViewMode::brief)
                         width = ItemWidth - 10; // 10 - abychom nebyli roztazeni pres celou sirku
                     else
                         width = Parent->Columns[0].Width - 1;
@@ -1942,23 +1942,23 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
             GetTextExtentPoint32(dc, s, len, &sz);
             width += 2 + sz.cx + 3;
 
-            if (ViewMode == vmDetailed && width > (int)Parent->Columns[0].Width)
+            if (ViewMode == ViewMode::detailed && width > (int)Parent->Columns[0].Width)
                 width = Parent->Columns[0].Width;
 
             SelectObject(dc, hOldFont);
             HANDLES(ReleaseDC(HWindow, dc));
         SKIP_MES:
 
-            labelR.right = labelR.left + width - IconSizes[ICONSIZE_16] - 2;
+            labelR.right = labelR.left + width - IconSizes[IconSize::size_16x16] - 2;
 
             int xPos = x;
-            if (ViewMode == vmBrief)
+            if (ViewMode == ViewMode::brief)
                 xPos %= ItemWidth;
             if (xPos >= width)
                 itemIndex = INT_MAX;
         }
 
-        if ((ViewMode == vmIcons || ViewMode == vmThumbnails) && !nearest)
+        if ((ViewMode == ViewMode::icons || ViewMode == ViewMode::thumbnails) && !nearest)
         {
             // do xPos a yPos vlozim relativni souradnice
             POINT pt;
@@ -1971,7 +1971,7 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
             int iconH = 32;
 
             // detekce kliknuti na ikonu
-            if (ViewMode == vmThumbnails)
+            if (ViewMode == ViewMode::thumbnails)
             {
                 rect.top = 3;
                 iconW = ThumbnailWidth + 2;
@@ -1998,7 +1998,7 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
             AlterFileName(formatedFileName, f->Name, -1, Configuration.FileNameFormat, 0,
                           itemIndex < Parent->Dirs->Count);
 
-            // POZOR: udrzovat v konzistenci s CFilesWindow::SetQuickSearchCaretPos
+            // POZOR: udrzovat v konzistenci s CPanelWindow::SetQuickSearchCaretPos
             char buff[1024];                  // cilovy buffer pro retezce
             int maxWidth = ItemWidth - 4 - 1; // -1, aby se nedotykaly
             char* out1 = buff;
@@ -2017,8 +2017,8 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
 
             if (isItemUpDir) // updir je pouze "..", musime ho prodlouzit na zobrazovanou velikost
             {
-                // viz CFilesWindow::DrawIconThumbnailItem
-                maxWidth = max(maxWidth, (Parent->GetViewMode() == vmThumbnails ? ThumbnailWidth : 32) + 4);
+                // viz CPanelWindow::DrawIconThumbnailItem
+                maxWidth = max(maxWidth, (Parent->GetViewMode() == ViewMode::thumbnails ? ThumbnailWidth : 32) + 4);
             }
 
             rect.left = (ItemWidth - maxWidth) / 2;
@@ -2042,7 +2042,7 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
                 itemIndex = INT_MAX;
         }
 
-        if ((ViewMode == vmTiles) && !nearest)
+        if ((ViewMode == ViewMode::tiles) && !nearest)
         {
             // do xPos a yPos vlozim relativni souradnice
             POINT pt;
@@ -2050,8 +2050,8 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
             pt.x = x % ItemWidth;
             pt.y = (y + TopIndex) % ItemHeight;
 
-            int iconW = IconSizes[ICONSIZE_48];
-            int iconH = IconSizes[ICONSIZE_48];
+            int iconW = IconSizes[IconSize::size_48x48];
+            int iconH = IconSizes[IconSize::size_48x48];
 
             // detekce kliknuti na ikonu
             rect.top = (ItemHeight - iconH) / 2;
@@ -2071,7 +2071,7 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
                 f = &Parent->Files->At(itemIndex - Parent->Dirs->Count);
 
             int itemWidth = rect.right - rect.left; // sirka polozky
-            int maxTextWidth = ItemWidth - TILE_LEFT_MARGIN - IconSizes[ICONSIZE_48] - TILE_LEFT_MARGIN - 4;
+            int maxTextWidth = ItemWidth - TILE_LEFT_MARGIN - IconSizes[IconSize::size_48x48] - TILE_LEFT_MARGIN - 4;
             int widthNeeded = 0;
 
             char buff[3 * 512]; // cilovy buffer pro retezce
@@ -2131,14 +2131,14 @@ int CFilesBox::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
 BOOL CFilesBox::ShowHideChilds()
 {
     BOOL change = FALSE;
-    if (HeaderLineVisible && ViewMode != vmDetailed)
+    if (HeaderLineVisible && ViewMode != ViewMode::detailed)
     {
         TRACE_E("Header line is supported only in Detailed mode");
         HeaderLineVisible = FALSE;
     }
 
     // vodorovne rolovatko je pripustne v detailed a brief; jinak ho schovam
-    if (ViewMode != vmDetailed && ViewMode != vmBrief && HHScrollBar != NULL)
+    if (ViewMode != ViewMode::detailed && ViewMode != ViewMode::brief && HHScrollBar != NULL)
     {
         DestroyWindow(BottomBar.HWindow);
         BottomBar.HScrollBar = NULL;
@@ -2147,7 +2147,7 @@ BOOL CFilesBox::ShowHideChilds()
     }
 
     // svisle rolovatko schovam pro brief rezim
-    if (ViewMode == vmBrief && HVScrollBar != NULL)
+    if (ViewMode == ViewMode::brief && HVScrollBar != NULL)
     {
         DestroyWindow(HVScrollBar);
         HVScrollBar = NULL;
@@ -2156,7 +2156,7 @@ BOOL CFilesBox::ShowHideChilds()
 
     // header line je pripustna pouze v detailed (a jeste ji musi user chtit);
     // jinak ji schovam
-    if ((ViewMode != vmDetailed || !HeaderLineVisible) &&
+    if ((ViewMode != ViewMode::detailed || !HeaderLineVisible) &&
         HeaderLine.HWindow != NULL)
     {
         DestroyWindow(HeaderLine.HWindow);
@@ -2165,7 +2165,7 @@ BOOL CFilesBox::ShowHideChilds()
     }
 
     // pokud jsem v detailed nebo brief, potrebujeme vodorovne rolovatko
-    if ((ViewMode == vmDetailed || ViewMode == vmBrief) && HHScrollBar == NULL)
+    if ((ViewMode == ViewMode::detailed || ViewMode == ViewMode::brief) && HHScrollBar == NULL)
     {
         BottomBar.Create(CWINDOW_CLASSNAME2, "", WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                          0, 0, 0, 0,
@@ -2184,10 +2184,10 @@ BOOL CFilesBox::ShowHideChilds()
     }
 
     // v detailed rezimu nechame ve vodorovnem rolovatku vpravo mezeru pod svislym rolovatkem
-    BottomBar.VertScrollSpace = (ViewMode == vmDetailed);
+    BottomBar.VertScrollSpace = (ViewMode == ViewMode::detailed);
 
     // svisle rolovatko potrebujeme ve vsech rezimech mimo brief
-    if (ViewMode != vmBrief)
+    if (ViewMode != ViewMode::brief)
     {
         if (HVScrollBar == NULL)
         {
@@ -2202,7 +2202,7 @@ BOOL CFilesBox::ShowHideChilds()
     }
 
     // v detailed rezimu, je-li pozadovana headerline, zajistime jeji vytvoreni
-    if (ViewMode == vmDetailed && HeaderLineVisible && HeaderLine.HWindow == NULL)
+    if (ViewMode == ViewMode::detailed && HeaderLineVisible && HeaderLine.HWindow == NULL)
     {
         HeaderLine.Create(CWINDOW_CLASSNAME2, "", WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
                           0, 0, 0, 0,
@@ -2223,12 +2223,12 @@ void CFilesBox::SetupScrollBars(DWORD flags)
     {
         si.cbSize = sizeof(si);
         si.fMask = SIF_DISABLENOSCROLL | SIF_POS | SIF_RANGE | SIF_PAGE;
-        if (ViewMode == vmDetailed)
+        if (ViewMode == ViewMode::detailed)
             si.nPos = XOffset;
         else
             si.nPos = TopIndex / EntireItemsInColumn;
         si.nMin = 0;
-        if (ViewMode == vmDetailed)
+        if (ViewMode == ViewMode::detailed)
         {
             // Detailed
             si.nMax = ItemWidth;
@@ -2271,7 +2271,7 @@ void CFilesBox::SetupScrollBars(DWORD flags)
         si.nPos = TopIndex;
         si.nMin = 0;
 
-        if (ViewMode == vmDetailed)
+        if (ViewMode == ViewMode::detailed)
         {
             // Detailed
             si.nMax = ItemsCount;
@@ -2313,7 +2313,7 @@ void CFilesBox::CheckAndCorrectBoundaries()
 {
     switch (ViewMode)
     {
-    case vmDetailed:
+    case ViewMode::detailed:
     {
         if (FilesRect.right - FilesRect.left > 0 && FilesRect.bottom - FilesRect.top > 0)
         {
@@ -2363,7 +2363,7 @@ void CFilesBox::CheckAndCorrectBoundaries()
         break;
     }
 
-    case vmBrief:
+    case ViewMode::brief:
     {
         int col = ItemsCount / EntireItemsInColumn - TopIndex / EntireItemsInColumn;
         if (col * ItemWidth < FilesRect.right - FilesRect.left - ItemWidth)
@@ -2381,9 +2381,9 @@ void CFilesBox::CheckAndCorrectBoundaries()
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         if (FilesRect.right - FilesRect.left > 0 && FilesRect.bottom - FilesRect.top > 0)
         {
@@ -2506,7 +2506,7 @@ void CFilesBox::LayoutChilds(BOOL updateAndCheck)
             int oldEntireItemsInColumn = EntireItemsInColumn;
             int oldEntireColumnsCount = EntireColumnsCount;
 
-            if (ViewMode == vmDetailed) // prepocitame sirku sloupce Name ve smart-mode detail view
+            if (ViewMode == ViewMode::detailed) // prepocitame sirku sloupce Name ve smart-mode detail view
             {
                 BOOL leftPanel = (Parent == MainWindow->LeftPanel);
                 CColumn* nameCol = &Parent->Columns[0];
@@ -2543,7 +2543,7 @@ void CFilesBox::LayoutChilds(BOOL updateAndCheck)
 
             switch (ViewMode)
             {
-            case vmBrief:
+            case ViewMode::brief:
             {
                 if (oldEntireItemsInColumn != EntireItemsInColumn)
                 {
@@ -2553,9 +2553,9 @@ void CFilesBox::LayoutChilds(BOOL updateAndCheck)
                 break;
             }
 
-            case vmIcons:
-            case vmThumbnails:
-            case vmTiles:
+            case ViewMode::icons:
+            case ViewMode::thumbnails:
+            case ViewMode::tiles:
             {
                 if (oldEntireColumnsCount != EntireColumnsCount)
                 {

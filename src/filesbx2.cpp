@@ -232,7 +232,7 @@ void CHeaderLine::PaintItem(HDC hDC, int index, int x)
         sz.cx = 0;
         HDC hMemDC = NULL;
         BOOL sort = FALSE;
-        CFilesWindow* panel = Parent->Parent;
+        CPanelWindow* panel = Parent->Parent;
         if (column->ID == COLUMN_ID_NAME && panel->SortType == stName)
             sort = TRUE;
         else if (column->ID == COLUMN_ID_SIZE && panel->SortType == stSize)
@@ -362,12 +362,11 @@ void CHeaderLine::SetMinWidths()
     SelectObject(hDC, hOldFont);
 }
 
-CHeaderHitTestEnum
-CHeaderLine::HitTest(int xPos, int yPos, int& index, BOOL& extInName)
+CHeaderLine::HitTest::Value CHeaderLine::HitTest(int xPos, int yPos, int& index, BOOL& extInName)
 {
     extInName = FALSE;
     if (xPos < 0 || xPos > Width || yPos < 0 || yPos > Height)
-        return hhtNone;
+        return HitTest::None;
 
     int left = -Parent->XOffset;
     int right;
@@ -383,12 +382,12 @@ CHeaderLine::HitTest(int xPos, int yPos, int& index, BOOL& extInName)
             if (xPos < left + 2 && i > 0 && Columns->At(i - 1).FixedWidth == 1)
             {
                 index = i - 1;
-                return hhtDivider;
+                return HitTest::Divider;
             }
             if (xPos >= right - 2 && column->FixedWidth == 1)
             {
                 index = i;
-                return hhtDivider;
+                return HitTest::Divider;
             }
             index = i;
             if (index == 0 && (Parent->Parent->ValidFileData & VALID_DATA_EXTENSION) &&
@@ -402,11 +401,11 @@ CHeaderLine::HitTest(int xPos, int yPos, int& index, BOOL& extInName)
                 if (xPos - left >= 1 + 3 + sz.cx + 3 * SORT_BITMAP_W)
                     extInName = TRUE;
             }
-            return hhtItem;
+            return HitTest::Item;
         }
         left = right;
     }
-    return hhtNone;
+    return HitTest::None;
 }
 
 void CHeaderLine::Cancel()
@@ -522,13 +521,13 @@ CHeaderLine::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         BOOL mPressed = (wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)) != 0;
         int index;
         BOOL extInName;
-        CHeaderHitTestEnum ht = HitTest(xPos, yPos, index, extInName);
+        const auto  ht = HitTest(xPos, yPos, index, extInName);
         if (DownIndex != -1)
         {
             BOOL oldDownVisible = DownVisible;
-            if (DownVisible && (ht == hhtNone || ht == hhtDivider || index != DownIndex))
+            if (DownVisible && (ht == HitTest::None || ht == HitTest::Divider || index != DownIndex))
                 DownVisible = FALSE;
-            else if (!DownVisible && ht == hhtItem && index == DownIndex)
+            else if (!DownVisible && ht == HitTest::Item && index == DownIndex)
                 DownVisible = TRUE;
             if (DownVisible != oldDownVisible)
             {
@@ -591,13 +590,13 @@ CHeaderLine::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         if (DownIndex == -1 && DragIndex == -1)
         {
-            if (ht == hhtItem)
+            if (ht == HitTest::Item)
                 SetCurrentToolTip(HWindow, HotIndex | HotExt << 16);
             else
                 SetCurrentToolTip(HWindow, 0xFFFF);
             int oldHotIndex = HotIndex;
             BOOL oldHotExt = HotExt;
-            if (!mPressed && (ht == hhtItem || ht == hhtDivider))
+            if (!mPressed && (ht == HitTest::Item || ht == HitTest::Divider))
             {
                 if (!MouseIsTracked)
                 {
@@ -608,7 +607,7 @@ CHeaderLine::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                     TrackMouseEvent(&tme);
                     MouseIsTracked = TRUE;
                 }
-                if (ht == hhtItem)
+                if (ht == HitTest::Item)
                 {
                     if (Columns->At(index).SupportSorting == 1)
                     {
@@ -632,7 +631,7 @@ CHeaderLine::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                     SetCursor(LoadCursor(HInstance, MAKEINTRESOURCE(IDC_SPLIT)));
                 }
             }
-            if (ht == hhtNone)
+            if (ht == HitTest::None)
             {
                 SetCurrentToolTip(NULL, 0);
                 if (MouseIsTracked)
@@ -666,8 +665,8 @@ CHeaderLine::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         int yPos = (short)HIWORD(lParam);
         int index;
         BOOL extInName;
-        CHeaderHitTestEnum ht = HitTest(xPos, yPos, index, extInName);
-        if (ht == hhtItem && Columns->At(index).SupportSorting == 1)
+        const auto  ht = HitTest(xPos, yPos, index, extInName);
+        if (ht == HitTest::Item && Columns->At(index).SupportSorting == 1)
         {
             HotIndex = -1;
             DownIndex = index;
@@ -677,7 +676,7 @@ CHeaderLine::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
             PaintItem2(DownIndex);
         }
-        if (ht == hhtDivider)
+        if (ht == HitTest::Divider)
         {
             if (uMsg == WM_LBUTTONDOWN)
             {
@@ -697,12 +696,12 @@ CHeaderLine::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         int yPos = (short)HIWORD(lParam);
         int index;
         BOOL extInName;
-        CHeaderHitTestEnum ht = HitTest(xPos, yPos, index, extInName);
+        const auto  ht = HitTest(xPos, yPos, index, extInName);
         if (DownVisible && GetCapture() == HWindow)
         {
             ReleaseCapture();
             Cancel();
-            if (ht == hhtItem && index >= 0 && index < Columns->Count)
+            if (ht == HitTest::Item && index >= 0 && index < Columns->Count)
             {
                 CColumn* column = &Columns->At(index);
                 CSortType st = stName;

@@ -92,29 +92,29 @@ Co lze vytahnout z HICON, ktere nam dodava OS?
 class CIconList : public CGUIIconListAbstract
 {
 private:
-    int ImageWidth; // rozmery jednoho obrazku
+    int ImageWidth; // dimensions of one picture
     int ImageHeight;
-    int ImageCount;  // pocet obrazku v bitmape
-    int BitmapWidth; // rozmery drzenych bitmap
+    int ImageCount;  // the number of images in the bitmap
+    int BitmapWidth; // dimensions of bold bitmaps
     int BitmapHeight;
 
-    // obrazky jsou usporadany zleva doprava a shora dolu
-    HBITMAP HImage;   // DIB, jeho raw data jsou v promenne ImageRaw
-    DWORD* ImageRaw;  // ARGB hodnoty; Alfa: 0x00=pruhledna, 0xFF=nepruhledna, ostatni=castecna_pruhlednost(puze u IL_TYPE_ALPHA)
-    BYTE* ImageFlags; // pole o poctu prvku 'imageCount'; (IL_TYPE_xxx)
+    // the images are arranged from left to right and top to bottom
+    HBITMAP HImage;   // DIB, its raw data is in the ImageRaw variable
+    DWORD* ImageRaw;  // ARGB values; Alpha: 0x00=transparent, 0xFF=opaque, last=partial_transparency (only for IL_TYPE_ALPHA)
+    BYTE* ImageFlags; // element count field 'imageCount'; (IL_TYPE_xxx)
 
-    COLORREF BkColor; // aktualni barva pozadi (body kde je Alfa==0x00)
+    COLORREF BkColor; // current background color (points where Alpha==0x00)
 
-    // sdilene promenne pres vsechny imagelisty -- setrime pameti
+    // shared variables across all imagelists -- wipe memory
     static HDC HMemDC;                       // sdilene mem dc
-    static HBITMAP HOldBitmap;               // puvodni bitmapa
-    static HBITMAP HTmpImage;                // cache pro paint + docasne uloziste masky
+    static HBITMAP HOldBitmap;               // original bitmap
+    static HBITMAP HTmpImage;                // cache for paint + temporarily store masks
     static DWORD* TmpImageRaw;               // raw data od HTmpImage
-    static int TmpImageWidth;                // rozmery HTmpImage v bodech
-    static int TmpImageHeight;               // rozmery HTmpImage v bodech
-    static int MemDCLocks;                   // pro destrukci mem dc
-    static CRITICAL_SECTION CriticalSection; // synchronizace pristupu
-    static int CriticalSectionLocks;         // pro konstrukci/destrukci CriticalSection
+    static int TmpImageWidth;                // HTmpImage dimensions in points
+    static int TmpImageHeight;               // HTmpImage dimensions in points
+    static int MemDCLocks;                   // for destruction mem dc
+    static CRITICAL_SECTION CriticalSection; // access synchronization
+    static int CriticalSectionLocks;         // for CriticalSection construction/destruction
 
 public:
     //    BOOL     Dump; // pokud je TRUE, dumpuji se raw data do TRACE
@@ -124,36 +124,37 @@ public:
     ~CIconList();
 
     virtual BOOL WINAPI Create(int imageWidth, int imageHeight, int imageCount);
-    virtual BOOL WINAPI CreateFromImageList(HIMAGELIST hIL, int requiredImageSize = -1);          // pokud je 'requiredImageSize' -1, pouzije se geometrie z hIL
-    virtual BOOL WINAPI CreateFromPNG(HINSTANCE hInstance, LPCTSTR lpBitmapName, int imageWidth); // nacte z resourcu PNG, musi jit o dlouhy prouzek jeden radek vysoky
+    virtual BOOL WINAPI CreateFromImageList(HIMAGELIST hIL, int requiredImageSize = -1);          // if 'requiredImageSize' is -1, geometry from hIL is used
+    virtual BOOL WINAPI CreateFromPNG(HINSTANCE hInstance, LPCTSTR lpBitmapName, int imageWidth); // read from the PNG resource, it must be a long strip one line high
     virtual BOOL WINAPI CreateFromRawPNG(const void* rawPNG, DWORD rawPNGSize, int imageWidth);
-    virtual BOOL WINAPI CreateFromBitmap(HBITMAP hBitmap, int imageCount, COLORREF transparentClr); // nasosne bitmapu (maximalne 256 barev), musi jit o dlouhy prouzek jeden radek vysoky
+    virtual BOOL WINAPI CreateFromBitmap(HBITMAP hBitmap, int imageCount, COLORREF transparentClr); // it sucks a bitmap (maximum 256 colors), it has to be a long strip one line high
+    virtual BOOL WINAPI CreateFromSVG(const int resID, const int nFrames, std::string rotate_parameter, const int rotate_angle );
     virtual BOOL WINAPI CreateAsCopy(const CIconList* iconList, BOOL grayscale);
     virtual BOOL WINAPI CreateAsCopy(const CGUIIconListAbstract* iconList, BOOL grayscale);
 
     // prevede icon list na cernobilou verzi
     virtual BOOL WINAPI ConvertToGrayscale(BOOL forceAlphaForBW);
 
-    // zakomprimuje bitmapu do 32bitoveho PNG a alfa kanalem (jeden dlouhy radek)
-    // pokud se vse podari, vraci TRUE a ukazatel na alokovanou pamet, kterou je nutne potom dealokovat
-    // pri chybe vraci FALSE
+    // compress the bitmap to a 32-bit PNG and alpha channel (one long line)
+    // if everything succeeds, it returns TRUE and a pointer to the allocated memory, which must then be deallocated
+    // returns FALSE on error
     virtual BOOL WINAPI SaveToPNG(BYTE** rawPNG, DWORD* rawPNGSize);
 
     virtual BOOL WINAPI ReplaceIcon(int index, HICON hIcon);
 
-    // vytvori ikonku z pozice 'index'; vraci jeji handle nebo NULL v pripade neuspechu
-    // vracenou ikonu je po pouziti treba destruovat pomoci API DestroyIcon
+    // create icon from position 'index'; returns its handle or NULL on failure
+    // the returned icon must be destroyed after use using the DestroyIcon API
     virtual HICON WINAPI GetIcon(int index);
     HICON GetIcon(int index, BOOL useHandles);
 
-    // vytvori imagelist (jeden radek, pocet sloupcu dle poctu polozek); vraci jeho handle nebo NULL v pripade neuspechu
-    // vraceny imagelist je po pouziti treba destruovat pomoci API ImageList_Destroy()
+    // create an imagelist (one row, the number of columns according to the number of items); returns its handle or NULL on failure
+    // the returned imagelist must be destroyed after use using the API ImageList_Destroy()
     virtual HIMAGELIST WINAPI GetImageList();
 
-    // kopiruje jednu polozku ze 'srcIL' a pozice 'srcIndex' na pozici 'dstIndex'
+    // copies one item from 'srcIL' and position 'srcIndex' to position 'dstIndex'
     virtual BOOL WINAPI Copy(int dstIndex, CIconList* srcIL, int srcIndex);
 
-    // kopiruje jednu polozku z pozice 'srcIndex' do 'hDstImageList' na pozici 'dstIndex'
+    // copies one item from position 'srcIndex' to 'hDstImageList' at position 'dstIndex'
     //    BOOL CopyToImageList(HIMAGELIST hDstImageList, int dstIndex, int srcIndex);
 
     virtual BOOL WINAPI Draw(int index, HDC hDC, int x, int y, COLORREF blendClr, DWORD flags);
@@ -162,24 +163,24 @@ public:
     virtual COLORREF WINAPI GetBkColor();
 
 private:
-    // pokud neexistuje, vytvori HTmpImage
-    // pokud HTmpImage existuje a je mensi nez 'width' x 'height', vytvori novy
-    // vraci TRUE v pripade uspechu, jinak vraci FALSE a zachovava minuly HTmpImage
+    // if not exist, create HTmpImage
+    // if HTmpImage exists and is smaller than 'width' x 'height', create new ones
+    // returns TRUE on success, otherwise returns FALSE and preserves the past HTmpImage
     BOOL CreateOrEnlargeTmpImage(int width, int height);
 
-    // vraci handle bitmapy prave vybrane v HMemDC
-    // pokud HMemDC neexistuje, vraci NULL
+    // returns the bitmap handles currently selected in HMemDC
+    // if HMemDC does not exist, return NULL
     HBITMAP GetCurrentBitmap();
 
-    // 'index' urcuje pozici ikonky v HImage
-    // vraci TRUE, pokud v obrazek 'index' v HImage obsahoval alfa kanal
+    // 'index' specifies the position of the icon in the HImage
+    // returns TRUE if image 'index' in HImage contained an alpha channel
     BYTE ApplyMaskToImage(int index, BYTE forceXOR);
 
-    // pro ladici ucely -- zobrazi dump ARGB hodnot barevne bitmapy i masky
+    // for debugging purposes -- display a dump of the ARGB values ​​of the color bitmap and the mask
     //    void DumpToTrace(int index, BOOL dumpMask);
 
-    // renderovani bod po bodu a nasledny BitBlt je v RELEASE verzi
-    // pouze o 30% pomalejsi proti cistemu BitBlt
+    // rendering point by point and the following BitBlt is in the RELEASE version
+    // only 30% slower vs pure BitBlt
 
     BOOL DrawALPHA(HDC hDC, int x, int y, int index, COLORREF bkColor);
     BOOL DrawXOR(HDC hDC, int x, int y, int index, COLORREF bkColor);
@@ -190,13 +191,13 @@ private:
 
     void StoreMonoIcon(int index, WORD* mask);
 
-    // specialni podpurna funkce pro CreateFromBitmap(); nakopiruj z 'hSrcBitmap'
-    // zvoleny pocet polozek do 'dstIndex'; predpoklada, ze 'hSrcBitmap' bude dlouhy
-    // prouzek ikon, jeden radek vysoky
-    // transparentClr udava barvu, ktera se ma povazovat za pruhlednou
-    // predpoklada se, ze zdrojova bitmapa ma stejny rozmer ikonek jako ma cilova (ImageWidth, ImageHeight)
-    // jednim kopirovanim lze pracovat maximalne s jednim radkem cilove bitmapy,
-    // nelze napriklad nakopirovat data do dvou radku v cilove bitmape
+    // special support function for CreateFromBitmap(); copy from 'hSrcBitmap'
+    // selected number of items to 'dstIndex'; assumes that 'hSrcBitmap' will be long
+    // icon strip, one row high
+    // transparentClr specifies the color to be considered transparent
+    // it is assumed that the source bitmap has the same icon size as the target bitmap (ImageWidth, ImageHeight)
+    // one copy can work with a maximum of one line of the target bitmap,
+    // it is not possible, for example, to copy data into two lines in the target bitmap
     BOOL CopyFromBitmapIternal(int dstIndex, HBITMAP hSrcBitmap, int srcIndex, int imageCount, COLORREF transparentClr);
 };
 

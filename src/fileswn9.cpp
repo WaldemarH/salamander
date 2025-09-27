@@ -50,10 +50,10 @@ CColumDataItem* GetStdColumn(int i, BOOL isDisk)
     return &StdColumnsPrivate[i];
 }
 
-BOOL CFilesWindow::ParsePath(char* path, int& type, BOOL& isDir, char*& secondPart,
+BOOL CPanelWindow::ParsePath(char* path, int& type, BOOL& isDir, char*& secondPart,
                              const char* errorTitle, char* nextFocus, int* error, int pathBufSize)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::ParsePath(%s, , , , %s, ,)", path, errorTitle);
+    CALL_STACK_MESSAGE3("CPanelWindow::ParsePath(%s, , , , %s, ,)", path, errorTitle);
 
     const char* curArchivePath = NULL;
     char curPath[2 * MAX_PATH];
@@ -68,13 +68,13 @@ BOOL CFilesWindow::ParsePath(char* path, int& type, BOOL& isDir, char*& secondPa
                         Is(ptDisk) || Is(ptZIPArchive), curPath, curArchivePath, error, pathBufSize);
 }
 
-int CFilesWindow::GetPanelCode()
+int CPanelWindow::GetPanelCode()
 {
     CALL_STACK_MESSAGE_NONE
     return (MainWindow != NULL && MainWindow->LeftPanel == this) ? PANEL_LEFT : PANEL_RIGHT;
 }
 
-void CFilesWindow::ClearPluginFSFromHistory(CPluginFSInterfaceAbstract* fs)
+void CPanelWindow::ClearPluginFSFromHistory(CPluginFSInterfaceAbstract* fs)
 {
     CALL_STACK_MESSAGE_NONE
     PathHistory->ClearPluginFSFromHistory(fs);
@@ -103,13 +103,13 @@ BOOL SafeInvokeCommand(IContextMenu2* menu, CMINVOKECOMMANDINFO& ici)
     return ret;
 }
 
-BOOL CFilesWindow::ClipboardPaste(BOOL onlyLinks, BOOL onlyTest, const char* pastePath)
+BOOL CPanelWindow::ClipboardPaste(BOOL onlyLinks, BOOL onlyTest, const char* pastePath)
 {
-    CALL_STACK_MESSAGE4("CFilesWindow::ClipboardPaste(%d, %d, %s)", onlyLinks, onlyTest, pastePath);
+    CALL_STACK_MESSAGE4("CPanelWindow::ClipboardPaste(%d, %d, %s)", onlyLinks, onlyTest, pastePath);
     IDataObject* dataObj;
     BOOL files = FALSE;       // zjistime jestli data na clipboardu jsou vubec soubory
     BOOL filesOnClip = FALSE; // je na clipboardu neco naseho k "paste" souboru/adresaru?
-                              //  TRACE_I("CFilesWindow::ClipboardPaste() called: " << (onlyLinks ? "links " : "") <<
+                              //  TRACE_I("CPanelWindow::ClipboardPaste() called: " << (onlyLinks ? "links " : "") <<
                               //          (onlyTest ? "test " : "") << (pastePath != NULL ? pastePath : "(null)"));
     if (OleGetClipboard(&dataObj) == S_OK && dataObj != NULL)
     {
@@ -301,7 +301,7 @@ BOOL CFilesWindow::ClipboardPaste(BOOL onlyLinks, BOOL onlyTest, const char* pas
                     CMINVOKECOMMANDINFO ici;
                     ici.cbSize = sizeof(CMINVOKECOMMANDINFO);
                     ici.fMask = 0;
-                    ici.hwnd = shellExecuteWnd.Create(MainWindow->HWindow, "SEW: CFilesWindow::ClipboardPaste onlyLinks=%d", onlyLinks);
+                    ici.hwnd = shellExecuteWnd.Create(MainWindow->HWindow, "SEW: CPanelWindow::ClipboardPaste onlyLinks=%d", onlyLinks);
                     if (onlyLinks)
                         ici.lpVerb = "pastelink";
                     else
@@ -396,9 +396,9 @@ BOOL CFilesWindow::ClipboardPaste(BOOL onlyLinks, BOOL onlyTest, const char* pas
     return files;
 }
 
-BOOL CFilesWindow::ClipboardPasteToArcOrFS(BOOL onlyTest, DWORD* pasteDefEffect)
+BOOL CPanelWindow::ClipboardPasteToArcOrFS(BOOL onlyTest, DWORD* pasteDefEffect)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::ClipboardPasteToArcOrFS(%d,)", onlyTest);
+    CALL_STACK_MESSAGE2("CPanelWindow::ClipboardPasteToArcOrFS(%d,)", onlyTest);
     if (pasteDefEffect != NULL)
         *pasteDefEffect = 0;
     BOOL ret = FALSE;
@@ -458,7 +458,7 @@ BOOL CFilesWindow::ClipboardPasteToArcOrFS(BOOL onlyTest, DWORD* pasteDefEffect)
                             moveOper = dropEffect == DROPEFFECT_MOVE;
                         }
                         else
-                            TRACE_E("CFilesWindow::ClipboardPasteToArcOrFS(): unexpected paste-effect!");
+                            TRACE_E("CPanelWindow::ClipboardPasteToArcOrFS(): unexpected paste-effect!");
                     }
                 }
                 else
@@ -492,10 +492,10 @@ BOOL CFilesWindow::ClipboardPasteToArcOrFS(BOOL onlyTest, DWORD* pasteDefEffect)
                                 moveOper = dropEffect == DROPEFFECT_MOVE;
                             }
                             else
-                                TRACE_E("CFilesWindow::ClipboardPasteToArcOrFS(): unable to get current path from FS!");
+                                TRACE_E("CPanelWindow::ClipboardPasteToArcOrFS(): unable to get current path from FS!");
                         }
                         else
-                            TRACE_E("CFilesWindow::ClipboardPasteToArcOrFS(): unexpected paste-effect!");
+                            TRACE_E("CPanelWindow::ClipboardPasteToArcOrFS(): unexpected paste-effect!");
                     }
                 }
                 if (moveOper) // Cut & Paste: musime vycistit clipboard
@@ -519,27 +519,27 @@ BOOL CFilesWindow::ClipboardPasteToArcOrFS(BOOL onlyTest, DWORD* pasteDefEffect)
     return ret;
 }
 
-void CFilesWindow::ClipboardCopy()
+void CPanelWindow::ClipboardCopy()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::ClipboardCopy()");
+    CALL_STACK_MESSAGE1("CPanelWindow::ClipboardCopy()");
     ShellAction(this, saCopyToClipboard);
 }
 
-void CFilesWindow::ClipboardCut()
+void CPanelWindow::ClipboardCut()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::ClipboardCut()");
+    CALL_STACK_MESSAGE1("CPanelWindow::ClipboardCut()");
     ShellAction(this, saCutToClipboard);
 }
 
-BOOL CFilesWindow::ClipboardPasteLinks(BOOL onlyTest)
+BOOL CPanelWindow::ClipboardPasteLinks(BOOL onlyTest)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::ClipboardPasteLinks(%d)", onlyTest);
+    CALL_STACK_MESSAGE2("CPanelWindow::ClipboardPasteLinks(%d)", onlyTest);
     return ClipboardPaste(TRUE, onlyTest);
 }
 
-BOOL CFilesWindow::IsTextOnClipboard()
+BOOL CPanelWindow::IsTextOnClipboard()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::IsTextOnClipboard()");
+    CALL_STACK_MESSAGE1("CPanelWindow::IsTextOnClipboard()");
     BOOL text = FALSE;
 
     int attempt = 1;
@@ -574,7 +574,7 @@ BOOL CFilesWindow::IsTextOnClipboard()
     return text;
 }
 
-BOOL CFilesWindow::PostProcessPathFromUser(HWND parent, char (&buff)[2 * MAX_PATH])
+BOOL CPanelWindow::PostProcessPathFromUser(HWND parent, char (&buff)[2 * MAX_PATH])
 {
     if (!IsFileURLPath(buff) && IsPluginFSPath(buff))
         return TRUE; // zpracovani nechame na pluginu s FS
@@ -622,9 +622,9 @@ BOOL CFilesWindow::PostProcessPathFromUser(HWND parent, char (&buff)[2 * MAX_PAT
     return TRUE;
 }
 
-void CFilesWindow::ClipboardPastePath()
+void CPanelWindow::ClipboardPastePath()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::ClipboardPastePath()");
+    CALL_STACK_MESSAGE1("CPanelWindow::ClipboardPastePath()");
     char buff[2 * MAX_PATH];
     buff[0] = 0;
     BOOL changePath = FALSE;
@@ -671,9 +671,9 @@ void CFilesWindow::ClipboardPastePath()
         ChangeDir(buff); // zmenim cestu
 }
 
-void CFilesWindow::ChangeFilter(BOOL disable)
+void CPanelWindow::ChangeFilter(BOOL disable)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::ChangeFilter()");
+    CALL_STACK_MESSAGE1("CPanelWindow::ChangeFilter()");
     BeginStopRefresh(); // zadne refreshe nepotrebujeme
     if (disable || CFilterDialog(HWindow, &Filter, Configuration.FilterHistory, &FilterEnabled /*, &FilterInverse*/).Execute() == IDOK)
     {
@@ -693,7 +693,7 @@ void CFilesWindow::ChangeFilter(BOOL disable)
     EndStopRefresh();
 }
 
-BOOL CFilesWindow::OnLButtonDown(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnLButtonDown(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     KillQuickRenameTimer(); // zamezime pripadnemu otevreni QuickRenameWindow
@@ -757,7 +757,7 @@ BOOL CFilesWindow::OnLButtonDown(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
                     if (first != last)
                     {
                         // skupinove odznaceni / oznaceni podle polozky sejmute pri stisku Shift
-                        SetSelRange(SelectItems, first, last);
+                        SetSelectedRange(SelectItems, first, last);
                     }
                     FocusedSinceClick = (index == FocusedIndex);
                     dontSetSince = TRUE;
@@ -767,8 +767,8 @@ BOOL CFilesWindow::OnLButtonDown(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
                 }
                 else // ctrl+lbutton -> norml. sel.
                 {
-                    BOOL select = GetSel(index);
-                    SetSel(!select, index);
+                    BOOL select = GetSelected(index);
+                    SetSelected(!select, index);
                     FocusedSinceClick = (index == FocusedIndex);
                     dontSetSince = TRUE;
                     SetCaretIndex(index, TRUE, TRUE);
@@ -811,7 +811,7 @@ BOOL CFilesWindow::OnLButtonDown(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
     return TRUE;
 }
 
-BOOL CFilesWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     if (BeginDragDrop)
@@ -875,7 +875,7 @@ BOOL CFilesWindow::OnLButtonUp(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
     return FALSE;
 }
 
-BOOL CFilesWindow::OnLButtonDblclk(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnLButtonDblclk(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     KillQuickRenameTimer(); // zamezime pripadnemu otevreni QuickRenameWindow
@@ -904,7 +904,7 @@ BOOL CFilesWindow::OnLButtonDblclk(WPARAM wParam, LPARAM lParam, LRESULT* lResul
     return TRUE;
 }
 
-BOOL CFilesWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     KillQuickRenameTimer(); // zamezime pripadnemu otevreni QuickRenameWindow
@@ -953,7 +953,7 @@ BOOL CFilesWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
                     if (first != last)
                     {
                         // skupinove odznaceni / oznaceni podle prvni polozky
-                        SetSelRange(!GetSel(first), first, last);
+                        SetSelectedRange(!GetSelected(first), first, last);
                     }
                     SetCaretIndex(last, TRUE, TRUE);
                     if (first != last)
@@ -963,9 +963,9 @@ BOOL CFilesWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
                 {
                     DragSelect = TRUE;
                     SetCapture(GetListBoxHWND());
-                    BOOL select = GetSel(index);
+                    BOOL select = GetSelected(index);
                     SelectItems = !select;
-                    SetSel(!select, index);
+                    SetSelected(!select, index);
                     SetCaretIndex(index, TRUE, TRUE);
                     ScrollObject.BeginScroll();
                 }
@@ -1005,7 +1005,7 @@ BOOL CFilesWindow::OnRButtonDown(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
     return TRUE;
 }
 
-BOOL CFilesWindow::OnRButtonUp(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnRButtonUp(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     KillQuickRenameTimer(); // zamezime pripadnemu otevreni QuickRenameWindow
@@ -1053,12 +1053,12 @@ BOOL CFilesWindow::OnRButtonUp(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
         {
             SetCaretIndex(index, TRUE);
 
-            if (GetSelCount() > 0) // existuje oznaceni?
+            if (GetSelectedCount() > 0) // existuje oznaceni?
             {
                 if (index < Dirs->Count && !Dirs->At(index).Selected ||
                     index >= Dirs->Count && !Files->At(index - Dirs->Count).Selected)
                 {                                                   // test jestli kliknul v oznaceni (jinak musime zrusit oznaceni)
-                    SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                    SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                     PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                     UpdateWindow(MainWindow->HWindow);
                 }
@@ -1069,9 +1069,9 @@ BOOL CFilesWindow::OnRButtonUp(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
         }
         else
         {
-            if (GetSelCount() > 0) // musime zrusit oznaceni (toto menu je pro panel - kliknuti za polozkami)
+            if (GetSelectedCount() > 0) // musime zrusit oznaceni (toto menu je pro panel - kliknuti za polozkami)
             {
-                SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                 PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                 UpdateWindow(MainWindow->HWindow);
             }
@@ -1085,7 +1085,7 @@ BOOL CFilesWindow::OnRButtonUp(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
     return FALSE;
 }
 
-BOOL CFilesWindow::IsDragDropSafe(int x, int y)
+BOOL CPanelWindow::IsDragDropSafe(int x, int y)
 {
     // uzivatel nechce nas bezpecnejsi drag-and-drop
     if (!Configuration.UseDragDropMinTime)
@@ -1108,7 +1108,7 @@ BOOL CFilesWindow::IsDragDropSafe(int x, int y)
     return FALSE;
 }
 
-void CFilesWindow::OfferArchiveUpdateIfNeededAux(HWND parent, int textID, BOOL* archMaybeUpdated)
+void CPanelWindow::OfferArchiveUpdateIfNeededAux(HWND parent, int textID, BOOL* archMaybeUpdated)
 {
     *archMaybeUpdated = FALSE;
     if (AssocUsed) // pokud user editoval soubory z archivu, musime je pred operaci s archivem updatnout, jinak bysme makali se starymi verzemi editovanych souboru, ktere jsou ulozene primo v archivu
@@ -1137,13 +1137,13 @@ void CFilesWindow::OfferArchiveUpdateIfNeededAux(HWND parent, int textID, BOOL* 
     }
 }
 
-void CFilesWindow::OfferArchiveUpdateIfNeeded(HWND parent, int textID, BOOL* archMaybeUpdated)
+void CPanelWindow::OfferArchiveUpdateIfNeeded(HWND parent, int textID, BOOL* archMaybeUpdated)
 {
     BeginStopRefresh(); // zadne refreshe nepotrebujeme
 
     OfferArchiveUpdateIfNeededAux(parent, textID, archMaybeUpdated);
 
-    CFilesWindow* otherPanel = MainWindow->LeftPanel == this ? MainWindow->RightPanel : MainWindow->LeftPanel;
+    CPanelWindow* otherPanel = MainWindow->LeftPanel == this ? MainWindow->RightPanel : MainWindow->LeftPanel;
     BOOL otherPanelArchMaybeUpdated = FALSE;
     if (otherPanel->Is(ptZIPArchive) && StrICmp(GetZIPArchive(), otherPanel->GetZIPArchive()) == 0)
     { // stejny archiv je i v druhem panelu, musime provest i jeho update
@@ -1170,7 +1170,7 @@ void CFilesWindow::OfferArchiveUpdateIfNeeded(HWND parent, int textID, BOOL* arc
     EndStopRefresh();
 }
 
-BOOL CFilesWindow::OnMouseMove(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnMouseMove(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     *lResult = 0;
@@ -1208,9 +1208,9 @@ BOOL CFilesWindow::OnMouseMove(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 
                         // pokud jsou oznacene urcite polozky a trhame za nekterou z neoznacenych,
                         // sestrelime select
-                        if (!GetSel(GetCaretIndex()) && GetSelCount() > 0)
+                        if (!GetSelected(GetCaretIndex()) && GetSelectedCount() > 0)
                         {
-                            SetSel(FALSE, -1, TRUE);
+                            SetSelected(FALSE, -1, TRUE);
                             PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
                         }
 
@@ -1296,10 +1296,10 @@ BOOL CFilesWindow::OnMouseMove(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
         if (index >= 0 && index < count)
         {
             int caret = GetCaretIndex();
-            BOOL select = GetSel(index);
+            BOOL select = GetSelected(index);
             if (index != caret || select != (int)SelectItems)
             {
-                SetSelRange(SelectItems, caret, index);
+                SetSelectedRange(SelectItems, caret, index);
                 RepaintListBox(DRAWFLAG_DIRTY_ONLY | DRAWFLAG_SKIP_VISTEST);
                 PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
                 SetCaretIndex(index, TRUE);
@@ -1343,14 +1343,14 @@ BOOL CFilesWindow::OnMouseMove(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
     return FALSE;
 }
 
-BOOL CFilesWindow::CanBeFocused()
+BOOL CPanelWindow::CanBeFocused()
 {
     CALL_STACK_MESSAGE_NONE
     RECT r = ListBox->FilesRect;
     return (r.right - r.left >= MIN_PANELWIDTH);
 }
 
-BOOL CFilesWindow::OnTimer(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnTimer(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     if (wParam == IDT_SINGLECLICKSELECT)
@@ -1365,7 +1365,7 @@ BOOL CFilesWindow::OnTimer(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
             {
                 if (MainWindow->EditMode)
                 {
-                    CFilesWindow* activePanel = MainWindow->GetActivePanel();
+                    CPanelWindow* activePanel = MainWindow->GetActivePanel();
 
                     if (CanBeFocused())
                     {
@@ -1391,7 +1391,7 @@ BOOL CFilesWindow::OnTimer(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
                             if (first != last)
                             {
                                 // skupinove odznaceni / oznaceni podle polozky sejmute pri stisku Shift
-                                SetSelRange(SelectItems, first, last);
+                                SetSelectedRange(SelectItems, first, last);
                                 PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
                             }
                             SetCaretIndex(last, TRUE);
@@ -1400,8 +1400,8 @@ BOOL CFilesWindow::OnTimer(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
                         }
                         else // ctrl+lbutton -> norml. sel.
                         {
-                            BOOL select = GetSel(index);
-                            SetSel(!select, index);
+                            BOOL select = GetSelected(index);
+                            SetSelected(!select, index);
                             SetCaretIndex(index, TRUE, TRUE);
                             PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
                         }
@@ -1450,7 +1450,7 @@ BOOL CFilesWindow::OnTimer(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
     return OnMouseMove(wParam, lParam, lResult);
 }
 
-BOOL CFilesWindow::OnCaptureChanged(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnCaptureChanged(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     if (!PersistentTracking && TrackingSingleClick)
@@ -1461,7 +1461,7 @@ BOOL CFilesWindow::OnCaptureChanged(WPARAM wParam, LPARAM lParam, LRESULT* lResu
     return FALSE;
 }
 
-BOOL CFilesWindow::OnCancelMode(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnCancelMode(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     if (GetCapture() == GetListBoxHWND())
@@ -1546,11 +1546,11 @@ BOOL SetAlphaByMask(void* lpBits, int width, int height, HDC hMaskDC)
 }
 
 HIMAGELIST
-CFilesWindow::CreateDragImage(int cursorX, int cursorY, int& dxHotspot, int& dyHotspot, int& imgWidth, int& imgHeight)
+CPanelWindow::CreateDragImage(int cursorX, int cursorY, int& dxHotspot, int& dyHotspot, int& imgWidth, int& imgHeight)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::CreateDragImage(%d, %d, , , )", cursorX, cursorY);
+    CALL_STACK_MESSAGE3("CPanelWindow::CreateDragImage(%d, %d, , , )", cursorX, cursorY);
     char buff[MAX_PATH];
-    int selCount = GetSelCount();
+    int selCount = GetSelectedCount();
     int iconWidth = 0;
     int itemIndex = 0;
     int totalCount = Dirs->Count + Files->Count;
@@ -1584,9 +1584,9 @@ CFilesWindow::CreateDragImage(int cursorX, int cursorY, int& dxHotspot, int& dyH
             TRACE_E("Invalid itemIndex= " << itemIndex);
             return NULL;
         }
-        if (GetViewMode() == vmBrief || GetViewMode() == vmDetailed)
+        if (GetViewMode() == ViewMode::brief || GetViewMode() == ViewMode::detailed)
         {
-            iconWidth = 1 + IconSizes[ICONSIZE_16] + 1 + 2;
+            iconWidth = 1 + IconSizes[IconSize::size_16x16] + 1 + 2;
             CFileData* f = (itemIndex < Dirs->Count) ? &Dirs->At(itemIndex) : &Files->At(itemIndex - Dirs->Count);
             AlterFileName(buff, f->Name, -1, Configuration.FileNameFormat, 0, itemIndex < Dirs->Count);
             trimWidth = TRUE;
@@ -1608,7 +1608,7 @@ CFilesWindow::CreateDragImage(int cursorX, int cursorY, int& dxHotspot, int& dyH
     SIZE sz;
     GetTextExtentPoint32(hDC, buff, buffLen, &sz);
     width = iconWidth + sz.cx;
-    if (GetViewMode() == vmDetailed && trimWidth)
+    if (GetViewMode() == ViewMode::detailed && trimWidth)
         width = Columns[0].Width; // pokud je sloupec zkraceny, nechceme aby do tazeneho obrazku propadly dalsi sloupce
 
     BITMAPINFOHEADER bmhdr;
@@ -1670,7 +1670,7 @@ CFilesWindow::CreateDragImage(int cursorX, int cursorY, int& dxHotspot, int& dyH
     {
         r.left = 0;
         int oldXOffset = ListBox->XOffset;
-        if (GetViewMode() == vmBrief || GetViewMode() == vmDetailed)
+        if (GetViewMode() == ViewMode::brief || GetViewMode() == ViewMode::detailed)
         {
             ListBox->XOffset = 0; // ovlivnuje posunuti polozky v detailed rezimu
             DrawBriefDetailedItem(hDC, itemIndex, &r, DRAWFLAG_NO_FRAME | DRAWFLAG_NO_STATE | DRAWFLAG_SKIP_VISTEST | DRAWFLAG_DRAGDROP);
@@ -1685,13 +1685,13 @@ CFilesWindow::CreateDragImage(int cursorX, int cursorY, int& dxHotspot, int& dyH
                 //        DrawBriefDetailedItem(hDC, itemIndex, &r, DRAWFLAG_NO_FRAME | DRAWFLAG_NO_STATE | DRAWFLAG_SKIP_VISTEST | DRAWFLAG_DRAGDROP | DRAWFLAG_ICON_ONLY);
             }
             ListBox->XOffset = oldXOffset;
-            if (GetViewMode() == vmBrief) // nevim, co je v brief v XOffsetu, tak sep ojistime, aby nebyl spatny dxHotspot
+            if (GetViewMode() == ViewMode::brief) // nevim, co je v brief v XOffsetu, tak sep ojistime, aby nebyl spatny dxHotspot
                 oldXOffset = 0;
         }
-        else if (GetViewMode() == vmIcons || GetViewMode() == vmThumbnails)
+        else if (GetViewMode() == ViewMode::icons || GetViewMode() == ViewMode::thumbnails)
         {
             // Icons || Thumbnails
-            CIconSizeEnum iconSize = (GetViewMode() == vmIcons) ? ICONSIZE_32 : ICONSIZE_48;
+            IconSize::Value iconSize = (GetViewMode() == ViewMode::icons) ? IconSize::size_32x32 : IconSize::size_48x48;
             DrawIconThumbnailItem(hDC, itemIndex, &r, DRAWFLAG_NO_FRAME | DRAWFLAG_NO_STATE | DRAWFLAG_SKIP_VISTEST | DRAWFLAG_DRAGDROP, iconSize);
             DrawIconThumbnailItem(hMaskDC, itemIndex, &r, DRAWFLAG_NO_FRAME | DRAWFLAG_NO_STATE | DRAWFLAG_MASK | DRAWFLAG_SKIP_VISTEST, iconSize);
             if (ContainsAlpha(lpBits, width, height))
@@ -1701,10 +1701,10 @@ CFilesWindow::CreateDragImage(int cursorX, int cursorY, int& dxHotspot, int& dyH
                 //        DrawIconThumbnailItem(hDC, itemIndex, &r, DRAWFLAG_NO_FRAME | DRAWFLAG_NO_STATE | DRAWFLAG_SKIP_VISTEST | DRAWFLAG_DRAGDROP | DRAWFLAG_ICON_ONLY | DRAWFLAG_SKIP_FRAME, iconSize);
             }
         }
-        else if (GetViewMode() == vmTiles)
+        else if (GetViewMode() == ViewMode::tiles)
         {
             // Tiles
-            CIconSizeEnum iconSize = ICONSIZE_48;
+            IconSize::Value iconSize = IconSize::size_48x48;
             DrawTileItem(hDC, itemIndex, &r, DRAWFLAG_NO_FRAME | DRAWFLAG_NO_STATE | DRAWFLAG_SKIP_VISTEST | DRAWFLAG_DRAGDROP, iconSize);
             DrawTileItem(hMaskDC, itemIndex, &r, DRAWFLAG_NO_FRAME | DRAWFLAG_NO_STATE | DRAWFLAG_MASK | DRAWFLAG_SKIP_VISTEST, iconSize);
             if (ContainsAlpha(lpBits, width, height))
@@ -1859,9 +1859,9 @@ BOOL CopyUNCPathToClipboard(const char* path, const char* name, BOOL isDir, HWND
     return FALSE;
 }
 
-BOOL CFilesWindow::CopyFocusedNameToClipboard(CCopyFocusedNameModeEnum mode)
+BOOL CPanelWindow::CopyFocusedNameToClipboard(CCopyFocusedNameModeEnum mode)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::CopyFocusedNameToClipboard(%d)", mode);
+    CALL_STACK_MESSAGE2("CPanelWindow::CopyFocusedNameToClipboard(%d)", mode);
 
     if (FocusedIndex == 0 && FocusedIndex < Dirs->Count &&
         strcmp(Dirs->At(0).Name, "..") == 0)
@@ -1930,9 +1930,9 @@ BOOL CFilesWindow::CopyFocusedNameToClipboard(CCopyFocusedNameModeEnum mode)
     return FALSE;
 }
 
-BOOL CFilesWindow::CopyCurrentPathToClipboard()
+BOOL CPanelWindow::CopyCurrentPathToClipboard()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::CopyCurrentPathToClipboard()");
+    CALL_STACK_MESSAGE1("CPanelWindow::CopyCurrentPathToClipboard()");
 
     char buff[2 * MAX_PATH];
     buff[0] = 0;
@@ -1966,9 +1966,9 @@ void AddStrToStr(char* dstStr, int dstBufSize, const char* srcStr)
 
 // pripravime predlohu pro promennou 'Columns'
 
-BOOL CFilesWindow::BuildColumnsTemplate()
+BOOL CPanelWindow::BuildColumnsTemplate()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::BuildColumnsTemplate()");
+    CALL_STACK_MESSAGE1("CPanelWindow::BuildColumnsTemplate()");
     // vyprazdnime existujici predlohu
     ColumnsTemplate.DetachMembers();
 
@@ -1977,7 +1977,7 @@ BOOL CFilesWindow::BuildColumnsTemplate()
     if (ViewTemplate->Mode == VIEW_MODE_BRIEF)
     {
         // v brief modu sice nebude zobrazena headerline, ale zajistime pridani sloupce
-        // Name, aby fungovaly testy typu CFilesWindow::IsExtensionInSeparateColumn
+        // Name, aby fungovaly testy typu CPanelWindow::IsExtensionInSeparateColumn
         CColumn column;
         column.CustomData = 0;
         lstrcpy(column.Name, LoadStr(IDS_COLUMN_NAME_NAME));
@@ -2053,9 +2053,9 @@ BOOL CFilesWindow::BuildColumnsTemplate()
     return TRUE;
 }
 
-BOOL CFilesWindow::CopyColumnsTemplateToColumns()
+BOOL CPanelWindow::CopyColumnsTemplateToColumns()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::CopyColumnsTemplateToColumns()");
+    CALL_STACK_MESSAGE1("CPanelWindow::CopyColumnsTemplateToColumns()");
     Columns.DetachMembers();
     int count = ColumnsTemplate.Count;
     if (count > 0)
@@ -2070,7 +2070,7 @@ BOOL CFilesWindow::CopyColumnsTemplateToColumns()
     return TRUE;
 }
 
-void CFilesWindow::DeleteColumnsWithoutData(DWORD columnValidMask)
+void CPanelWindow::DeleteColumnsWithoutData(DWORD columnValidMask)
 {
     columnValidMask &= ValidFileData;
     int i;
@@ -2116,9 +2116,9 @@ void CFilesWindow::DeleteColumnsWithoutData(DWORD columnValidMask)
     }
 }
 
-void CFilesWindow::OnHeaderLineColWidthChanged()
+void CPanelWindow::OnHeaderLineColWidthChanged()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::OnHeaderLineColWidthChanged()");
+    CALL_STACK_MESSAGE1("CPanelWindow::OnHeaderLineColWidthChanged()");
     // prenesu data z panelu do sablony
     BOOL pluginColMaybeChanged = FALSE;
     BOOL leftPanel = (this == MainWindow->LeftPanel);
@@ -2175,7 +2175,7 @@ void CFilesWindow::OnHeaderLineColWidthChanged()
                     ViewTemplate->Columns[colIndex].RightWidth = column->Width;
             }
             else
-                TRACE_E("CFilesWindow::OnHeaderLineColWidthChanged(): unexpected column-ID!");
+                TRACE_E("CPanelWindow::OnHeaderLineColWidthChanged(): unexpected column-ID!");
         }
     }
     // nechame vytvorit novou predlohu (sloupce uz jsou modifikovany)
@@ -2183,7 +2183,7 @@ void CFilesWindow::OnHeaderLineColWidthChanged()
 }
 
 CHeaderLine*
-CFilesWindow::GetHeaderLine()
+CPanelWindow::GetHeaderLine()
 {
     if (ListBox == NULL)
         return NULL;

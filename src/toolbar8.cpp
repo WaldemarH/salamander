@@ -83,7 +83,7 @@ int CPluginsBar::GetNeededHeight()
     CALL_STACK_MESSAGE_NONE
     // i v pripade, ze nedrzime zadnou ikonu budeem vracet spravnou vysku
     int height = CToolBar::GetNeededHeight();
-    int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+    int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
     int minH = 3 + iconSize + 3;
     if (height < minH)
         height = minH;

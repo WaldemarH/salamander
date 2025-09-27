@@ -359,7 +359,7 @@ void CShrinkImage::ProcessRows(DWORD* inBuff, DWORD rowCount)
 // CSalamanderThumbnailMaker
 //
 
-CSalamanderThumbnailMaker::CSalamanderThumbnailMaker(CFilesWindow* window)
+CSalamanderThumbnailMaker::CSalamanderThumbnailMaker(CPanelWindow* window)
 {
     Window = window;
     Buffer = NULL;

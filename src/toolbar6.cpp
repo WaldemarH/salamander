@@ -99,7 +99,7 @@ BOOL CDriveBar::CreateDriveButtons(CDriveBar* copyDrivesListFrom)
         SetCheckedDrive(MainWindow->GetActivePanel(), TRUE);
     else
     {
-        CFilesWindow* panel = this == MainWindow->DriveBar2 ? MainWindow->RightPanel : MainWindow->LeftPanel;
+        CPanelWindow* panel = this == MainWindow->DriveBar2 ? MainWindow->RightPanel : MainWindow->LeftPanel;
         SetCheckedDrive(panel, TRUE);
     }
     SendMessage(HWindow, WM_SETREDRAW, TRUE, 0);
@@ -113,7 +113,7 @@ int CDriveBar::GetNeededHeight()
     CALL_STACK_MESSAGE_NONE
     // i v pripade, ze nedrzime zadnou ikonu budeem vracet spravnou vysku
     int height = CToolBar::GetNeededHeight();
-    int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+    int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
     int minH = 3 + iconSize + 3;
     if (height < minH)
         height = minH;
@@ -132,7 +132,7 @@ void CDriveBar::Execute(DWORD id)
         BOOL fromDropDown;
         if (List->ExecuteItem(index, MainWindow->HWindow, &r, &fromDropDown))
         {
-            CFilesWindow* panel;
+            CPanelWindow* panel;
             if (MainWindow->DriveBar2->HWindow != NULL)
                 panel = bar2 ? MainWindow->RightPanel : MainWindow->LeftPanel;
             else
@@ -192,7 +192,7 @@ void CDriveBar::Execute(DWORD id)
 
             case drvtPluginCmd:
             {
-                // kod prevzaty z fileswn3.cpp, CFilesWindow::ChangeDrive()
+                // kod prevzaty z fileswn3.cpp, CPanelWindow::ChangeDrive()
                 const char* dllName = (const char*)DriveTypeParam;
                 CPluginData* data = Plugins.GetPluginData(dllName);
                 if (data != NULL) // plug-in existuje, jdeme spustit prikaz
@@ -204,7 +204,7 @@ void CDriveBar::Execute(DWORD id)
     }
 }
 
-void CDriveBar::SetCheckedDrive(CFilesWindow* panel, BOOL force)
+void CDriveBar::SetCheckedDrive(CPanelWindow* panel, BOOL force)
 {
     BOOL isDiskOrArchive = panel->Is(ptDisk) || panel->Is(ptZIPArchive);
     if (!force && isDiskOrArchive && strnicmp(CheckedDrive, panel->GetPath(), 2) == 0) // cache
@@ -282,7 +282,7 @@ BOOL CDriveBar::OnContextMenu()
                 else
                     return FALSE; // nemelo by se stat
             }
-            CFilesWindow* panel;
+            CPanelWindow* panel;
             BOOL bar2 = this == MainWindow->DriveBar2;
             if (MainWindow->DriveBar2->HWindow != NULL)
                 panel = bar2 ? MainWindow->RightPanel : MainWindow->LeftPanel;

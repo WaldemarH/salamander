@@ -459,7 +459,7 @@ CSizeResultsDlg::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         // naplnime combobox
 
         DWORD clusterSize = 2048; // nejvic se to asi bude pouzivat pro CDcka
-        CFilesWindow* panel = MainWindow->GetNonActivePanel();
+        CPanelWindow* panel = MainWindow->GetNonActivePanel();
         if (panel->Is(ptDisk))
         {
             DWORD sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters;
@@ -605,7 +605,7 @@ CImportConfigDialog::~CImportConfigDialog()
 {
 }
 
-extern const char* SalamanderConfigurationVersions[SALCFG_ROOTS_COUNT];
+extern const TCHAR* SalamanderConfigurationVersions[SALCFG_ROOTS_COUNT];
 
 void CImportConfigDialog::Transfer(CTransferInfo& ti)
 {

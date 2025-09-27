@@ -381,7 +381,7 @@ CEditLine::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 int selTo = 0;
 
                 BOOL executed = FALSE;
-                CFilesWindow* panel = MainWindow->GetActivePanel();
+                CPanelWindow* panel = MainWindow->GetActivePanel();
                 if (panel->Is(ptDisk)) // spousteni prikazu na disku -> spusteni v DOS Promptu
                 {
                     // lide jsou z TC a ostatnich file manageru navykli menit cestu v panelu pomoci command line
@@ -702,13 +702,13 @@ CEditLine::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         // nastavime panelu promennou SelectedItems, aby chodilo oznacovani
         // pres Shift+sipky je-li focus zde v edit line
-        CFilesWindow* panel = MainWindow->GetActivePanel();
+        CPanelWindow* panel = MainWindow->GetActivePanel();
         BOOL firstPress = (lParam & 0x40000000) == 0;
         // j.r.: Dusek nasel problem, kdy neodrazilo UP do paru k DOWN
         // proto zavadim test na prvni stisk klavesy SHIFT
         if (wParam == VK_SHIFT && firstPress && panel->Dirs->Count + panel->Files->Count > 0)
         {
-            panel->SelectItems = !panel->GetSel(panel->FocusedIndex);
+            panel->SelectItems = !panel->GetSelected(panel->FocusedIndex);
         }
 
         if (MainWindow->EditWindow->Dropped())
@@ -862,7 +862,7 @@ CEditLine::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 char path[MAX_PATH + 1];
                 const char* s;
                 int l;
-                CFilesWindow* p = MainWindow->GetActivePanel();
+                CPanelWindow* p = MainWindow->GetActivePanel();
                 if (p->FocusedIndex >= 0 &&
                     p->FocusedIndex < p->Files->Count + p->Dirs->Count)
                 {
@@ -999,7 +999,7 @@ CEditLine::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         case VK_PRIOR:
         case VK_NEXT:
         {
-            CFilesWindow* activePanel = MainWindow->GetActivePanel();
+            CPanelWindow* activePanel = MainWindow->GetActivePanel();
             LRESULT dummy;
             activePanel->OnSysKeyDown(WM_SYSKEYDOWN, wParam, lParam, &dummy);
             return 0;

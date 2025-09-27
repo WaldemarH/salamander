@@ -19,11 +19,12 @@
 // CTabWindow
 //
 
-CTabWindow::CTabWindow(CFilesWindow* filesWindow) : CWindow(ooStatic) /*, HotTrackItems(10, 5)*/
-                                                    {
-                                                        CALL_STACK_MESSAGE_NONE}
+CTabWindow::CTabWindow(CPanelWindow* filesWindow) : CWindow(ooStatic) /*, HotTrackItems(10, 5)*/
+{
+    CALL_STACK_MESSAGE_NONE
+}
 
-                                                    CTabWindow::~CTabWindow()
+CTabWindow::~CTabWindow()
 {
     CALL_STACK_MESSAGE1("CTabWindow::~CTabWindow()");
 }

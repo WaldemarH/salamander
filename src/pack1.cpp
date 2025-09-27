@@ -566,7 +566,7 @@ BOOL PackScanLine(char* buffer, CSalamanderDirectory& dir, const int index,
 
 //
 // ****************************************************************************
-// BOOL PackList(CFilesWindow *panel, const char *archiveFileName, CSalamanderDirectory &dir,
+// BOOL PackList(CPanelWindow *panel, const char *archiveFileName, CSalamanderDirectory &dir,
 //               CPluginDataInterfaceAbstract *&pluginData, CPluginData *&plugin)
 //
 //   Funkce pro zjisteni obsahu archivu.
@@ -579,7 +579,7 @@ BOOL PackScanLine(char* buffer, CSalamanderDirectory& dir, const int index,
 //        pluginData je interface k datum o sloupcich definovanych plug-inem archivatoru
 //        plugin je zaznam plug-inu, ktery provedl ListArchive
 
-BOOL PackList(CFilesWindow* panel, const char* archiveFileName, CSalamanderDirectory& dir,
+BOOL PackList(CPanelWindow* panel, const char* archiveFileName, CSalamanderDirectory& dir,
               CPluginDataInterfaceAbstract*& pluginData, CPluginData*& plugin)
 {
     CALL_STACK_MESSAGE2("PackList(, %s, , ,)", archiveFileName);
@@ -1335,7 +1335,7 @@ BOOL PackUC2List(const char* archiveFileName, CPackLineArray& lineArray,
 
 //
 // ****************************************************************************
-// BOOL PackUncompress(HWND parent, CFilesWindow *panel, const char *archiveFileName,
+// BOOL PackUncompress(HWND parent, CPanelWindow *panel, const char *archiveFileName,
 //                     CPluginDataInterfaceAbstract *pluginData,
 //                     const char *targetDir, const char *archiveRoot,
 //                     SalEnumSelection nextName, void *param)
@@ -1354,7 +1354,7 @@ BOOL PackUC2List(const char* archiveFileName, CPackLineArray& lineArray,
 //        pluginData je interface pro praci s daty o souborech/adresarich, ktere jsou specificke pro plugin
 //   OUT:
 
-BOOL PackUncompress(HWND parent, CFilesWindow* panel, const char* archiveFileName,
+BOOL PackUncompress(HWND parent, CPanelWindow* panel, const char* archiveFileName,
                     CPluginDataInterfaceAbstract* pluginData,
                     const char* targetDir, const char* archiveRoot,
                     SalEnumSelection nextName, void* param)
@@ -1390,7 +1390,7 @@ BOOL PackUncompress(HWND parent, CFilesWindow* panel, const char* archiveFileNam
 //
 // ****************************************************************************
 // BOOL PackUniversalUncompress(HWND parent, const char *command, TPackErrorTable *const errorTable,
-//                              const char *initDir, BOOL expandInitDir, CFilesWindow *panel,
+//                              const char *initDir, BOOL expandInitDir, CPanelWindow *panel,
 //                              const BOOL supportLongNames, const char *archiveFileName,
 //                              const char *targetDir, const char *archiveRoot,
 //                              SalEnumSelection nextName, void *param, BOOL needANSIListFile)
@@ -1416,7 +1416,7 @@ BOOL PackUncompress(HWND parent, CFilesWindow* panel, const char* archiveFileNam
 //   OUT:
 
 BOOL PackUniversalUncompress(HWND parent, const char* command, TPackErrorTable* const errorTable,
-                             const char* initDir, BOOL expandInitDir, CFilesWindow* panel,
+                             const char* initDir, BOOL expandInitDir, CPanelWindow* panel,
                              const BOOL supportLongNames, const char* archiveFileName,
                              const char* targetDir, const char* archiveRoot,
                              SalEnumSelection nextName, void* param, BOOL needANSIListFile)
@@ -1749,7 +1749,7 @@ const char* WINAPI PackEnumMask(HWND parent, int enumFiles, BOOL* isDir, CQuadWo
 
 //
 // ****************************************************************************
-// BOOL PackUnpackOneFile(CFilesWindow *panel, const char *archiveFileName,
+// BOOL PackUnpackOneFile(CPanelWindow *panel, const char *archiveFileName,
 //                        CPluginDataInterfaceAbstract *pluginData, const char *nameInArchive,
 //                        CFileData *fileData, const char *targetDir, const char *newFileName,
 //                        BOOL *renamingNotSupported)
@@ -1769,7 +1769,7 @@ const char* WINAPI PackEnumMask(HWND parent, int enumFiles, BOOL* isDir, CQuadWo
 //          nepodporuje prejmenovani pri vybalovani, Salamander zobrazi chybovou hlasku
 //   OUT:
 
-BOOL PackUnpackOneFile(CFilesWindow* panel, const char* archiveFileName,
+BOOL PackUnpackOneFile(CPanelWindow* panel, const char* archiveFileName,
                        CPluginDataInterfaceAbstract* pluginData, const char* nameInArchive,
                        CFileData* fileData, const char* targetDir, const char* newFileName,
                        BOOL* renamingNotSupported)

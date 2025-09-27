@@ -43,13 +43,15 @@ struct CHighlightMasksItem
 class CHighlightMasks : public TIndirectArray<CHighlightMasksItem>
 {
 public:
-    CHighlightMasks(DWORD base, DWORD delta, CDeleteType dt = dtDelete)
-        : TIndirectArray<CHighlightMasksItem>(base, delta, dt) {}
+    CHighlightMasks(DWORD base, DWORD delta, CDeleteType dt = dtDelete) : TIndirectArray<CHighlightMasksItem>(base, delta, dt) {}
 
     BOOL Load(CHighlightMasks& source);
 
     // prohleda vsechny masky, pokud najde odpovidajici polozku, vrati na ni ukazatel
     // jinak vrati NULL; 'fileExt' je u adresaru NULL (pripona se musi dohledat)
+    //
+    // search all masks, if it finds a matching item, return a pointer to it
+    // else return NULL; 'fileExt' is NULL in the address book (extension must be found)
     inline CHighlightMasksItem* AgreeMasks(const char* fileName, const char* fileExt, DWORD fileAttr)
     {
         int i;
@@ -287,11 +289,11 @@ struct CConfiguration
     BOOL QuickSearchEnterAlt; // je-li TRUE, bude vstup do QS pres Alt+pismeno
 
     // pro zobrazeni polozek v panelu
-    int FullRowSelect;    // v detailed/brief view lze klikat kamkoliv
-    int FullRowHighlight; // v detailed view je za focusem jeste podbarven zbytek radku
+    int FullRowSelect;    // you can click anywhere in the detailed/brief view
+    int FullRowHighlight; // in the detailed view, the rest of the row behind the focus is still shaded
     int UseIconTincture;  // pro hidden/system/selected/focused polozky
-    int ShowPanelCaption; // bude v directory line zobrazen barevne panel caption?
-    int ShowPanelZoom;    // bude v directory line zobrazeno tlacitko Zoom?
+    int ShowPanelCaption; // will the caption panel be displayed in color in the directory line?
+    int ShowPanelZoom;    // will the Zoom button be displayed in the directory line?
 
     char InfoLineContent[200];
 
@@ -735,25 +737,49 @@ protected:
 
 //
 // ****************************************************************************
-
-#define CFG_COLORS_BUTTONS 5
-
 class CCfgPageColors : public CCommonPropSheetPage
 {
-protected:
-    CColorArrowButton* Items[CFG_COLORS_BUTTONS];
-    CColorArrowButton* Masks[CFG_COLORS_BUTTONS];
+    #define CFG_COLORS_BUTTONS_ITEMS 6
+    #define CFG_COLORS_BUTTONS_MASK 5
 
-    HWND HScheme;
-    HWND HItem;
-    COLORREF TmpColors[NUMBER_OF_COLORS];
+    protected: struct Settings_Item
+    {
+    //Defines
+        public: struct Button
+        {
+        //Data
+            int Label;    // resID of the string with the name of the first color [static before the button]
+            BYTE Index_ColorFg; // the index of the foreground (text) color that it should affect
+            BYTE Index_ColorBk; // the index of the background color to affect
+            BYTE Flags;   // options pro polozku
+        };
 
-    CEditListBox* EditLB;
-    BOOL DisableNotification;
-    CHighlightMasks HighlightMasks;
-    CHighlightMasks* SourceHighlightMasks;
+    //Data
+        int ButtonLabel; // resID string with item name [combobox]
+        Button Buttons[CFG_COLORS_BUTTONS_ITEMS];
+    };
 
-    BOOL Dirty;
+//Data
+    protected: static Settings_Item Data[7];
+
+    protected: CColorArrowButton* Items[CFG_COLORS_BUTTONS_ITEMS];
+    protected: static int Items_ResId_Buttons[CFG_COLORS_BUTTONS_ITEMS];
+    protected: static int Items_ResId_Labels[CFG_COLORS_BUTTONS_ITEMS];
+
+    protected: CColorArrowButton* Masks[CFG_COLORS_BUTTONS_MASK];
+    protected: static int Masks_ResId_Buttons[CFG_COLORS_BUTTONS_MASK];
+    protected: static int Masks_ResId_Labels[CFG_COLORS_BUTTONS_MASK];
+
+    protected: HWND HScheme = NULL;
+    protected: HWND HItem = NULL;
+    protected: COLORREF TmpColors[NUMBER_OF_COLORS];
+
+    protected: CEditListBox* EditLB = NULL;
+    protected: BOOL DisableNotification = FALSE;
+    protected: CHighlightMasks HighlightMasks;
+    protected: CHighlightMasks* SourceHighlightMasks;
+
+    protected: BOOL Dirty = FALSE;
 
 public:
     CCfgPageColors();

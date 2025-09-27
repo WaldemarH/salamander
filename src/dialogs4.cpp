@@ -15,7 +15,7 @@
 #include "codetbl.h"
 #include "execute.h"
 #include "viewer.h"
-#include "find.h"
+#include "find.old.h"
 #include "gui.h"
 
 //****************************************************************************
@@ -514,8 +514,8 @@ CConfiguration::CConfiguration()
     // Find dialog
     SearchFileContent = FALSE;
     FindDialogWindowPlacement.length = 0; // zatim neplatne
-    // sirky sloupce Find dialogu
-    FindColNameWidth = -1; // nechame nastavit podle okna
+    // Find dialog column matches
+    FindColNameWidth = -1; // let's set it according to the window
 
     // Language
     LoadedSLGName[0] = 0;
@@ -3188,137 +3188,151 @@ CCfgPageSystem::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return CCommonPropSheetPage::DialogProc(uMsg, wParam, lParam);
 }
 
-//
-// ****************************************************************************
+//***************************************************************************************************************************************************
 // CCfgPageColors
 //
+#define CCFG_COLORS_MENU_SHOW_SINGLECOLOR 0x01 // Plate is only one color (foreground).
+#define CCFG_COLORS_MENU_ENABLE_BK_DEFAULT 0x04 // Background can take on default values (enable/disable menu item).
+#define CCFG_COLORS_MENU_ENABLE_FG_DEFAULT 0x02 // Foreground can take on default values (enable/disable menu item).
+#define CCFG_COLORS_MENU_ENABLE_FG_NOCOLOR 0x08 // Do not set any color (behave as if no selection or focus is set).
 
-#define CFG7F_SINGLECOLOR 0x01 // platna je pouze jedna barva (foreground)
-#define CFG7F_DEFFG 0x02       // foreground muze nabyvat default hodnot
-#define CFG7F_DEFBK 0x04       // background muze nabyvat default hodnot
-
-struct CConfigurationPage7SubData
-{
-    int Label;    // resID stringu s nazvem prvni barvy [static pred tlacitkem]
-    BYTE ColorFg; // index barvy popredi (textu), kterou to ma ovlivnit
-    BYTE ColorBk; // index barvy pozadi, kterou to ma ovlivnit
-    BYTE Flags;   // options pro polozku
-};
-
-struct CConfigurationPage7Data
-{
-    int ItemLabel; // resID stringu s nazvem polozky [combobox]
-    CConfigurationPage7SubData Items[CFG_COLORS_BUTTONS];
-};
-
-#define PAGE7DATA_COUNT 7
-
-CConfigurationPage7Data Page7Data[PAGE7DATA_COUNT] =
+CCfgPageColors::Settings_Item CCfgPageColors::Data[7] =
     {
-        // barvy polozek v panelu
         {
+        //Colors for 'items in panel'.
             IDS_COLORITEM_PANELITEM,
-            {{IDS_COLORLABEL_NORMAL, ITEM_FG_NORMAL, ITEM_BK_NORMAL, CFG7F_DEFFG | CFG7F_DEFBK},
-             {IDS_COLORLABEL_FOCUSED, ITEM_FG_FOCUSED, ITEM_BK_FOCUSED, CFG7F_DEFFG},
-             {IDS_COLORLABEL_SELECTED, ITEM_FG_SELECTED, ITEM_BK_SELECTED, CFG7F_DEFBK},
-             {IDS_COLORLABEL_FOCUSEDSELECTED, ITEM_FG_FOCSEL, ITEM_BK_FOCSEL, 0},
-             {IDS_COLORLABEL_HIGHLIGHTED, ITEM_FG_HIGHLIGHT, ITEM_BK_HIGHLIGHT, CFG7F_DEFFG | CFG7F_DEFBK}},
+            {
+            //Color buttons.
+                {IDS_COLORLABEL_NORMAL, ITEM_FG_NORMAL, ITEM_BK_NORMAL, CCFG_COLORS_MENU_ENABLE_FG_DEFAULT | CCFG_COLORS_MENU_ENABLE_BK_DEFAULT},
+                {IDS_COLORLABEL_FOCUSED, ITEM_FG_FOCUSED, ITEM_BK_FOCUSED, CCFG_COLORS_MENU_ENABLE_FG_DEFAULT},
+                {IDS_COLORLABEL_SELECTED, ITEM_FG_SELECTED, ITEM_BK_SELECTED, CCFG_COLORS_MENU_ENABLE_BK_DEFAULT},
+                {IDS_COLORLABEL_FOCUSEDSELECTED, ITEM_FG_FOCSEL, ITEM_BK_FOCSEL, 0},
+                {IDS_COLORLABEL_HIGHLIGHTED, ITEM_FG_HIGHLIGHT, ITEM_BK_HIGHLIGHT, CCFG_COLORS_MENU_ENABLE_FG_DEFAULT | CCFG_COLORS_MENU_ENABLE_BK_DEFAULT},
+                {0, 0, 0, 0}
+            },
         },
-        // barvy pera pro ramecek kolem polozky
         {
+        //Colors for 'frame of focused item in panel' (border around the item).
             IDS_COLORITEM_FOCUSEDFRAME,
-            {{IDS_COLORLABEL_ACTIVENORMAL, FOCUS_ACTIVE_NORMAL, 0, CFG7F_SINGLECOLOR | CFG7F_DEFFG},
-             {IDS_COLORLABEL_ACTIVESELECTED, FOCUS_ACTIVE_SELECTED, 0, CFG7F_SINGLECOLOR | CFG7F_DEFFG},
-             {IDS_COLORLABEL_INACTIVENORMAL, FOCUS_FG_INACTIVE_NORMAL, FOCUS_BK_INACTIVE_NORMAL, CFG7F_DEFBK},
-             {IDS_COLORLABEL_INACTIVESELECTED, FOCUS_FG_INACTIVE_SELECTED, FOCUS_BK_INACTIVE_SELECTED, CFG7F_DEFBK},
-             {0, 0, 0, 0}}},
-        // barvy pera pro ramecek kolem thumbnails
+            {
+            //Color buttons.
+                {IDS_COLORLABEL_ACTIVENORMAL, FOCUS_ACTIVE_NORMAL, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR | CCFG_COLORS_MENU_ENABLE_FG_DEFAULT},
+                {IDS_COLORLABEL_ACTIVESELECTED, FOCUS_ACTIVE_SELECTED, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR | CCFG_COLORS_MENU_ENABLE_FG_DEFAULT},
+                {IDS_COLORLABEL_INACTIVENORMAL, FOCUS_FG_INACTIVE_NORMAL, FOCUS_BK_INACTIVE_NORMAL, CCFG_COLORS_MENU_ENABLE_BK_DEFAULT},
+                {IDS_COLORLABEL_INACTIVESELECTED, FOCUS_FG_INACTIVE_SELECTED, FOCUS_BK_INACTIVE_SELECTED, CCFG_COLORS_MENU_ENABLE_BK_DEFAULT},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0}
+            }
+        },
         {
+        //Colors for 'frame around the thumbnails in panel' (border around thumbnails).
             IDS_COLORITEM_THUMBNAILFRAME,
-            {{IDS_COLORLABEL_NORMAL, THUMBNAIL_FRAME_NORMAL, 0, CFG7F_SINGLECOLOR | CFG7F_DEFFG},
-             {IDS_COLORLABEL_FOCUSED, THUMBNAIL_FRAME_FOCUSED, 0, CFG7F_SINGLECOLOR | CFG7F_DEFFG},
-             {IDS_COLORLABEL_SELECTED, THUMBNAIL_FRAME_SELECTED, 0, CFG7F_SINGLECOLOR},
-             {IDS_COLORLABEL_FOCUSEDSELECTED, THUMBNAIL_FRAME_FOCSEL, 0, CFG7F_SINGLECOLOR},
-             {0, 0, 0, 0}}},
-        // barvy pro blend ikonek
+            {
+            //Color buttons.
+                {IDS_COLORLABEL_NORMAL, THUMBNAIL_FRAME_NORMAL, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR | CCFG_COLORS_MENU_ENABLE_FG_DEFAULT},
+                {IDS_COLORLABEL_FOCUSED, THUMBNAIL_FRAME_FOCUSED, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR | CCFG_COLORS_MENU_ENABLE_FG_DEFAULT},
+                {IDS_COLORLABEL_SELECTED, THUMBNAIL_FRAME_SELECTED, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR},
+                {IDS_COLORLABEL_FOCUSEDSELECTED, THUMBNAIL_FRAME_FOCSEL, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0}
+            }
+        },
         {
+        //Colors for 'icon tincture in panel' (blending icons).
             IDS_COLORITEM_BLENDEDICONS,
-            {{IDS_COLORLABEL_SELECTED, ICON_BLEND_SELECTED, 0, CFG7F_SINGLECOLOR | CFG7F_DEFFG},
-             {IDS_COLORLABEL_FOCUSED, ICON_BLEND_FOCUSED, 0, CFG7F_SINGLECOLOR},
-             {IDS_COLORLABEL_FOCUSEDSELECTED, ICON_BLEND_FOCSEL, 0, CFG7F_SINGLECOLOR},
-             {0, 0, 0, 0},
-             {0, 0, 0, 0}}},
-        // barvy progress bary
+            {
+            //Color buttons.
+                {IDS_COLORLABEL_SELECTED, ICON_BLEND_SELECTED, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR | CCFG_COLORS_MENU_ENABLE_FG_DEFAULT | CCFG_COLORS_MENU_ENABLE_FG_NOCOLOR},
+                {IDS_COLORLABEL_FOCUSED, ICON_BLEND_FOCUSED, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR | CCFG_COLORS_MENU_ENABLE_FG_NOCOLOR},
+                {IDS_COLORLABEL_FOCUSEDSELECTED, ICON_BLEND_FOCSEL, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR | CCFG_COLORS_MENU_ENABLE_FG_NOCOLOR},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0}
+            }
+        },
         {
+        //Colors for 'operation progress' (progress bar).
             IDS_COLORITEM_PROGRESS,
-            {{IDS_COLORLABEL_LEFTPART, PROGRESS_FG_SELECTED, PROGRESS_BK_SELECTED, CFG7F_DEFFG | CFG7F_DEFBK},
-             {IDS_COLORLABEL_RIGHTPART, PROGRESS_FG_NORMAL, PROGRESS_BK_NORMAL, CFG7F_DEFFG | CFG7F_DEFBK},
-             {0, 0, 0, 0},
-             {0, 0, 0, 0},
-             {0, 0, 0, 0}}},
-        // barvy titulku panelu
+            {
+                {IDS_COLORLABEL_LEFTPART, PROGRESS_FG_SELECTED, PROGRESS_BK_SELECTED, CCFG_COLORS_MENU_ENABLE_FG_DEFAULT | CCFG_COLORS_MENU_ENABLE_BK_DEFAULT},
+                {IDS_COLORLABEL_RIGHTPART, PROGRESS_FG_NORMAL, PROGRESS_BK_NORMAL, CCFG_COLORS_MENU_ENABLE_FG_DEFAULT | CCFG_COLORS_MENU_ENABLE_BK_DEFAULT},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0}
+            }
+        },
         {
+        //Colors for 'panel caption' (panel title colors).
             IDS_COLORITEM_CAPTION,
-            {{IDS_COLORLABEL_ACTIVE, ACTIVE_CAPTION_FG, ACTIVE_CAPTION_BK, CFG7F_DEFFG | CFG7F_DEFBK},
-             {IDS_COLORLABEL_INACTIVE, INACTIVE_CAPTION_FG, INACTIVE_CAPTION_BK, CFG7F_DEFFG | CFG7F_DEFBK},
-             {0, 0, 0, 0},
-             {0, 0, 0, 0},
-             {0, 0, 0, 0}}},
-        // barvy hot polozky
+            {
+            //Color buttons.
+                {IDS_COLORLABEL_ACTIVE, ACTIVE_CAPTION_FG, ACTIVE_CAPTION_BK, CCFG_COLORS_MENU_ENABLE_FG_DEFAULT | CCFG_COLORS_MENU_ENABLE_BK_DEFAULT},
+                {IDS_COLORLABEL_INACTIVE, INACTIVE_CAPTION_FG, INACTIVE_CAPTION_BK, CCFG_COLORS_MENU_ENABLE_FG_DEFAULT | CCFG_COLORS_MENU_ENABLE_BK_DEFAULT},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0}
+            }
+        },
         {
+        //Colors for 'hot items'.
             IDS_COLORITEM_HOT,
-            {{IDS_COLORLABEL_HOTPANEL, HOT_PANEL, 0, CFG7F_SINGLECOLOR | CFG7F_DEFFG},
-             {IDS_COLORLABEL_HOTACTIVE, HOT_ACTIVE, 0, CFG7F_SINGLECOLOR | CFG7F_DEFFG},
-             {IDS_COLORLABEL_HOTINACTIVE, HOT_INACTIVE, 0, CFG7F_SINGLECOLOR | CFG7F_DEFFG},
-             {0, 0, 0, 0},
-             {0, 0, 0, 0}}},
-};
+            {
+            //Color buttons.
+                {IDS_COLORLABEL_HOTPANEL, HOT_PANEL, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR | CCFG_COLORS_MENU_ENABLE_FG_DEFAULT},
+                {IDS_COLORLABEL_HOTACTIVE, HOT_ACTIVE, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR | CCFG_COLORS_MENU_ENABLE_FG_DEFAULT},
+                {IDS_COLORLABEL_HOTINACTIVE, HOT_INACTIVE, 0, CCFG_COLORS_MENU_SHOW_SINGLECOLOR | CCFG_COLORS_MENU_ENABLE_FG_DEFAULT},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0},
+                {0, 0, 0, 0}
+            }
+         },
+    };
 
-int CConfigurationPage7Items[CFG_COLORS_BUTTONS] = {IDC_C_ITEM1_L, IDC_C_ITEM2_L, IDC_C_ITEM3_L, IDC_C_ITEM4_L, IDC_C_ITEM5_L};
-int CConfigurationPage7Masks[CFG_COLORS_BUTTONS] = {IDC_C_MASK1_L, IDC_C_MASK2_L, IDC_C_MASK3_L, IDC_C_MASK4_L, IDC_C_MASK5_L};
-int CConfigurationPage7ItemsBut[CFG_COLORS_BUTTONS] = {IDC_C_ITEM1_C, IDC_C_ITEM2_C, IDC_C_ITEM3_C, IDC_C_ITEM4_C, IDC_C_ITEM5_C};
-int CConfigurationPage7MasksBut[CFG_COLORS_BUTTONS] = {IDC_C_MASK1_C, IDC_C_MASK2_C, IDC_C_MASK3_C, IDC_C_MASK4_C, IDC_C_MASK5_C};
+int CCfgPageColors::Items_ResId_Buttons[CFG_COLORS_BUTTONS_ITEMS] = {IDC_C_ITEM1_C, IDC_C_ITEM2_C, IDC_C_ITEM3_C, IDC_C_ITEM4_C, IDC_C_ITEM5_C, IDC_C_ITEM6_C};
+int CCfgPageColors::Items_ResId_Labels[CFG_COLORS_BUTTONS_ITEMS] = {IDC_C_ITEM1_L, IDC_C_ITEM2_L, IDC_C_ITEM3_L, IDC_C_ITEM4_L, IDC_C_ITEM5_L, IDC_C_ITEM6_L};
 
-CCfgPageColors::CCfgPageColors()
-    : CCommonPropSheetPage(NULL, HLanguage, IDD_CFGPAGE_COLORS, IDD_CFGPAGE_COLORS, PSP_USETITLE, NULL), HighlightMasks(10, 5)
+int CCfgPageColors::Masks_ResId_Buttons[CFG_COLORS_BUTTONS_MASK] = {IDC_C_MASK1_C, IDC_C_MASK2_C, IDC_C_MASK3_C, IDC_C_MASK4_C, IDC_C_MASK5_C};
+int CCfgPageColors::Masks_ResId_Labels[CFG_COLORS_BUTTONS_MASK] = {IDC_C_MASK1_L, IDC_C_MASK2_L, IDC_C_MASK3_L, IDC_C_MASK4_L, IDC_C_MASK5_L};
+
+CCfgPageColors::CCfgPageColors() : CCommonPropSheetPage(NULL, HLanguage, IDD_CFGPAGE_COLORS, IDD_CFGPAGE_COLORS, PSP_USETITLE, NULL), HighlightMasks(10, 5)
 {
-    HScheme = NULL;
-    HItem = NULL;
-    int i;
-    for (i = 0; i < CFG_COLORS_BUTTONS; i++)
-    {
-        Items[i] = NULL;
-        Masks[i] = NULL;
-    }
+//Initialize variables.
+    memset( TmpColors, 0, sizeof( TmpColors ) );
 
-    EditLB = NULL;
-    DisableNotification = FALSE;
     SourceHighlightMasks = MainWindow->HighlightMasks;
     HighlightMasks.Load(*SourceHighlightMasks);
-
-    Dirty = FALSE;
 }
 
 void CCfgPageColors::Transfer(CTransferInfo& ti)
 {
     CALL_STACK_MESSAGE1("CCfgPageColors::Transfer()");
+
     if (ti.Type == ttDataToWindow)
     {
-        int i;
-        for (i = 0; i < NUMBER_OF_COLORS; i++)
+    //Read user's custom colors.
+        for (auto i = 0; i < NUMBER_OF_COLORS; i++)
             TmpColors[i] = UserColors[i];
 
+    //Set page text.
+        //Set 'Scheme' string list.
         int schemes[5] = {IDS_COLORSCHEME_SALAMANDER, IDS_COLORSCHEME_EXPLORER, IDS_COLORSCHEME_NORTON, IDS_COLORSCHEME_NAVIGATOR, IDS_COLORSCHEME_CUSTOM};
-        for (i = 0; i < 5; i++)
+
+        for (int i = 0, i_max = sizeof( schemes )/sizeof( schemes[0] ); i < i_max; i++)
             SendMessage(HScheme, CB_ADDSTRING, 0, (LPARAM)LoadStr(schemes[i]));
 
-        for (i = 0; i < PAGE7DATA_COUNT; i++)
-            SendMessage(HItem, CB_ADDSTRING, 0, (LPARAM)LoadStr(Page7Data[i].ItemLabel));
+        //Set 'Select item' string list.
+        for (int i = 0, i_max = sizeof( CCfgPageColors::Data )/sizeof( CCfgPageColors::Data[0] ); i < i_max; i++)
+            SendMessage(HItem, CB_ADDSTRING, 0, (LPARAM)LoadStr(CCfgPageColors::Data[i].ButtonLabel));
 
-        int labels[CFG_COLORS_BUTTONS] = {IDS_COLORLABEL_NORMAL, IDS_COLORLABEL_FOCUSED, IDS_COLORLABEL_SELECTED, IDS_COLORLABEL_FOCUSEDSELECTED, IDS_COLORLABEL_HIGHLIGHTED};
-        for (i = 0; i < CFG_COLORS_BUTTONS; i++)
-            SetDlgItemText(HWindow, CConfigurationPage7Masks[i], LoadStr(labels[i]));
+        //Set mask 'color selectors' labels.
+        int labels[CFG_COLORS_BUTTONS_MASK] = {IDS_COLORLABEL_NORMAL, IDS_COLORLABEL_FOCUSED, IDS_COLORLABEL_SELECTED, IDS_COLORLABEL_FOCUSEDSELECTED, IDS_COLORLABEL_HIGHLIGHTED};
 
+        for (int i = 0, i_max = sizeof( labels )/sizeof( labels[0] ); i < i_max; i++)
+            SetDlgItemText(HWindow, Masks_ResId_Labels[i], LoadStr(labels[i]));
+
+    //Select 'Schema'.
         int index = 4; // custom
         if (CurrentColors == SalamanderColors)
             index = 0;
@@ -3329,44 +3343,51 @@ void CCfgPageColors::Transfer(CTransferInfo& ti)
         else if (CurrentColors == NavigatorColors)
             index = 3;
         SendMessage(HScheme, CB_SETCURSEL, index, 0);
+
+    //Reset 'Selecting item'.
         SendMessage(HItem, CB_SETCURSEL, 0, 0);
 
-        // naleju seznam hilight polozek
-        for (i = 0; i < HighlightMasks.Count; i++)
+    //Set 'highlighting files' editor list.
+        //Define masks/rules.
+        for (auto i = 0; i < HighlightMasks.Count; i++)
             EditLB->AddItem((INT_PTR)HighlightMasks[i]);
 
+        //Set default selection to first item in list.
         DisableNotification = TRUE;
         EditLB->SetCurSel(0);
         DisableNotification = FALSE;
+
+    //Define button colors.
         LoadColors();
+
+    //Define selected 'highlighting files' file attributes checkboxes.
         LoadMasks();
         EnableControls();
     }
     else
     {
-        int index = (int)SendMessage(HScheme, CB_GETCURSEL, 0, 0);
-        if (index == 0)
-            CurrentColors = SalamanderColors;
-        else if (index == 1)
-            CurrentColors = ExplorerColors;
-        else if (index == 2)
-            CurrentColors = NortonColors;
-        else if (index == 3)
-            CurrentColors = NavigatorColors;
-        else
+    //Write to configuration.
+        switch ( (int)SendMessage(HScheme, CB_GETCURSEL, 0, 0) )
+        {
+        case 0: CurrentColors = SalamanderColors; break;
+        case 1: CurrentColors = ExplorerColors; break;
+        case 2: CurrentColors = NortonColors; break;
+        case 3: CurrentColors = NavigatorColors; break;
+        default:
         {
             CurrentColors = UserColors;
-            int i;
-            for (i = 0; i < NUMBER_OF_COLORS; i++)
+
+            for ( int i = 0; i < NUMBER_OF_COLORS; i++)
                 UserColors[i] = TmpColors[i];
+            break;
+        }
         }
 
-        ColorsChanged(TRUE, TRUE, FALSE); // sporime cas, nechame zmenit jen barvo-zavisle polozky, neloadime znovu ikony
+        ColorsChanged(TRUE, TRUE, FALSE); // let's save time, let's change only the color-dependent items, don't reload the icons
 
         SourceHighlightMasks->Load(HighlightMasks);
         int errPos;
-        int i;
-        for (i = 0; i < SourceHighlightMasks->Count; i++)
+        for ( int i = 0; i < SourceHighlightMasks->Count; i++)
             SourceHighlightMasks->At(i)->Masks->PrepareMasks(errPos);
     }
 }
@@ -3376,42 +3397,53 @@ void CCfgPageColors::LoadColors()
     CALL_STACK_MESSAGE1("CCfgPageColors::LoadColors()");
 
     COLORREF* tmpColors;
-    int index = (int)SendMessage(HScheme, CB_GETCURSEL, 0, 0);
-    if (index == 0)
-        tmpColors = SalamanderColors;
-    else if (index == 1)
-        tmpColors = ExplorerColors;
-    else if (index == 2)
-        tmpColors = NortonColors;
-    else if (index == 3)
-        tmpColors = NavigatorColors;
-    else
-        tmpColors = TmpColors;
 
-    // nechame vytahnout default hodnoty
+    switch ( (int)SendMessage(HScheme, CB_GETCURSEL, 0, 0) )
+    {
+    case 0: tmpColors = SalamanderColors; break;
+    case 1: tmpColors = ExplorerColors; break;
+    case 2: tmpColors = NortonColors; break;
+    case 3: tmpColors = NavigatorColors; break;
+    default: tmpColors = TmpColors; break;
+    }
+
+    //Extract the default values.
     UpdateDefaultColors(tmpColors, &HighlightMasks, TRUE, TRUE);
 
-    index = (int)SendMessage(HItem, CB_GETCURSEL, 0, 0);
-    CConfigurationPage7Data* data = &Page7Data[index];
+    //Update item's colors.
+    auto* pData = &Data[(int)SendMessage(HItem, CB_GETCURSEL, 0, 0)];
 
-    int i;
-    for (i = 0; i < CFG_COLORS_BUTTONS; i++)
+    for ( int i = 0, i_max = sizeof( Settings_Item::Buttons )/sizeof( Settings_Item::Buttons[0] ) ; i < i_max; i++)
     {
-        CConfigurationPage7SubData* subData = &data->Items[i];
+    //Get button.
+        auto* pButton = &pData->Buttons[i];
+
+    //Set button label.
         const char* label;
-        if (subData->Label != 0)
-            label = LoadStr(subData->Label);
+        if (pButton->Label != 0)
+            label = LoadStr(pButton->Label);
         else
             label = "";
-        SetDlgItemText(HWindow, CConfigurationPage7Items[i], label);
-        if (subData->Label != 0)
+
+        SetDlgItemText(HWindow, Items_ResId_Labels[i], label);
+
+    //Set button color.
+        if (pButton->Label != 0)
         {
-            if (subData->Flags & CFG7F_SINGLECOLOR)
-                Items[i]->SetColor(GetCOLORREF(tmpColors[subData->ColorFg]), GetCOLORREF(tmpColors[subData->ColorFg]));
+            if (pButton->Flags & CCFG_COLORS_MENU_SHOW_SINGLECOLOR)
+            {
+            //Single color button -> use foreground color for both text and background.
+                Items[i]->SetColor(GetCOLORREF(tmpColors[pButton->Index_ColorFg]), GetCOLORREF(tmpColors[pButton->Index_ColorFg]));
+            }
             else
-                Items[i]->SetColor(GetCOLORREF(tmpColors[subData->ColorFg]), GetCOLORREF(tmpColors[subData->ColorBk]));
+            {
+            //Double color button -> separate text and background colors.
+                Items[i]->SetColor(GetCOLORREF(tmpColors[pButton->Index_ColorFg]), GetCOLORREF(tmpColors[pButton->Index_ColorBk]));
+            }
         }
-        ShowWindow(Items[i]->HWindow, subData->Label != 0 ? SW_SHOW : SW_HIDE);
+
+    //Show/Hide button.
+        ShowWindow(Items[i]->HWindow, pButton->Label != 0 ? SW_SHOW : SW_HIDE);
     }
 
     INT_PTR itemID;
@@ -3497,21 +3529,13 @@ void CCfgPageColors::EnableControls()
     EnableWindow(GetDlgItem(HWindow, IDC_C_ENCRYPTED), validItem);
     EnableWindow(GetDlgItem(HWindow, IDC_C_DIRECTORY), validItem);
 
-    if (!validItem)
-        Masks[0]->SetColor(RGB(255, 255, 255), RGB(255, 255, 255));
-    EnableWindow(GetDlgItem(HWindow, IDC_C_MASK1_C), validItem);
-    if (!validItem)
-        Masks[1]->SetColor(RGB(255, 255, 255), RGB(255, 255, 255));
-    EnableWindow(GetDlgItem(HWindow, IDC_C_MASK2_C), validItem);
-    if (!validItem)
-        Masks[2]->SetColor(RGB(255, 255, 255), RGB(255, 255, 255));
-    EnableWindow(GetDlgItem(HWindow, IDC_C_MASK3_C), validItem);
-    if (!validItem)
-        Masks[3]->SetColor(RGB(255, 255, 255), RGB(255, 255, 255));
-    EnableWindow(GetDlgItem(HWindow, IDC_C_MASK4_C), validItem);
-    if (!validItem)
-        Masks[4]->SetColor(RGB(255, 255, 255), RGB(255, 255, 255));
-    EnableWindow(GetDlgItem(HWindow, IDC_C_MASK5_C), validItem);
+    for ( int i = 0, i_max = sizeof( Masks )/sizeof( Masks[0] ); i < i_max; i++ )
+    {
+        if (!validItem)
+            Masks[0]->SetColor(RGB(255, 255, 255), RGB(255, 255, 255));
+
+        EnableWindow(GetDlgItem(HWindow, Masks_ResId_Buttons[i]), validItem);
+    }
 }
 
 void CCfgPageColors::Validate(CTransferInfo& ti)
@@ -3527,8 +3551,7 @@ void CCfgPageColors::Validate(CTransferInfo& ti)
             if (!masks.PrepareMasks(errorPos1))
             {
                 EditLB->SetCurSel(i);
-                SalMessageBox(HWindow, LoadStr(IDS_INCORRECTSYNTAX), LoadStr(IDS_ERRORTITLE),
-                              MB_OK | MB_ICONEXCLAMATION);
+                SalMessageBox(HWindow, LoadStr(IDS_INCORRECTSYNTAX), LoadStr(IDS_ERRORTITLE), MB_OK | MB_ICONEXCLAMATION);
                 ti.ErrorOn(IDC_C_LIST);
                 PostMessage(HWindow, WM_USER_EDIT, errorPos1, errorPos1 + 1);
                 return;
@@ -3537,8 +3560,7 @@ void CCfgPageColors::Validate(CTransferInfo& ti)
     }
 }
 
-INT_PTR
-CCfgPageColors::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CCfgPageColors::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     CALL_STACK_MESSAGE4("CCfgPageColors::DialogProc(0x%X, 0x%IX, 0x%IX)", uMsg, wParam, lParam);
 
@@ -3546,14 +3568,17 @@ CCfgPageColors::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case WM_INITDIALOG:
     {
+    //Retrieve window handles.
         HScheme = GetDlgItem(HWindow, IDC_C_SCHEME);
         HItem = GetDlgItem(HWindow, IDC_C_ITEM);
 
-        int i;
-        for (i = 0; i < 5; i++)
+        for ( int i = 0, i_max = sizeof( Items )/sizeof( Items[0] ); i < i_max; i++ )
         {
-            Items[i] = new CColorArrowButton(HWindow, CConfigurationPage7ItemsBut[i], TRUE);
-            Masks[i] = new CColorArrowButton(HWindow, CConfigurationPage7MasksBut[i], TRUE);
+            Items[i] = new CColorArrowButton(HWindow, Items_ResId_Buttons[i], TRUE);
+        }
+        for ( int i = 0, i_max = sizeof( Masks )/sizeof( Masks[0] ); i < i_max; i++ )
+        {
+            Masks[i] = new CColorArrowButton(HWindow, Masks_ResId_Buttons[i], TRUE);
         }
 
         EditLB = new CEditListBox(HWindow, IDC_C_LIST);
@@ -3562,7 +3587,7 @@ CCfgPageColors::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         EditLB->MakeHeader(IDC_C_LIST_HEADER);
         EditLB->EnableDrag(::GetParent(HWindow));
 
-        // prvky dialogu se maji natahovat podle jeho velikosti, nastavime delici controly
+    //Elements of the dialog should be stretched according to its size, let's set the deli controls.
         ElasticVerticalLayout(1, IDC_C_LIST);
 
         break;
@@ -3596,265 +3621,340 @@ CCfgPageColors::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         }
 
+    //Process color buttons clicks.
+        //Is it one of the color buttons?
         WORD id = LOWORD(wParam);
-        if (id == IDC_C_ITEM1_C || id == IDC_C_ITEM2_C || id == IDC_C_ITEM3_C || id == IDC_C_ITEM4_C || id == IDC_C_ITEM5_C ||
-            id == IDC_C_MASK1_C || id == IDC_C_MASK2_C || id == IDC_C_MASK3_C || id == IDC_C_MASK4_C || id == IDC_C_MASK5_C)
+        BOOL isItem = FALSE;
+        BOOL isMask = FALSE;
+
+        for ( int i = 0, i_max = sizeof( Items_ResId_Buttons )/sizeof( Items_ResId_Buttons[0] ); i < i_max; i++ )
         {
-            CColorArrowButton* button = (CColorArrowButton*)WindowsManager.GetWindowPtr((HWND)lParam);
-            HMENU hMenu = CreatePopupMenu();
+            isItem = isItem || ( Items_ResId_Buttons[i] == id );
+        }
+        for ( int i = 0, i_max = sizeof( Masks_ResId_Buttons )/sizeof( Masks_ResId_Buttons[0] ); i < i_max; i++ )
+        {
+            isMask = isMask || ( Masks_ResId_Buttons[i] == id );
+        }
 
-            BOOL item = (id == IDC_C_ITEM1_C || id == IDC_C_ITEM2_C || id == IDC_C_ITEM3_C || id == IDC_C_ITEM4_C || id == IDC_C_ITEM5_C);
+        //Process item/mask button.
+        if (isItem || isMask)
+        {
+        //Was item's or 'highlighting files's color button clicked?
+            CHighlightMasksItem*    highlightItem = NULL;
 
-            CHighlightMasksItem* highlightItem = NULL;
-            if (!item)
+            if (!isItem)
             {
-                INT_PTR itemID;
+            //'highlighting files' button was clicked -> get selected mask.
+                INT_PTR     itemID;
+
                 EditLB->GetCurSelItemID(itemID);
+
                 if (itemID == -1)
                 {
                     TRACE_E("This should never happen!");
                     break;
                 }
+
                 highlightItem = (CHighlightMasksItem*)itemID;
             }
-            BOOL singleColor = FALSE;
-            BOOL enabledFg = FALSE;
-            BOOL enabledBk = FALSE;
-            BOOL checkedDefaultFg = FALSE;
-            BOOL checkedDefaultBk = FALSE;
-            COLORREF* tmpColors = NULL;
-            CConfigurationPage7Data* data = NULL;
-            CConfigurationPage7SubData* subData = NULL;
-            SALCOLOR* fgColor = NULL;
-            SALCOLOR* bkColor = NULL;
-            if (item)
+
+        //What to show in the dropdown menu?
+            struct MenuItem_Check
             {
-                data = &Page7Data[SendMessage(HItem, CB_GETCURSEL, 0, 0)];
-                int index;
+                public: enum Value
+                {
+                    Custom,
+                    Default,
+                    NoColor
+                };
+            };
 
-                index = (int)SendMessage(HScheme, CB_GETCURSEL, 0, 0);
-                if (index == 0)
-                    tmpColors = SalamanderColors;
-                else if (index == 1)
-                    tmpColors = ExplorerColors;
-                else if (index == 2)
-                    tmpColors = NortonColors;
-                else if (index == 3)
-                    tmpColors = NavigatorColors;
-                else
-                    tmpColors = TmpColors;
+            MenuItem_Check::Value menu_item_bk_check = MenuItem_Check::Custom;
+            BOOL menu_item_bk_enable_default = FALSE;
 
-                if (id == IDC_C_ITEM1_C)
-                    index = 0;
-                else if (id == IDC_C_ITEM2_C)
-                    index = 1;
-                else if (id == IDC_C_ITEM3_C)
-                    index = 2;
-                else if (id == IDC_C_ITEM4_C)
-                    index = 3;
-                else if (id == IDC_C_ITEM5_C)
-                    index = 4;
+            MenuItem_Check::Value  menu_item_fg_check = MenuItem_Check::Custom;
+            BOOL menu_item_fg_enable_default = FALSE;
+            BOOL menu_item_fg_enable_noColor = FALSE;
 
-                subData = &data->Items[index];
+            BOOL menu_showAsSingleColorOnly = FALSE;
 
-                if (GetFValue(tmpColors[subData->ColorFg]) & SCF_DEFAULT)
-                    checkedDefaultFg = TRUE;
-                if (subData->Flags & CFG7F_SINGLECOLOR)
-                    singleColor = TRUE;
-                else if (GetFValue(tmpColors[subData->ColorBk]) & SCF_DEFAULT)
-                    checkedDefaultBk = TRUE;
+            SALCOLOR* pColor_bk = NULL;
+            SALCOLOR* pColor_fg = NULL;
+            Settings_Item* pItem = NULL;
+            Settings_Item::Button* pItem_button = NULL;
 
-                if (subData->Flags & CFG7F_DEFFG)
-                    enabledFg = TRUE;
-                if (subData->Flags & CFG7F_DEFBK)
-                    enabledBk = TRUE;
+            if (isItem)
+            {
+            //Item's button was clicked.
+                //Get schema colors.
+                COLORREF* pColors = NULL;
+
+                switch ( SendMessage(HScheme, CB_GETCURSEL, 0, 0) )
+                {
+                case 0: pColors = SalamanderColors; break;
+                case 1: pColors = ExplorerColors; break;
+                case 2: pColors = NortonColors; break;
+                case 3: pColors = NavigatorColors; break;
+                default: pColors = TmpColors; break;
+                }
+
+                //Get button data.
+                pItem = &Data[SendMessage(HItem, CB_GETCURSEL, 0, 0)];
+
+                for ( int i = 0, i_max = sizeof( Items_ResId_Buttons )/sizeof( Items_ResId_Buttons[0] ); i < i_max; i++ )
+                {
+                //Is it the one we are searching for?
+                    if ( Items_ResId_Buttons[i] != id )
+                    {
+                    //No -> skip it.
+                        continue;
+                    }
+
+                //Found it.
+                    pItem_button = &pItem->Buttons[i];
+                    break;
+                }
+
+                //Show single or double color button?
+                menu_showAsSingleColorOnly = pItem_button->Flags & CCFG_COLORS_MENU_SHOW_SINGLECOLOR;
+
+                //Enable/Disable menu items.
+                if (pItem_button->Flags & CCFG_COLORS_MENU_ENABLE_BK_DEFAULT)
+                    menu_item_bk_enable_default = TRUE;
+                if (pItem_button->Flags & CCFG_COLORS_MENU_ENABLE_FG_DEFAULT)
+                    menu_item_fg_enable_default = TRUE;
+                if (pItem_button->Flags & CCFG_COLORS_MENU_ENABLE_FG_NOCOLOR)
+                    menu_item_fg_enable_noColor = TRUE;
+
+                //Which menu item is checked?
+                const auto index_color_bk = pItem_button->Index_ColorBk;
+                const auto index_color_fg = pItem_button->Index_ColorFg;
+
+                if (GetFValue(pColors[index_color_bk]) & SCF_DEFAULT)
+                    menu_item_bk_check = MenuItem_Check::Default;
+                //else
+                //    menu_item_bk_check = MenuItem_Check::Custom;
+
+                if (GetFValue(pColors[index_color_fg]) & SCF_DEFAULT)
+                    menu_item_fg_check = MenuItem_Check::Default;
+                else if (GetFValue(pColors[index_color_fg]) & SCF_NOCOLOR)
+                    menu_item_fg_check = MenuItem_Check::NoColor;
+                //else
+                //    menu_item_fg_check = MenuItem_Check::Custom;
             }
             else
             {
-                enabledFg = TRUE;
-                enabledBk = TRUE;
+            //'highlighting files' button was clicked.
+                menu_item_bk_enable_default = TRUE;
+                menu_item_fg_enable_default = TRUE;
 
                 switch (id)
                 {
                 case IDC_C_MASK1_C:
                 {
-                    fgColor = &highlightItem->NormalFg;
-                    bkColor = &highlightItem->NormalBk;
+                    pColor_fg = &highlightItem->NormalFg;
+                    pColor_bk = &highlightItem->NormalBk;
                     break;
                 }
-
                 case IDC_C_MASK2_C:
                 {
-                    fgColor = &highlightItem->FocusedFg;
-                    bkColor = &highlightItem->FocusedBk;
+                    pColor_fg = &highlightItem->FocusedFg;
+                    pColor_bk = &highlightItem->FocusedBk;
                     break;
                 }
-
                 case IDC_C_MASK3_C:
                 {
-                    fgColor = &highlightItem->SelectedFg;
-                    bkColor = &highlightItem->SelectedBk;
+                    pColor_fg = &highlightItem->SelectedFg;
+                    pColor_bk = &highlightItem->SelectedBk;
                     break;
                 }
-
                 case IDC_C_MASK4_C:
                 {
-                    fgColor = &highlightItem->FocSelFg;
-                    bkColor = &highlightItem->FocSelBk;
+                    pColor_fg = &highlightItem->FocSelFg;
+                    pColor_bk = &highlightItem->FocSelBk;
                     break;
                 }
-
                 case IDC_C_MASK5_C:
                 {
-                    fgColor = &highlightItem->HighlightFg;
-                    bkColor = &highlightItem->HighlightBk;
+                    pColor_fg = &highlightItem->HighlightFg;
+                    pColor_bk = &highlightItem->HighlightBk;
                     break;
                 }
                 }
 
-                if (GetFValue(*fgColor) & SCF_DEFAULT)
-                    checkedDefaultFg = TRUE;
-                if (GetFValue(*bkColor) & SCF_DEFAULT)
-                    checkedDefaultBk = TRUE;
+                if (GetFValue(*pColor_fg) & SCF_DEFAULT)
+                    menu_item_fg_check = MenuItem_Check::Default;
+                if (GetFValue(*pColor_bk) & SCF_DEFAULT)
+                    menu_item_bk_check = MenuItem_Check::Default;
             }
-            int maxCmd;
-            if (singleColor)
+
+        //Create dropdown menu.
+            struct MenuItem_Id
             {
-                /* slouzi pro skript export_mnu.py, ktery generuje salmenu.mnu pro Translator
-   udrzovat synchronizovane s volanim InsertMenu() dole...
-MENU_TEMPLATE_ITEM CfgPageColorsMenu1[] = 
-{
-  {MNTT_PB, 0
-  {MNTT_IT, IDS_SETCOLOR_CUSTOM
-  {MNTT_IT, IDS_SETCOLOR_SYSTEM
-  {MNTT_PE, 0
-};
-*/
-                InsertMenu(hMenu, 0xFFFFFFFF, checkedDefaultFg ? 0 : MF_CHECKED | MF_BYCOMMAND | MF_STRING, 1, LoadStr(IDS_SETCOLOR_CUSTOM));
-                InsertMenu(hMenu, 0xFFFFFFFF, checkedDefaultFg ? MF_CHECKED : 0 | MF_BYCOMMAND | MF_STRING | enabledFg ? 0
-                                                                                                                       : MF_GRAYED,
-                           2, LoadStr(IDS_SETCOLOR_SYSTEM));
-                maxCmd = 2;
+                public: enum Value
+                {
+                    not_selected    = 0,
+
+                    bk_custom,
+                    bk_default,
+                    fg_custom,
+                    fg_default,
+                    fg_noColor,
+                };
+            };
+
+            HMENU hMenu = CreatePopupMenu();
+
+            if (menu_showAsSingleColorOnly)
+            {
+                InsertMenu(hMenu, 0xFFFFFFFF, ( ( menu_item_fg_check == MenuItem_Check::Custom ) ? MF_CHECKED : 0 ) | MF_BYCOMMAND | MF_STRING, MenuItem_Id::fg_custom, LoadStr(IDS_SETCOLOR_CUSTOM));
+                InsertMenu(hMenu, 0xFFFFFFFF, ( ( menu_item_fg_check == MenuItem_Check::Default ) ? MF_CHECKED : 0 ) | MF_BYCOMMAND | MF_STRING | ( menu_item_fg_enable_default ? 0 : MF_GRAYED ), MenuItem_Id::fg_default, LoadStr(IDS_SETCOLOR_SYSTEM));
+                InsertMenu(hMenu, 0xFFFFFFFF, ( ( menu_item_fg_check == MenuItem_Check::NoColor ) ? MF_CHECKED : 0 ) | MF_BYCOMMAND | MF_STRING | ( menu_item_fg_enable_noColor ? 0 : MF_GRAYED ), MenuItem_Id::fg_noColor, LoadStr(IDS_SETCOLOR_NOCOLOR_FG));
             }
             else
             {
-                /* slouzi pro skript export_mnu.py, ktery generuje salmenu.mnu pro Translator
-   udrzovat synchronizovane s volanim InsertMenu() dole...
-MENU_TEMPLATE_ITEM CfgPageColorsMenu2[] = 
-{
-  {MNTT_PB, 0
-  {MNTT_IT, IDS_SETCOLOR_CUSTOM_FG
-  {MNTT_IT, IDS_SETCOLOR_SYSTEM_FG
-  {MNTT_IT, IDS_SETCOLOR_CUSTOM_BK
-  {MNTT_IT, IDS_SETCOLOR_SYSTEM_BK
-  {MNTT_PE, 0
-};
-MENU_TEMPLATE_ITEM CfgPageColorsMenu3[] = 
-{
-  {MNTT_PB, 0
-  {MNTT_IT, IDS_SETCOLOR_CUSTOM_FG
-  {MNTT_IT, IDS_SETCOLOR_DEFAULT_FG
-  {MNTT_IT, IDS_SETCOLOR_CUSTOM_BK
-  {MNTT_IT, IDS_SETCOLOR_DEFAULT_BK
-  {MNTT_PE, 0
-};
-*/
-                InsertMenu(hMenu, 0xFFFFFFFF, checkedDefaultFg ? 0 : MF_CHECKED | MF_BYCOMMAND | MF_STRING, 1, LoadStr(IDS_SETCOLOR_CUSTOM_FG));
-                int textResID = (item || id == IDC_C_MASK5_C) ? IDS_SETCOLOR_SYSTEM_FG : IDS_SETCOLOR_DEFAULT_FG;
-                InsertMenu(hMenu, 0xFFFFFFFF, checkedDefaultFg ? MF_CHECKED : 0 | MF_BYCOMMAND | MF_STRING | enabledFg ? 0
-                                                                                                                       : MF_GRAYED,
-                           2, LoadStr(textResID));
+                InsertMenu(hMenu, 0xFFFFFFFF, ( ( menu_item_fg_check == MenuItem_Check::Custom ) ? MF_CHECKED : 0 ) | MF_BYCOMMAND | MF_STRING, MenuItem_Id::fg_custom, LoadStr(IDS_SETCOLOR_CUSTOM_FG));
+                InsertMenu(hMenu, 0xFFFFFFFF, ( ( menu_item_fg_check == MenuItem_Check::Default ) ? MF_CHECKED : 0 ) | MF_BYCOMMAND | MF_STRING | ( menu_item_fg_enable_default ? 0 : MF_GRAYED ), MenuItem_Id::fg_default, LoadStr( (isItem || id == IDC_C_MASK5_C) ? IDS_SETCOLOR_SYSTEM_FG : IDS_SETCOLOR_DEFAULT_FG));
+                InsertMenu(hMenu, 0xFFFFFFFF, ( ( menu_item_fg_check == MenuItem_Check::NoColor ) ? MF_CHECKED : 0 ) | MF_BYCOMMAND | MF_STRING | ( menu_item_fg_enable_noColor ? 0 : MF_GRAYED ), MenuItem_Id::fg_noColor, LoadStr(IDS_SETCOLOR_NOCOLOR_FG));
                 InsertMenu(hMenu, 0xFFFFFFFF, MF_BYCOMMAND | MF_SEPARATOR, 0, NULL);
-                InsertMenu(hMenu, 0xFFFFFFFF, checkedDefaultBk ? 0 : MF_CHECKED | MF_BYCOMMAND | MF_STRING, 3, LoadStr(IDS_SETCOLOR_CUSTOM_BK));
-                textResID = (item || id == IDC_C_MASK5_C) ? IDS_SETCOLOR_SYSTEM_BK : IDS_SETCOLOR_DEFAULT_BK;
-                InsertMenu(hMenu, 0xFFFFFFFF, checkedDefaultBk ? MF_CHECKED : 0 | MF_BYCOMMAND | MF_STRING | enabledBk ? 0
-                                                                                                                       : MF_GRAYED,
-                           4, LoadStr(textResID));
-                maxCmd = 4;
+                InsertMenu(hMenu, 0xFFFFFFFF, ( ( menu_item_bk_check == MenuItem_Check::Custom ) ? MF_CHECKED : 0 ) | MF_BYCOMMAND | MF_STRING, MenuItem_Id::bk_custom, LoadStr(IDS_SETCOLOR_CUSTOM_BK));
+                InsertMenu(hMenu, 0xFFFFFFFF, ( ( menu_item_bk_check == MenuItem_Check::Default ) ? MF_CHECKED : 0 ) | MF_BYCOMMAND | MF_STRING | ( menu_item_bk_enable_default ? 0 : MF_GRAYED ), MenuItem_Id::bk_default, LoadStr( (isItem || id == IDC_C_MASK5_C) ? IDS_SETCOLOR_SYSTEM_BK : IDS_SETCOLOR_DEFAULT_BK));
             }
 
-            //        int i;
-            //        for (i = 0; i < maxCmd; i++)
-            //          SetMenuItemBitmaps(hMenu, i + 1, MF_BYCOMMAND, NULL, HMenuCheckDot);
-
+        //Get position of the clicked button.
             TPMPARAMS tpmPar;
             tpmPar.cbSize = sizeof(tpmPar);
-            GetWindowRect(button->HWindow, &tpmPar.rcExclude);
-            DWORD cmd = TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, tpmPar.rcExclude.right, tpmPar.rcExclude.top,
-                                         HWindow, &tpmPar);
-            if (cmd != 0)
-            {
-                int index = (int)SendMessage(HScheme, CB_GETCURSEL, 0, 0);
-                if (index != 4)
-                {
-                    COLORREF* colors;
-                    if (index == 0)
-                        colors = SalamanderColors;
-                    else if (index == 1)
-                        colors = ExplorerColors;
-                    else if (index == 2)
-                        colors = NortonColors;
-                    else if (index == 3)
-                        colors = NavigatorColors;
 
-                    int i;
-                    for (i = 0; i < NUMBER_OF_COLORS; i++)
-                        TmpColors[i] = colors[i];
+            CColorArrowButton* pButton = (CColorArrowButton*)WindowsManager.GetWindowPtr((HWND)lParam);
+            GetWindowRect(pButton->HWindow, &tpmPar.rcExclude);
+
+        //Show menu.
+            DWORD menuId_clicked = TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, tpmPar.rcExclude.right, tpmPar.rcExclude.top, HWindow, &tpmPar);
+
+            if (menuId_clicked != MenuItem_Id::not_selected)
+            {
+            //Menu item was clicked -> what to do?
+                //Did user change a predefined scheme?
+                int index_schema = (int)SendMessage(HScheme, CB_GETCURSEL, 0, 0);
+
+                if (index_schema != 4)
+                {
+                //Yes -> copy predefined scheme colors to custom container.
+                    //Get scheme.
+                    COLORREF* pColors = NULL;
+
+                    switch (index_schema)
+                    {
+                    case 0: pColors = SalamanderColors; break;
+                    case 1: pColors = ExplorerColors; break;
+                    case 2: pColors = NortonColors; break;
+                    case 3: pColors = NavigatorColors; break;
+                    }
+
+                    //Copy to user's color container.
+                    memcpy( TmpColors, pColors, sizeof( TmpColors ) );
+
+                    //Select 'custom' schema.
                     SendMessage(HScheme, CB_SETCURSEL, 4, 0);
                 }
 
-                if (cmd == 1 || cmd == 3)
+                //What to do?
+                switch ( menuId_clicked )
                 {
+                case MenuItem_Id::bk_custom:
+                case MenuItem_Id::fg_custom:
+                {
+                //Show color picker.
                     CHOOSECOLOR cc;
+
                     cc.lStructSize = sizeof(cc);
                     cc.hwndOwner = HWindow;
                     cc.lpCustColors = (LPDWORD)CustomColors;
 
-                    if (cmd == 1)
-                        cc.rgbResult = button->GetTextColor();
+                    if (menuId_clicked == MenuItem_Id::fg_custom)
+                        cc.rgbResult = pButton->GetTextColor();
                     else
-                        cc.rgbResult = button->GetBkgndColor();
+                        cc.rgbResult = pButton->GetBkgndColor();
                     cc.Flags = CC_RGBINIT | CC_FULLOPEN;
+
                     if (ChooseColor(&cc))
                     {
-                        if (item)
+                    //Update selected color and clear defautl/noColor flags.
+                        if (isItem)
                         {
-                            int colorIndex = (cmd == 1) ? subData->ColorFg : subData->ColorBk;
-                            BYTE flags = GetFValue(TmpColors[colorIndex]);
-                            flags &= ~SCF_DEFAULT;
-                            TmpColors[colorIndex] = cc.rgbResult & 0x00ffffff | (((DWORD)flags) << 24);
+                        //Item color.
+                            //Get color.
+                            int index_color = (menuId_clicked == MenuItem_Id::fg_custom) ? pItem_button->Index_ColorFg : pItem_button->Index_ColorBk;
+                            auto& color = TmpColors[index_color];
+
+                            //Clear flags.
+                            BYTE flags = GetFValue(color);
+                            flags &= ~( SCF_DEFAULT | SCF_NOCOLOR );
+
+                            //Update color.
+                            color = ( cc.rgbResult & 0x00ffffff ) | (((DWORD)flags) << 24);
                         }
                         else
                         {
-                            // masks
-                            SALCOLOR* color = (cmd == 1) ? fgColor : bkColor;
-                            BYTE flags = GetFValue(*color);
-                            flags &= ~SCF_DEFAULT;
-                            *color = cc.rgbResult & 0x00ffffff | (((DWORD)flags) << 24);
+                        //'highlighting files' color.
+                            //Get color.
+                            SALCOLOR* pColor = (menuId_clicked == MenuItem_Id::fg_custom) ? pColor_fg : pColor_bk;
+                            auto& color = *pColor;
+
+                            //Clear flags.
+                            BYTE flags = GetFValue(color);
+                            flags &= ~( SCF_DEFAULT | SCF_NOCOLOR );
+
+                            //Update color.
+                            color = ( cc.rgbResult & 0x00ffffff ) | (((DWORD)flags) << 24);
                         }
                     }
+                    break;
                 }
-                else
+                case MenuItem_Id::bk_default:
+                case MenuItem_Id::fg_default:
+                case MenuItem_Id::fg_noColor:   //Uses default color to represent button color.
                 {
-                    // cmd == 2 || cmd == 4
-                    if (item)
+                //Set default/noColor flag.
+                    if (isItem)
                     {
-                        int colorIndex = (cmd == 2) ? subData->ColorFg : subData->ColorBk;
-                        BYTE flags = GetFValue(TmpColors[colorIndex]);
-                        flags |= SCF_DEFAULT;
-                        TmpColors[colorIndex] = TmpColors[colorIndex] & 0x00ffffff | (((DWORD)flags) << 24);
+                    //Item color.
+                        //Get color.
+                        int index_color = (menuId_clicked == MenuItem_Id::bk_default) ? pItem_button->Index_ColorBk : pItem_button->Index_ColorFg;
+                        auto& color = TmpColors[index_color];
+
+                        //Set default flag.
+                        BYTE flags = GetFValue(color);
+                        flags &= ~( SCF_DEFAULT | SCF_NOCOLOR );
+                        flags |= ( menuId_clicked == MenuItem_Id::fg_noColor ) ? SCF_NOCOLOR : SCF_DEFAULT;
+
+                        //Update color.
+                        color = ( color & 0x00ffffff ) | (((DWORD)flags) << 24);
                     }
                     else
                     {
-                        SALCOLOR* color = (cmd == 2) ? fgColor : bkColor;
-                        BYTE flags = GetFValue(*color);
-                        flags |= SCF_DEFAULT;
-                        *color = *color & 0x00ffffff | (((DWORD)flags) << 24);
+                    //'highlighting files' color.
+                        //Get color.
+                        SALCOLOR* pColor = (menuId_clicked == MenuItem_Id::bk_default) ? pColor_bk : pColor_fg;
+                        auto color = *pColor;
+
+                        //Set default flag.
+                        BYTE flags = GetFValue(color);
+                        flags &= ~( SCF_DEFAULT | SCF_NOCOLOR );
+                        flags |= ( menuId_clicked == MenuItem_Id::fg_noColor ) ? SCF_NOCOLOR : SCF_DEFAULT;
+
+                        //Update color.
+                        color = ( color & 0x00ffffff ) | (((DWORD)flags) << 24);
                     }
+                    break;
                 }
-                // natahneme barvy do tlacitek
+                }
+
+            //Reload colors.
                 LoadColors();
             }
+
+        //Free resources.
             DestroyMenu(hMenu);
             return 0;
         }

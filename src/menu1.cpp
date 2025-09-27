@@ -4,85 +4,14 @@
 #include "precomp.h"
 
 #include "menu.h"
+#include "menu_queue.h"
 
 const char* WC_POPUPMENU = "PopupMenuClass";
 
-CMenuWindowQueue MenuWindowQueue;
 COldMenuHookTlsAllocator OldMenuHookTlsAllocator;
 
 //static DWORD MenuMessageHookTimeout = GetTickCount();
 
-//*****************************************************************************
-//
-// CMenuWindowQueue
-//
-
-CMenuWindowQueue::CMenuWindowQueue()
-    : Data(5, 5)
-{
-    CALL_STACK_MESSAGE_NONE
-    UsingData = FALSE;
-    HANDLES(InitializeCriticalSection(&DataCriticalSection));
-}
-
-CMenuWindowQueue::~CMenuWindowQueue()
-{
-    CALL_STACK_MESSAGE_NONE
-    HANDLES(DeleteCriticalSection(&DataCriticalSection));
-}
-
-BOOL CMenuWindowQueue::Add(HWND hWindow)
-{
-    CALL_STACK_MESSAGE1("CMenuWindowQueue::Add()");
-    BOOL isGood;
-    HANDLES(EnterCriticalSection(&DataCriticalSection));
-    Data.Add(hWindow);
-    isGood = Data.IsGood();
-    if (!isGood)
-        Data.ResetState();
-    //  TRACE_I("XXX CMenuWindowQueue::Add() hWnd="<<hex<<hWindow);
-    HANDLES(LeaveCriticalSection(&DataCriticalSection));
-    //  MenuMessageHookTimeout = GetTickCount();
-    return isGood;
-}
-
-void CMenuWindowQueue::Remove(HWND hWindow)
-{
-    CALL_STACK_MESSAGE1("CMenuWindowQueue::Remove()");
-
-    if (UsingData)
-        return;
-    HANDLES(EnterCriticalSection(&DataCriticalSection));
-    UsingData = TRUE;
-    int i;
-    for (i = Data.Count - 1; i >= 0; i--)
-        if (Data[i] == hWindow)
-        {
-            Data.Detach(i);
-            //      TRACE_I("XXX CMenuWindowQueue::Remove() hWnd="<<hex<<hWindow);
-            break;
-        }
-    UsingData = FALSE;
-    HANDLES(LeaveCriticalSection(&DataCriticalSection));
-}
-
-void CMenuWindowQueue::DispatchCloseMenu()
-{
-    CALL_STACK_MESSAGE1("CMenuWindowQueue::DispatchCloseMenu()");
-    if (UsingData)
-        return;
-    HANDLES(EnterCriticalSection(&DataCriticalSection));
-    UsingData = TRUE;
-    int i;
-    for (i = Data.Count - 1; i >= 0; i--)
-    {
-        //    TRACE_I("XXX CMenuWindowQueue::DispatchCloseMenu() hWnd="<<hex<<Data[i]);
-        CWindow::CWindowProc(Data[i], WM_USER_CLOSEMENU, 0, 0);
-    }
-    Data.DetachMembers();
-    UsingData = FALSE;
-    HANDLES(LeaveCriticalSection(&DataCriticalSection));
-}
 
 //*****************************************************************************
 //
@@ -91,8 +20,7 @@ void CMenuWindowQueue::DispatchCloseMenu()
 
 DWORD OldMenuHookTlsIndexHOldHook = 0xFFFFFFFF;
 
-LRESULT CALLBACK
-MenuMessageHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK MenuMessageHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
     CALL_STACK_MESSAGE_NONE
     HHOOK hOldHookProc = NULL;
@@ -101,18 +29,19 @@ MenuMessageHookProc(int nCode, WPARAM wParam, LPARAM lParam)
     if (nCode >= 0)
     {
         CWPSTRUCT* cwp = (CWPSTRUCT*)lParam;
-        if (cwp->message == WM_CANCELMODE || cwp->message == WM_ACTIVATEAPP ||
-            cwp->message == WM_ACTIVATE || cwp->message == WM_NCACTIVATE ||
-            cwp->message == WM_KILLFOCUS)
+        if (
+            ( cwp->message == WM_CANCELMODE )
+            ||
+            ( cwp->message == WM_ACTIVATEAPP )
+            ||
+            ( cwp->message == WM_ACTIVATE )
+            ||
+            ( cwp->message == WM_NCACTIVATE )
+            ||
+            ( cwp->message == WM_KILLFOCUS )
+        )
         {
-            //      if (GetTickCount() - MenuMessageHookTimeout < 500)
-            //        TRACE_I("SKIPPING !!!");
-            //      else
-            //      {
-            //        TRACE_I("XXX MenuMessageHookProc(); message="<<hex<<cwp->message<<" hwnd="<<cwp->hwnd<<" wParam="<<cwp->wParam<<" lParam="<<cwp->lParam);
-            MenuWindowQueue.DispatchCloseMenu();
-            //        MenuMessageHookTimeout = GetTickCount();
-            //      }
+            MenuQueue.Menus_CloseAll_Blocking();
         }
     }
     if (hOldHookProc != NULL)

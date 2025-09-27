@@ -66,8 +66,7 @@ BOOL CHotPathItems::SwapItems(int index1, int index2)
     return TRUE;
 }
 
-void CHotPathItems::FillHotPathsMenu(CMenuPopup* menu, int minCommand, BOOL emptyItems, BOOL emptyEcho,
-                                     BOOL customize, BOOL topSeparator, BOOL forAssign)
+void CHotPathItems::FillHotPathsMenu(CMenuPopup* menu, int minCommand, BOOL emptyItems, BOOL emptyEcho, BOOL customize, BOOL topSeparator, BOOL forAssign)
 {
     CALL_STACK_MESSAGE1("CHotPathItems::FillMenu()");
     char root[MAX_PATH + 100];
@@ -105,7 +104,7 @@ void CHotPathItems::FillHotPathsMenu(CMenuPopup* menu, int minCommand, BOOL empt
             mii.ID = minCommand + i;
             mii.String = root;
             mii.HIcon = assigned ? HFavoritIcon : NULL;
-            menu->InsertItem(0xFFFFFFFF, TRUE, &mii);
+            menu->InsertItem( 0xffffffff, TRUE, &mii);
         }
     }
     int unassignedIndex = GetUnassignedHotPathIndex();
@@ -114,7 +113,7 @@ void CHotPathItems::FillHotPathsMenu(CMenuPopup* menu, int minCommand, BOOL empt
         mii.ID = minCommand + unassignedIndex;
         mii.String = LoadStr(IDS_NEWHOTPATH);
         mii.HIcon = NULL;
-        menu->InsertItem(0xFFFFFFFF, TRUE, &mii);
+        menu->InsertItem( 0xffffffff, TRUE, &mii);
     }
 
     if (!menuIsEmpty && topSeparator)
@@ -130,7 +129,7 @@ void CHotPathItems::FillHotPathsMenu(CMenuPopup* menu, int minCommand, BOOL empt
         mii.Type = MENU_TYPE_STRING;
         mii.State = MENU_STATE_GRAYED;
         mii.String = LoadStr(IDS_EMPTYHOTPATHS);
-        menu->InsertItem(0xFFFFFFFF, TRUE, &mii);
+        menu->InsertItem( 0xffffffff, TRUE, &mii);
     }
 
     if (customize)
@@ -139,7 +138,7 @@ void CHotPathItems::FillHotPathsMenu(CMenuPopup* menu, int minCommand, BOOL empt
         mii.Mask = MENU_MASK_TYPE;
         mii.Type = MENU_TYPE_SEPARATOR;
         mii.HIcon = NULL;
-        menu->InsertItem(0xFFFFFFFF, TRUE, &mii);
+        menu->InsertItem( 0xffffffff, TRUE, &mii);
 
         mii.Mask = MENU_MASK_TYPE | MENU_MASK_ID | MENU_MASK_STATE | MENU_MASK_STRING;
         mii.Type = MENU_TYPE_STRING;
@@ -147,7 +146,7 @@ void CHotPathItems::FillHotPathsMenu(CMenuPopup* menu, int minCommand, BOOL empt
         mii.ID = CM_CUSTOMIZE_HOTPATHS;
         mii.String = LoadStr(IDS_CUSTOMIZE_HOTPATHS);
         mii.HIcon = NULL;
-        menu->InsertItem(0xFFFFFFFF, TRUE, &mii);
+        menu->InsertItem( 0xffffffff, TRUE, &mii);
     }
 }
 
@@ -473,7 +472,7 @@ void CMainWindow::ClearHistory()
 
 void CMainWindow::UpdateDefaultDir(BOOL activePrefered)
 {
-    CFilesWindow *active, *nonactive;
+    CPanelWindow *active, *nonactive;
     if (activePrefered)
     {
         nonactive = GetActivePanel();
@@ -1170,7 +1169,7 @@ BOOL CMainWindow::EditWindowKnowHWND(HWND hwnd)
 void CMainWindow::EditWindowSetDirectory()
 {
     SetWindowTitle(); // aktualni adresar do title bar
-    CFilesWindow* panel = GetActivePanel();
+    CPanelWindow* panel = GetActivePanel();
     if (panel != NULL &&
         (panel->Is(ptDisk) ||
          panel->Is(ptPluginFS) && panel->GetPluginFS()->NotEmpty() &&
@@ -1547,7 +1546,7 @@ void CMainWindow::FillUserMenu2(CMenuPopup* menu, int* iterator, int max)
         {
             mii.Mask = MENU_MASK_TYPE;
             mii.Type = MENU_TYPE_SEPARATOR;
-            menu->InsertItem(0xFFFFFFFF, TRUE, &mii);
+            menu->InsertItem( 0xffffffff, TRUE, &mii);
             break;
         }
 
@@ -1559,7 +1558,7 @@ void CMainWindow::FillUserMenu2(CMenuPopup* menu, int* iterator, int max)
             mii.ID = CM_USERMENU_MIN + *iterator;
             mii.String = UserMenuItems->At(*iterator)->ItemName;
             mii.HIcon = UserMenuItems->At(*iterator)->UMIcon;
-            menu->InsertItem(0xFFFFFFFF, TRUE, &mii);
+            menu->InsertItem( 0xffffffff, TRUE, &mii);
             added++;
             break;
         }
@@ -1577,7 +1576,7 @@ void CMainWindow::FillUserMenu2(CMenuPopup* menu, int* iterator, int max)
             mii.SubMenu = popup;
             mii.String = UserMenuItems->At(*iterator)->ItemName;
             mii.HIcon = UserMenuItems->At(*iterator)->UMIcon;
-            menu->InsertItem(0xFFFFFFFF, TRUE, &mii);
+            menu->InsertItem( 0xffffffff, TRUE, &mii);
             // rekurze
             (*iterator)++;
             FillUserMenu2(popup, iterator, max);
@@ -1598,7 +1597,7 @@ ESCAPE:
         mii.Type = MENU_TYPE_STRING;
         mii.State = MENU_STATE_GRAYED;
         mii.String = LoadStr(IDS_EMPTYUSERMENU);
-        menu->InsertItem(0xFFFFFFFF, TRUE, &mii);
+        menu->InsertItem( 0xffffffff, TRUE, &mii);
     }
 }
 
@@ -1615,14 +1614,14 @@ void CMainWindow::FillUserMenu(CMenuPopup* menu, BOOL customize)
         MENU_ITEM_INFO mii;
         mii.Mask = MENU_MASK_TYPE;
         mii.Type = MENU_TYPE_SEPARATOR;
-        menu->InsertItem(0xFFFFFFFF, TRUE, &mii);
+        menu->InsertItem( 0xffffffff, TRUE, &mii);
         mii.Mask = MENU_MASK_TYPE | MENU_MASK_ID | MENU_MASK_STATE | MENU_MASK_STRING | MENU_MASK_ICON;
         mii.Type = MENU_TYPE_STRING;
         mii.State = 0;
         mii.ID = CM_CUSTOMIZE_USERMENU;
         mii.String = LoadStr(IDS_CUSTOMIZE_HOTPATHS);
         mii.HIcon = NULL;
-        menu->InsertItem(0xFFFFFFFF, TRUE, &mii);
+        menu->InsertItem( 0xffffffff, TRUE, &mii);
     }
 }
 
@@ -1646,8 +1645,8 @@ void CMainWindow::LayoutWindows()
 {
     RECT r;
     GetClientRect(HWindow, &r);
-    SendMessage(HWindow, WM_SIZE, SIZE_RESTORED,
-                MAKELONG(r.right - r.left, r.bottom - r.top));
+
+    SendMessage(HWindow, WM_SIZE, SIZE_RESTORED, MAKELONG(r.right - r.left, r.bottom - r.top));
 }
 
 void CMainWindow::AddTrayIcon(BOOL updateIcon)
@@ -1661,7 +1660,7 @@ void CMainWindow::AddTrayIcon(BOOL updateIcon)
     tnid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     tnid.uCallbackMessage = WM_USER_ICON_NOTIFY;
     int resID = MainWindowIcons[Configuration.GetMainWindowIconIndex()].IconResID;
-    tnid.hIcon = SalLoadIcon(HInstance, resID, IconSizes[ICONSIZE_16]);
+    tnid.hIcon = SalLoadIcon(HInstance, resID, IconSizes[IconSize::size_16x16]);
     lstrcpyn(tnid.szTip, MAINWINDOW_NAME, sizeof(tnid.szTip));
     Shell_NotifyIcon(updateIcon ? NIM_MODIFY : NIM_ADD, &tnid);
     HANDLES(DestroyIcon(tnid.hIcon));
@@ -1700,7 +1699,7 @@ void CMainWindow::GetFormatedPathForTitle(char* path)
     path[0] = 0;
     int titleBarMode = Configuration.TitleBarMode;
     // plugin FS bez podpory pro ziskavani cesty do titulku okna umi zobrazit jen Full Path
-    CFilesWindow* panel = GetActivePanel();
+    CPanelWindow* panel = GetActivePanel();
     if (panel == NULL)
     {
         path[0] = 0;
@@ -1958,689 +1957,906 @@ void CMainWindow::UpdateBottomToolBar()
     BottomToolBar->UpdateItemsState();
 }
 
-CMainWindowsHitTestEnum
-CMainWindow::HitTest(int xPos, int yPos) // screen souradnice
+CMainWindow::MouseLocation::Value CMainWindow::MouseLocation( POINT point )
 {
-    POINT p;
-    p.x = xPos;
-    p.y = yPos;
-    RECT clientRect;
-    RECT r;
-    GetClientRect(HWindow, &clientRect);
-    r = clientRect;
-    MapWindowPoints(HWindow, NULL, (POINT*)&r, 2);
+//Was it clicked inside the main window?
+    //Get main window rect.
+    //
+    //Notice:
+    //Upper-left is always (0, 0).
+    RECT    rect_main;
 
-    // neni-li bod v client area, nezajima nas
-    if (!PtInRect(&r, p))
-        return mwhteNone;
+    GetClientRect( HWindow, &rect_main );
 
-    CMainWindowsHitTestEnum hit = mwhteNone;
+    //Convert main window rect to screen coordinates.
+    RECT    rect_main_screen = rect_main;
 
-    // najdu komu patri bod
-    ScreenToClient(HWindow, &p);
+    MapWindowPoints( HWindow, NULL, (POINT*)&rect_main_screen, 2 );
 
-    // rebar?
-    if (PtInChild(HTopRebar, p))
+    //Was point clicked inside the main window area?
+    MouseLocation::Value    location = MouseLocation::Value::none;
+
+    if ( PtInRect( &rect_main_screen, point ) == 0 )
     {
-        RBHITTESTINFO hti;
-        hti.pt = p;
-        if (SendMessage(HTopRebar, RB_HITTEST, 0, (LPARAM)&hti) == -1 ||
-            hti.flags == RBHT_NOWHERE || hti.iBand == -1) // lehce pretestovane, ale verte salatum...
+    //Mouse was NOT clicked inside main window -> ignore.
+        return location;
+    }
+
+//Which window was clicked?
+    //Convert position relative to client area.
+    ScreenToClient( HWindow, &point );
+
+    //Which window was clicked?
+    //
+    //Notice:
+    //Order of tests is on assumption was is clicked most of the time e.g. file context menu is probably the most often clicked,...
+    if ( PtInChild( LeftPanel->HWindow, point ) != 0 )
+    {
+    //Left panel -> which windows was clicked?
+        if ( PtInChild( LeftPanel->DirectoryLine->HWindow, point ) != 0 )
         {
-            hit = mwhteTopRebar;
+        //Directory line
+            location = MouseLocation::panel_left_dirLine;
+        }
+        else if ( PtInChild( LeftPanel->GetHeaderLineHWND(), point) != 0 )
+        {
+        //Header line
+            location = MouseLocation::panel_left_headerLine;
+        }
+        else if ( PtInChild( LeftPanel->StatusLine->HWindow, point) != 0 )
+        {
+        //Status line
+            location = MouseLocation::panel_left_statusLine;
         }
         else
         {
-            REBARBANDINFO rbi;
-            rbi.cbSize = sizeof(rbi);
-            rbi.fMask = RBBIM_ID;
-            SendMessage(HTopRebar, RB_GETBANDINFO, hti.iBand, (LPARAM)&rbi);
-            switch (rbi.wID)
+        //Working area
+            location = MouseLocation::panel_left_workingArea;
+        }
+    }
+    else if ( PtInChild( RightPanel->HWindow, point ) != 0 )
+    {
+    //Right panel -> which windows was clicked?
+        if ( PtInChild( RightPanel->DirectoryLine->HWindow, point ) != 0 )
+        {
+        //Directory line
+            location = MouseLocation::panel_right_dirLine;
+        }
+        else if ( PtInChild( RightPanel->GetHeaderLineHWND(), point) != 0 )
+        {
+        //Header line
+            location = MouseLocation::panel_right_headerLine;
+        }
+        else if ( PtInChild( RightPanel->StatusLine->HWindow, point) != 0 )
+        {
+        //Status line
+            location = MouseLocation::panel_right_statusLine;
+        }
+        else
+        {
+        //Working area
+            location = MouseLocation::panel_right_workingArea;
+        }
+    }
+    else if ( PtInChild( HTopRebar, point ) != 0 )
+    {
+    //Top rebar -> was it one of the toolbars or a rebar it self?
+        RBHITTESTINFO    hti = { .pt = point };
+
+        if (
+            ( SendMessage( HTopRebar, RB_HITTEST, 0, (LPARAM)&hti ) == -1 )
+            ||
+            ( hti.flags == RBHT_NOWHERE )
+            ||
+            ( hti.iBand == -1 )
+        )
+        {
+        //Click was on the rebar it self.
+            location = MouseLocation::rebar_top;
+        }
+        else
+        {
+        //One of the toolbars was clicked -> which one?
+            //Get toolbar id.
+            REBARBANDINFO   rbi = { .cbSize = sizeof( REBARBANDINFO ), .fMask = RBBIM_ID };
+
+            SendMessage( HTopRebar, RB_GETBANDINFO, hti.iBand, (LPARAM)&rbi );
+
+            //Convert to enum.
+            switch ( rbi.wID )
             {
-            case BANDID_MENU:
-                hit = mwhteMenu;
-                break;
-            case BANDID_TOPTOOLBAR:
-                hit = mwhteTopToolbar;
-                break;
-            case BANDID_PLUGINSBAR:
-                hit = mwhtePluginsBar;
-                break;
-            case BANDID_UMTOOLBAR:
-                hit = mwhteUMToolbar;
-                break;
-            case BANDID_HPTOOLBAR:
-                hit = mwhteHPToolbar;
-                break;
-            case BANDID_DRIVEBAR:
-                hit = mwhteDriveBar;
-                break;
-            case BANDID_DRIVEBAR2:
-                hit = mwhteDriveBar;
-                break;
-            case BANDID_WORKER:
-                hit = mwhteWorker;
-                break;
+            case BANDID_MENU: location = MouseLocation::menu; break;
+            case BANDID_TOPTOOLBAR: location = MouseLocation::toolbar_top; break;
+            case BANDID_PLUGINSBAR: location = MouseLocation::toolbar_plugins; break;
+            case BANDID_UMTOOLBAR: location = MouseLocation::toolbar_userMenu; break;
+            case BANDID_HPTOOLBAR: location = MouseLocation::toolbar_hotPaths; break;
+            case BANDID_DRIVEBAR: location = MouseLocation::toolbar_drive; break;
+            case BANDID_DRIVEBAR2: location = MouseLocation::toolbar_drive; break;
+            case BANDID_WORKER: location = MouseLocation::worker; break;
             default:
             {
-                TRACE_E("Unknown band in rebar id = " << rbi.wID);
-                hit = mwhteTopRebar;
+                TRACE_E( "Unknown band in rebar id = " << rbi.wID );
+                location = MouseLocation::rebar_top;
             }
             }
         }
     }
-
-    // middle toolbar?
-    if (hit == mwhteNone)
+    else if ( PtInChild( MiddleToolBar->HWindow, point ) != 0 )
     {
-        if (PtInChild(MiddleToolBar->HWindow, p))
-            hit = mwhteMiddleToolbar;
+    //Middle toolbar
+        location = MouseLocation::toolbar_middle;
     }
-
-    // command line?
-    if (hit == mwhteNone)
+    else if ( PtInChild( EditWindow->HWindow, point ) )
     {
-        if (PtInChild(EditWindow->HWindow, p))
-            hit = mwhteCmdLine;
+    //Command line window
+        location = MouseLocation::commandLine;
     }
-
-    // bottom toolbar?
-    if (hit == mwhteNone)
+    else if ( PtInChild( BottomToolBar->HWindow, point ) != 0 )
     {
-        if (PtInChild(((CWindow*)BottomToolBar)->HWindow, p))
-            hit = mwhteBottomToolbar;
+    //Bottom toolbar
+        location = MouseLocation::toolbar_bottom;
     }
-
-    // split line?
-    if (hit == mwhteNone)
+    else
     {
-        GetSplitRect(r);
-        if (PtInRect(&r, p))
-            hit = mwhteSplitLine;
-    }
+    //Was it maybe split line?
+        RECT    rect_splitLine;
 
-    // left panel?
-    if (hit == mwhteNone)
-    {
-        if (PtInChild(LeftPanel->HWindow, p))
+        GetSplitRect( rect_splitLine );
+
+        if ( PtInRect( &rect_splitLine, point ) != 0 )
         {
-            if (PtInChild(LeftPanel->DirectoryLine->HWindow, p))
-                hit = mwhteLeftDirLine;
-            else if (PtInChild(LeftPanel->GetHeaderLineHWND(), p))
-                hit = mwhteLeftHeaderLine;
-            else if (PtInChild(LeftPanel->StatusLine->HWindow, p))
-                hit = mwhteLeftStatusLine;
-            else
-                hit = mwhteLeftWorkingArea;
+            location = MouseLocation::splitLine_middleToolbar;
         }
     }
 
-    // right panel?
-    if (hit == mwhteNone)
-    {
-        if (PtInChild(RightPanel->HWindow, p))
-        {
-            if (PtInChild(RightPanel->DirectoryLine->HWindow, p))
-                hit = mwhteRightDirLine;
-            else if (PtInChild(RightPanel->GetHeaderLineHWND(), p))
-                hit = mwhteRightHeaderLine;
-            else if (PtInChild(RightPanel->StatusLine->HWindow, p))
-                hit = mwhteRightStatusLine;
-            else
-                hit = mwhteRightWorkingArea;
-        }
-    }
-
-    return hit;
+    return location;
 }
 
-void CMainWindow::OnWmContextMenu(HWND hWnd, int xPos, int yPos)
+void CMainWindow::OnWmContextMenu( const HWND hWnd, const POINT point_screen )
 {
-    CALL_STACK_MESSAGE3("CMainWindow::OnWmContextMenu(, %d, %d)", xPos, yPos);
+    CALL_STACK_MESSAGE3( "CMainWindow::OnWmContextMenu(, %d, %d)", point_screen.x, point_screen.y );
 
-    CMainWindowsHitTestEnum hit = HitTest(xPos, yPos);
+//Which window was clicked?
+    const auto      location = MouseLocation( point_screen );
 
-    if (hit == mwhteNone)
-        return;
-
-    BOOL mainClass = (hit == mwhteTopRebar || hit == mwhteMenu || hit == mwhteTopToolbar ||
-                      hit == mwhteUMToolbar || hit == mwhteDriveBar || hit == mwhteCmdLine ||
-                      hit == mwhteBottomToolbar || hit == mwhteMiddleToolbar ||
-                      hit == mwhteHPToolbar || hit == mwhtePluginsBar);
-    BOOL leftPanel = (hit == mwhteLeftDirLine || hit == mwhteLeftHeaderLine ||
-                      hit == mwhteLeftStatusLine);
-    BOOL panelClass = (leftPanel || hit == mwhteRightDirLine || hit == mwhteRightHeaderLine ||
-                       hit == mwhteRightStatusLine);
-
-    // vytvorim menu
-    CMenuPopup menu;
-
-    menu.SetImageList(HGrayToolBarImageList, TRUE);
-    menu.SetHotImageList(HHotToolBarImageList, TRUE);
-
-    // pripravim si separator
-    MENU_ITEM_INFO miiSep;
-    miiSep.Mask = MENU_MASK_TYPE;
-    miiSep.Type = MENU_TYPE_SEPARATOR;
-
-    MENU_ITEM_INFO mii;
-    mii.Mask = MENU_MASK_TYPE | MENU_MASK_ID | MENU_MASK_STATE | MENU_MASK_STRING | MENU_MASK_SUBMENU | MENU_MASK_IMAGEINDEX;
-    mii.Type = MENU_TYPE_STRING;
-    mii.State = 0;
-    mii.ImageIndex = -1;
-    mii.SubMenu = NULL;
-
-    // naplnim ho
-    if (hit == mwhteSplitLine)
+    switch ( location )
     {
-        char buff[20];
-        int i;
-        for (i = 2; i < 9; i++)
+    case MouseLocation::commandLine:
+    case MouseLocation::menu:
+    case MouseLocation::rebar_top:
+    case MouseLocation::toolbar_bottom:
+    case MouseLocation::toolbar_drive:
+    case MouseLocation::toolbar_hotPaths:
+    case MouseLocation::toolbar_middle:
+    case MouseLocation::toolbar_plugins:
+    case MouseLocation::toolbar_userMenu:
+    case MouseLocation::toolbar_top:
+    case MouseLocation::worker:
+    {
+    //Main window child.
+        OnWmContextMenu_Main( hWnd, point_screen, location );
+        break;
+    }
+    case MouseLocation::panel_left_dirLine:
+    case MouseLocation::panel_left_headerLine:
+    case MouseLocation::panel_left_statusLine:
+    case MouseLocation::panel_left_workingArea:
+    case MouseLocation::panel_right_dirLine:
+    case MouseLocation::panel_right_headerLine:
+    case MouseLocation::panel_right_statusLine:
+    case MouseLocation::panel_right_workingArea:
+    {
+    //Left or right panel.
+        OnWmContextMenu_Panel( hWnd, point_screen, location );
+        break;
+    }
+    case MouseLocation::splitLine_middleToolbar:
+    {
+    //Split line at middle toolbar.
+        OnWmContextMenu_SplitLine( point_screen );
+        break;
+    }
+    }
+}
+void CMainWindow::OnWmContextMenu_Main( const HWND hWnd, const POINT& point_screen, MouseLocation::Value location )
+{
+//Initialize menu.
+    CMenuPopup      menu;
+
+    menu.SetImageList( HGrayToolBarImageList, TRUE );
+    menu.SetHotImageList( HHotToolBarImageList, TRUE );
+
+    //Initialize menu item info structures.
+    MENU_ITEM_INFO  mii_item =
+    {
+        .Mask = MENU_MASK_TYPE | MENU_MASK_ID | MENU_MASK_STATE | MENU_MASK_STRING | MENU_MASK_SUBMENU | MENU_MASK_IMAGEINDEX,
+        .Type = MENU_TYPE_STRING,
+        .State = 0,
+        .SubMenu = NULL,
+        .ImageIndex = -1
+    };
+    MENU_ITEM_INFO  mii_separator =
+    {
+        .Mask = MENU_MASK_TYPE,
+        .Type = MENU_TYPE_SEPARATOR
+    };
+
+//Insert menu items.
+    struct MenuItem_Id
+    {
+        public: enum Value
         {
-            sprintf(buff, "&%d0 / %d0", i, 10 - i);
-            mii.ID = i;
-            mii.State = i == 5 ? MENU_STATE_DEFAULT : 0;
-            mii.String = buff;
-            menu.InsertItem(0xffffffff, TRUE, &mii);
+            commandLine = 1,                //Has to start with 1 as 0 is used as error.
+
+            customize_toolbar_hotPaths,
+            customize_toolbar_middle,
+            customize_toolbar_plugins,
+            customize_toolbar_top,
+            customize_toolbar_userMenu,
+
+            lock_toolbars,
+            show_labels,
+
+            toolbar_bottom,
+            toolbar_drive_double,
+            toolbar_drive_single,
+            toolbar_hotPaths,
+            toolbar_middle,
+            toolbar_plugins,
+            toolbar_top,
+            toolbar_userMenu,
+        };
+    };
+
+    //Top toolbar checkbox.
+    mii_item.String = LoadStr( IDS_TOPTOOLBAR );
+    mii_item.ID = MenuItem_Id::toolbar_top;
+    mii_item.State = TopToolBar->HWindow != NULL ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //Plugins toolbar checkbox.
+    mii_item.String = LoadStr(IDS_PLUGINSBAR);
+    mii_item.ID = MenuItem_Id::toolbar_plugins;
+    mii_item.State = PluginsBar->HWindow != NULL ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //User menu toolbar checkbox.
+    mii_item.String = LoadStr(IDS_UMTOOLBAR);
+    mii_item.ID = MenuItem_Id::toolbar_userMenu;
+    mii_item.State = UMToolBar->HWindow != NULL ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //Hot paths toolbar checkbox.
+    mii_item.String = LoadStr(IDS_HPTOOLBAR);
+    mii_item.ID = MenuItem_Id::toolbar_hotPaths;
+    mii_item.State = HPToolBar->HWindow != NULL ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //'Single' drive toolbar checkbox.
+    mii_item.String = LoadStr(IDS_DRIVEBAR);
+    mii_item.ID = MenuItem_Id::toolbar_drive_single;
+    mii_item.State = (DriveBar->HWindow != NULL && DriveBar2->HWindow == NULL) ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //'Double' drive toolbar checkbox.
+    mii_item.String = LoadStr(IDS_DRIVEBAR2);
+    mii_item.ID = MenuItem_Id::toolbar_drive_double;
+    mii_item.State = (DriveBar->HWindow != NULL && DriveBar2->HWindow != NULL) ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //Middle toolbar checkbox.
+    mii_item.String = LoadStr(IDS_MIDDLETOOLBAR);
+    mii_item.ID = MenuItem_Id::toolbar_middle;
+    mii_item.State = (MiddleToolBar->HWindow != NULL) ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //Command line checkbox.
+    mii_item.String = LoadStr(IDS_COMMANDLINE);
+    mii_item.ID = MenuItem_Id::commandLine;
+    mii_item.State = EditPermanentVisible ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //Bottom toolbar checkbox.
+    mii_item.String = LoadStr(IDS_BOTTOMTOOLBAR);
+    mii_item.ID = MenuItem_Id::toolbar_bottom;
+    mii_item.State = ((CWindow*)BottomToolBar)->HWindow != NULL ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //Separator.
+    menu.InsertItem( 0xffffffff, TRUE, &mii_separator );
+
+    //Lock the toolbars checkbox.
+    mii_item.String = LoadStr(IDS_GRIPSINTOOLBAR);
+    mii_item.ID = MenuItem_Id::lock_toolbars;
+    mii_item.State = Configuration.GripsVisible ? 0 : MENU_STATE_CHECKED;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //Show text labels in user menu toolbar checkbox.
+    mii_item.String = LoadStr(IDS_SHOWLABELS);
+    mii_item.ID = MenuItem_Id::show_labels;
+    mii_item.State = Configuration.UserMenuToolbarLabels ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //Customize toolbar text.
+    switch ( location )
+    {
+    case MouseLocation::toolbar_top:
+    case MouseLocation::toolbar_userMenu:
+    case MouseLocation::toolbar_hotPaths:
+    case MouseLocation::toolbar_middle:
+    case MouseLocation::toolbar_plugins:
+    {
+    //One of toolbars -> insert customize toolbar menu item
+        //Insert separator.
+        menu.InsertItem( 0xffffffff, TRUE, &mii_separator );
+
+        //Get id.
+        DWORD   id = -1;
+
+        switch ( location )
+        {
+        case MouseLocation::toolbar_hotPaths: id = MenuItem_Id::customize_toolbar_hotPaths; break;
+        case MouseLocation::toolbar_middle: id = MenuItem_Id::customize_toolbar_middle; break;
+        case MouseLocation::toolbar_plugins: id = MenuItem_Id::customize_toolbar_plugins; break;
+        case MouseLocation::toolbar_top: id = MenuItem_Id::customize_toolbar_top; break;
+        case MouseLocation::toolbar_userMenu: id = MenuItem_Id::customize_toolbar_userMenu; break;
         }
+
+        //Insert menu item.
+        mii_item.String = LoadStr( IDS_CUSTOMIZE );
+        mii_item.ID = id;
+        mii_item.State = 0;
+        menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+        break;
+    }
     }
 
-    if (mainClass)
+//Show context menu.
+    const auto      cmd = menu.Track( MENU_TRACK_RETURNCMD | MENU_TRACK_RIGHTBUTTON, point_screen.x, point_screen.y, HWindow, NULL );
+
+    if ( cmd == 0 )
     {
-        /* slouzi pro skript export_mnu.py, ktery generuje salmenu.mnu pro Translator
-   udrzovat synchronizovane s volanim InsertItem() dole...
-MENU_TEMPLATE_ITEM ToolbarsCtxMenu[] = 
-{
-  {MNTT_PB, 0
-  {MNTT_IT, IDS_TOPTOOLBAR
-  {MNTT_IT, IDS_PLUGINSBAR
-  {MNTT_IT, IDS_UMTOOLBAR
-  {MNTT_IT, IDS_HPTOOLBAR
-  {MNTT_IT, IDS_DRIVEBAR
-  {MNTT_IT, IDS_DRIVEBAR2
-  {MNTT_IT, IDS_MIDDLETOOLBAR
-  {MNTT_IT, IDS_COMMANDLINE
-  {MNTT_IT, IDS_BOTTOMTOOLBAR
-  {MNTT_IT, IDS_GRIPSINTOOLBAR
-  {MNTT_IT, IDS_SHOWLABELS
-  {MNTT_IT, IDS_CUSTOMIZE
-  {MNTT_PE, 0
-};
-*/
-
-        mii.String = LoadStr(IDS_TOPTOOLBAR);
-        mii.ID = 1;
-        mii.State = TopToolBar->HWindow != NULL ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        mii.String = LoadStr(IDS_PLUGINSBAR);
-        mii.ID = 12;
-        mii.State = PluginsBar->HWindow != NULL ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        mii.String = LoadStr(IDS_UMTOOLBAR);
-        mii.ID = 2;
-        mii.State = UMToolBar->HWindow != NULL ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        mii.String = LoadStr(IDS_HPTOOLBAR);
-        mii.ID = 11;
-        mii.State = HPToolBar->HWindow != NULL ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        mii.String = LoadStr(IDS_DRIVEBAR);
-        mii.ID = 3;
-        mii.State = (DriveBar->HWindow != NULL && DriveBar2->HWindow == NULL) ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        mii.String = LoadStr(IDS_DRIVEBAR2);
-        mii.ID = 4;
-        mii.State = (DriveBar->HWindow != NULL && DriveBar2->HWindow != NULL) ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        mii.String = LoadStr(IDS_MIDDLETOOLBAR);
-        mii.ID = 10;
-        mii.State = (MiddleToolBar->HWindow != NULL) ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        mii.String = LoadStr(IDS_COMMANDLINE);
-        mii.ID = 5;
-        mii.State = EditPermanentVisible ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        mii.String = LoadStr(IDS_BOTTOMTOOLBAR);
-        mii.ID = 6;
-        mii.State = ((CWindow*)BottomToolBar)->HWindow != NULL ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        menu.InsertItem(0xffffffff, TRUE, &miiSep);
-
-        mii.String = LoadStr(IDS_GRIPSINTOOLBAR);
-        mii.ID = 9;
-        mii.State = Configuration.GripsVisible ? 0 : MENU_STATE_CHECKED;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        mii.String = LoadStr(IDS_SHOWLABELS);
-        mii.ID = 8;
-        mii.State = Configuration.UserMenuToolbarLabels ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        if (hit == mwhteTopToolbar || hit == mwhteUMToolbar || hit == mwhteHPToolbar ||
-            hit == mwhteMiddleToolbar || hit == mwhtePluginsBar)
-        {
-            menu.InsertItem(0xffffffff, TRUE, &miiSep);
-
-            mii.String = LoadStr(IDS_CUSTOMIZE);
-            mii.ID = 7;
-            mii.State = 0;
-            menu.InsertItem(0xffffffff, TRUE, &mii);
-        }
-    }
-
-    char HotText[2 * MAX_PATH];
-    int HeaderLineItem = -1; // bude naplnena indexem polozky, pokud user na nejakou kliknul
-
-    if (panelClass)
-    {
-        CFilesWindow* panel = leftPanel ? LeftPanel : RightPanel;
-
-        /* slouzi pro skript export_mnu.py, ktery generuje salmenu.mnu pro Translator
-   udrzovat synchronizovane s volanim InsertItem() dole...
-MENU_TEMPLATE_ITEM DirLineHeaderLineMenu[] = 
-{
-  {MNTT_PB, 0
-  {MNTT_IT, IDS_HDR_ELASTIC
-  {MNTT_IT, IDS_HDR_SMARTMODE
-  {MNTT_IT, IDS_MENU_LEFT_VIEW
-  {MNTT_IT, IDS_DIRECTORYLINE
-  {MNTT_IT, IDS_HEADERLINE
-  {MNTT_IT, IDS_INFORMATIONLINE
-  {MNTT_IT, IDS_CUSTOMIZEPANEL
-  {MNTT_PE, 0
-};
-MENU_TEMPLATE_ITEM DirLinePathMenu[] = 
-{
-  {MNTT_PB, 0
-  {MNTT_IT, IDS_CHANGEDIRECTORY
-  {MNTT_IT, IDS_SETHOTPATH
-  {MNTT_IT, IDS_COPYTOCLIPBOARD
-  {MNTT_IT, IDS_DIRECTORYLINE
-  {MNTT_IT, IDS_HEADERLINE
-  {MNTT_IT, IDS_INFORMATIONLINE
-  {MNTT_IT, IDS_CUSTOMIZEPANEL
-  {MNTT_PE, 0
-};
-MENU_TEMPLATE_ITEM InfoLineMenu[] = 
-{
-  {MNTT_PB, 0
-  {MNTT_IT, IDS_COPYTOCLIPBOARD
-  {MNTT_IT, IDS_DIRECTORYLINE
-  {MNTT_IT, IDS_HEADERLINE
-  {MNTT_IT, IDS_INFORMATIONLINE
-  {MNTT_IT, IDS_CUSTOMIZEPANEL
-  {MNTT_PE, 0
-};
-*/
-
-        if (hit == mwhteLeftHeaderLine || hit == mwhteRightHeaderLine)
-        {
-            CHeaderLine* hdrLine = panel->GetHeaderLine();
-            if (hdrLine != NULL)
-            {
-                // zjistim, nad kterou polozkou header line se bod naleza
-                POINT hdrP;
-                hdrP.x = xPos;
-                hdrP.y = yPos;
-                ScreenToClient(hdrLine->HWindow, &hdrP);
-                int index;
-                BOOL extInName;
-                CHeaderHitTestEnum ht = hdrLine->HitTest(hdrP.x, hdrP.y, index, extInName);
-                if (index >= 0 && (ht == hhtItem || ht == hhtDivider))
-                {
-                    HeaderLineItem = index;
-                    CColumn* column = &panel->Columns[index];
-
-                    mii.String = LoadStr(IDS_HDR_ELASTIC);
-                    mii.ID = 1;
-                    mii.State = column->FixedWidth ? 0 : MENU_STATE_CHECKED;
-                    menu.InsertItem(0xffffffff, TRUE, &mii);
-
-                    if (index == 0 /* sloupec Name */)
-                    {
-                        mii.String = LoadStr(IDS_HDR_SMARTMODE);
-                        mii.ID = 17;
-                        mii.State = GetSmartColumnMode(panel) ? MENU_STATE_CHECKED : 0;
-                        menu.InsertItem(0xffffffff, TRUE, &mii);
-                    }
-                }
-            }
-
-            mii.String = LoadStr(IDS_MENU_LEFT_VIEW);
-            mii.ID = 2;
-            mii.State = 0;
-            menu.InsertItem(0xffffffff, TRUE, &mii);
-
-            menu.InsertItem(0xffffffff, TRUE, &miiSep);
-
-            /*
-      char modiBuff[200];
-      strcpy(modiBuff, LoadStr(IDS_HDR_ELASTIC));
-      mii.String = modiBuff;
-      mii.ID = 1;
-      mii.State = Configuration.ElasticMode ? MENU_STATE_CHECKED : 0;
-      menu.InsertItem(0xffffffff, TRUE, &mii);
-      menu.InsertItem(0xffffffff, TRUE, &miiSep);
-      strcpy(modiBuff, LoadStr(IDS_HDR_EXTENSION));
-      InsertMenu(hMenu, 0xffffffff, MF_BYPOSITION | MF_STRING | 
-                 (Configuration.ShowExtension ? MF_CHECKED : 0),
-                 2, modiBuff);
-      InsertMenu(hMenu, 0xffffffff, MF_BYPOSITION | MF_STRING | 
-                 (Configuration.ShowDosName ? MF_CHECKED : 0),
-                 3, LoadStr(IDS_HDR_DOS));
-      InsertMenu(hMenu, 0xffffffff, MF_BYPOSITION | MF_STRING | 
-                 (Configuration.ShowSize ? MF_CHECKED : 0),
-                 4, LoadStr(IDS_HDR_SIZE));
-      InsertMenu(hMenu, 0xffffffff, MF_BYPOSITION | MF_STRING | 
-                 (Configuration.ShowDate ? MF_CHECKED : 0),
-                 5, LoadStr(IDS_HDR_DATE));
-      InsertMenu(hMenu, 0xffffffff, MF_BYPOSITION | MF_STRING | 
-                 (Configuration.ShowTime ? MF_CHECKED : 0),
-                 6, LoadStr(IDS_HDR_TIME));
-      InsertMenu(hMenu, 0xffffffff, MF_BYPOSITION | MF_STRING | 
-                 (Configuration.ShowAttr ? MF_CHECKED : 0),
-                 7, LoadStr(IDS_HDR_ATTR));
-      InsertMenu(hMenu, 0xffffffff, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-*/
-        }
-
-        // obslouzim hot path
-        if (hit == mwhteLeftDirLine || hit == mwhteRightDirLine)
-        {
-            mii.String = LoadStr(IDS_CHANGEDIRECTORY);
-            mii.ID = 16;
-            mii.State = 0;
-            mii.ImageIndex = IDX_TB_CHANGE_DIR;
-            menu.InsertItem(0xffffffff, TRUE, &mii);
-            mii.ImageIndex = -1;
-
-            menu.InsertItem(0xffffffff, TRUE, &miiSep);
-
-            panel->DirectoryLine->GetHotText(HotText, _countof(HotText));
-            if (strlen(HotText) > 0)
-            {
-                CMenuPopup* popup = new CMenuPopup();
-                if (popup != NULL)
-                {
-                    HotPaths.FillHotPathsMenu(popup, 20, TRUE, FALSE, FALSE, FALSE, TRUE);
-                    mii.SubMenu = popup;
-                    mii.String = LoadStr(IDS_SETHOTPATH);
-                    mii.ID = 0;
-                    mii.State = 0;
-                    menu.InsertItem(0xffffffff, TRUE, &mii);
-                    mii.SubMenu = NULL;
-
-                    mii.String = LoadStr(IDS_COPYTOCLIPBOARD);
-                    mii.ID = 8;
-                    mii.State = 0;
-                    menu.InsertItem(0xffffffff, TRUE, &mii);
-
-                    menu.InsertItem(0xffffffff, TRUE, &miiSep);
-                }
-            }
-        }
-
-        // obslouzim hot text v info line
-        if (hit == mwhteLeftStatusLine || hit == mwhteRightStatusLine)
-        {
-            panel->StatusLine->GetHotText(HotText, _countof(HotText));
-            if (strlen(HotText) > 0)
-            {
-                mii.String = LoadStr(IDS_COPYTOCLIPBOARD);
-                mii.ID = 9;
-                mii.State = 0;
-                menu.InsertItem(0xffffffff, TRUE, &mii);
-
-                menu.InsertItem(0xffffffff, TRUE, &miiSep);
-            }
-        }
-
-        mii.String = LoadStr(IDS_DIRECTORYLINE);
-        mii.ID = 11;
-        mii.State = panel->DirectoryLine->HWindow != NULL ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        mii.String = LoadStr(IDS_HEADERLINE);
-        mii.ID = 12;
-        mii.State = (panel->GetViewMode() == vmDetailed ? 0 : (MENU_STATE_GRAYED)) |
-                    (panel->GetViewMode() == vmDetailed && panel->HeaderLineVisible ? MENU_STATE_CHECKED : 0);
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        mii.String = LoadStr(IDS_INFORMATIONLINE);
-        mii.ID = 13;
-        mii.State = panel->StatusLine->HWindow != NULL ? MENU_STATE_CHECKED : 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-
-        menu.InsertItem(0xffffffff, TRUE, &miiSep);
-
-        mii.String = LoadStr(IDS_CUSTOMIZEPANEL);
-        mii.ID = 15;
-        mii.State = 0;
-        menu.InsertItem(0xffffffff, TRUE, &mii);
-    }
-
-    // vybalim menu
-    int cmd = menu.Track(MENU_TRACK_RETURNCMD | MENU_TRACK_RIGHTBUTTON,
-                         xPos, yPos, HWindow, NULL);
-    if (cmd == 0)
-        return;
-
-    // vyhodnotim vysledek
-    if (hit == mwhteSplitLine)
-    {
-        SplitPosition = (double)cmd / 10;
-        LayoutWindows();
+    //No item was clicked -> stop execution.
         return;
     }
 
-    if (mainClass)
+//Handle mouse click.
+    switch ( cmd )
     {
-        int cm = 0;
-        switch (cmd)
+    case MenuItem_Id::commandLine:
+    case MenuItem_Id::lock_toolbars:
+    case MenuItem_Id::show_labels:
+    case MenuItem_Id::toolbar_bottom:
+    case MenuItem_Id::toolbar_drive_double:
+    case MenuItem_Id::toolbar_drive_single:
+    case MenuItem_Id::toolbar_hotPaths:
+    case MenuItem_Id::toolbar_middle:
+    case MenuItem_Id::toolbar_plugins:
+    case MenuItem_Id::toolbar_top:
+    case MenuItem_Id::toolbar_userMenu:
+    {
+    //Regular menu item -> send command.
+        //Get command id.
+        int     cm = 0;
+
+        switch ( cmd )
         {
-        case 1:
-            cm = CM_TOGGLETOPTOOLBAR;
-            break;
-        case 2:
-            cm = CM_TOGGLEUSERMENUTOOLBAR;
-            break;
-        case 3:
-            cm = CM_TOGGLEDRIVEBAR;
-            break;
-        case 4:
-            cm = CM_TOGGLEDRIVEBAR2;
-            break;
-        case 5:
-            cm = CM_TOGGLEEDITLINE;
-            break;
-        case 6:
-            cm = CM_TOGGLEBOTTOMTOOLBAR;
-            break;
-        case 8:
-            cm = CM_TOGGLE_UMLABELS;
-            break;
-        case 9:
-            cm = CM_TOGGLE_GRIPS;
-            break;
-        case 10:
-            cm = CM_TOGGLEMIDDLETOOLBAR;
-            break;
-        case 11:
-            cm = CM_TOGGLEHOTPATHSBAR;
-            break;
-        case 12:
-            cm = CM_TOGGLEPLUGINSBAR;
-            break;
+        case MenuItem_Id::commandLine: cm = CM_TOGGLEEDITLINE; break;
+        case MenuItem_Id::lock_toolbars: cm = CM_TOGGLE_GRIPS; break;
+        case MenuItem_Id::show_labels: cm = CM_TOGGLE_UMLABELS; break;
+        case MenuItem_Id::toolbar_bottom: cm = CM_TOGGLEBOTTOMTOOLBAR; break;
+        case MenuItem_Id::toolbar_drive_double: cm = CM_TOGGLEDRIVEBAR2; break;
+        case MenuItem_Id::toolbar_drive_single: cm = CM_TOGGLEDRIVEBAR; break;
+        case MenuItem_Id::toolbar_hotPaths: cm = CM_TOGGLEHOTPATHSBAR; break;
+        case MenuItem_Id::toolbar_middle: cm = CM_TOGGLEMIDDLETOOLBAR; break;
+        case MenuItem_Id::toolbar_plugins: cm = CM_TOGGLEPLUGINSBAR; break;
+        case MenuItem_Id::toolbar_top: cm = CM_TOGGLETOPTOOLBAR; break;
+        case MenuItem_Id::toolbar_userMenu: cm = CM_TOGGLEUSERMENUTOOLBAR; break;
         }
-        if (cm != 0)
+
+        //Send command
+        PostMessage( HWindow, WM_COMMAND, MAKEWPARAM( cm, 0 ), 0 );
+        break;
+    }
+    case MenuItem_Id::customize_toolbar_hotPaths:
+    {
+    //Customize hot paths toolbar.
+        PostMessage( HWindow, WM_USER_CONFIGURATION, 1, -1 );
+        break;
+    }
+    case MenuItem_Id::customize_toolbar_middle:
+    {
+    //Customize middle toolbar.
+        PostMessage( MainWindow->HWindow, WM_COMMAND, CM_CUSTOMIZEMIDDLE, 0 );
+        break;
+    }
+    case MenuItem_Id::customize_toolbar_plugins:
+    {
+    //Customize plugins toolbar.
+        PostMessage(MainWindow->HWindow, WM_COMMAND, CM_CUSTOMIZEPLUGINS, 0);
+        break;
+    }
+    case MenuItem_Id::customize_toolbar_top:
+    {
+    //Customize top toolbar.
+        PostMessage( MainWindow->HWindow, WM_COMMAND, CM_CUSTOMIZETOP, 0 );
+        break;
+    }
+    case MenuItem_Id::customize_toolbar_userMenu:
+    {
+    //Customize user menu toolbar.
+        PostMessage( HWindow, WM_USER_CONFIGURATION, 2, 0 );
+        break;
+    }
+    }
+}
+void CMainWindow::OnWmContextMenu_Panel( const HWND hWnd, const POINT& point_screen, MouseLocation::Value location )
+{
+//Initialize menu.
+    CMenuPopup      menu;
+
+    menu.SetImageList( HGrayToolBarImageList, TRUE );
+    menu.SetHotImageList( HHotToolBarImageList, TRUE );
+
+    //Initialize menu item info structures.
+    MENU_ITEM_INFO  mii_item =
+    {
+        .Mask = MENU_MASK_TYPE | MENU_MASK_ID | MENU_MASK_STATE | MENU_MASK_STRING | MENU_MASK_SUBMENU | MENU_MASK_IMAGEINDEX,
+        .Type = MENU_TYPE_STRING,
+        .State = 0,
+        .SubMenu = NULL,
+        .ImageIndex = -1
+    };
+    MENU_ITEM_INFO  mii_separator =
+    {
+        .Mask = MENU_MASK_TYPE,
+        .Type = MENU_TYPE_SEPARATOR
+    };
+
+//Get panel.
+    struct Panel
+    {
+        public: enum Value
         {
-            PostMessage(HWindow, WM_COMMAND, MAKEWPARAM(cm, 0), 0);
-            return;
-        }
-        if (cmd == 7)
-        {
-            switch (hit)
-            {
-            case mwhteTopToolbar:
-            {
-                PostMessage(MainWindow->HWindow, WM_COMMAND, CM_CUSTOMIZETOP, 0);
-                break;
-            }
+            not_set,
 
-            case mwhtePluginsBar:
-            {
-                PostMessage(MainWindow->HWindow, WM_COMMAND, CM_CUSTOMIZEPLUGINS, 0);
-                break;
-            }
+            left,
+            right
+        };
+    };
 
-            case mwhteMiddleToolbar:
-            {
-                PostMessage(MainWindow->HWindow, WM_COMMAND, CM_CUSTOMIZEMIDDLE, 0);
-                break;
-            }
+    Panel::Value    panel = Panel::not_set;
+    CPanelWindow*   pPanel = NULL;
 
-            case mwhteUMToolbar:
-            {
-                // nechame vybalit stranku UserMenu a rozeditovat polozku index
-                PostMessage(HWindow, WM_USER_CONFIGURATION, 2, 0);
-                break;
-            }
-
-            case mwhteHPToolbar:
-            {
-                // nechame vybalit stranku HotPaths
-                PostMessage(HWindow, WM_USER_CONFIGURATION, 1, -1);
-                break;
-            }
-            }
-            return;
-        }
+    switch ( location )
+    {
+    case MouseLocation::panel_left_dirLine:
+    case MouseLocation::panel_left_headerLine:
+    case MouseLocation::panel_left_statusLine:
+    case MouseLocation::panel_left_workingArea: panel = Panel::left; pPanel = LeftPanel; break;
+    case MouseLocation::panel_right_dirLine:
+    case MouseLocation::panel_right_headerLine:
+    case MouseLocation::panel_right_statusLine:
+    case MouseLocation::panel_right_workingArea: panel = Panel::right; pPanel = RightPanel; break;
+    default:
+    {
+    //Just to be 100% sure all will be good.
+        return;
+    }
     }
 
-    if (panelClass)
+//Insert menu items.
+    struct MenuItem_Id
     {
-        CFilesWindow* panel = leftPanel ? LeftPanel : RightPanel;
-        int cm = 0;
-        switch (cmd)
+        public: enum Value
         {
-        case 1:
+            dirLine_assignHotPath               = 1,    //Has to start with 1 as 0 is used as error.
+            dirLine_changeDirectory,
+            dirLine_copyToClipboard,
+            dirLine_toOtherPanel,
+
+            headerLine_automaticColumnWidth,
+            headerLine_chooseColumns,
+            headerLine_smartColumnMode,
+
+            show_directoryLine,
+            show_headerLine,
+            show_informationLine,
+
+            statusLine_copyToClipboard,
+
+            //--------------------------
+            hotPaths_id_first                           //Root id for hot paths.
+        };
+    };
+
+    char    HotText[2 * MAX_PATH] = {0};
+    int     index_headerLineItem = -1;
+
+    switch ( location )
+    {
+    case MouseLocation::panel_left_headerLine:
+    case MouseLocation::panel_right_headerLine:
+    {
+    //Header line
+    //
+    //Get header line.
+        CHeaderLine*    pHeaderLine = pPanel->GetHeaderLine();
+
+        if ( pHeaderLine == NULL )
         {
-            CColumn* column = &panel->Columns[HeaderLineItem];
-            if (column->ID != COLUMN_ID_CUSTOM)
+            break;
+        }
+
+    //Which item on header line was clicked on?
+        //Convert position relative to header area.
+        POINT   point_header = point_screen;
+
+        ScreenToClient( pHeaderLine->HWindow, &point_header );
+
+        //Get item that was clicked on.
+        int             index;
+        BOOL            extInName;
+
+        const auto      ht = pHeaderLine->HitTest( point_header.x, point_header.y, index, extInName );
+
+        //Was one of the items (e.g. Name, Ext, Size,..)?
+        if (
+            ( index >= 0 )
+            &&
+            (
+                ( ht == CHeaderLine::HitTest::Item )
+                ||
+                ( ht == CHeaderLine::HitTest::Divider )
+            )
+        )
+        {
+        //Yes -> add menu items.
+            //Store index on which item user clicked.
+            index_headerLineItem = index;
+
+            //Automatic column width checkbox.
+            CColumn*    pColumn = &pPanel->Columns[index];
+
+            mii_item.String = LoadStr( IDS_HDR_ELASTIC );
+            mii_item.ID = MenuItem_Id::headerLine_automaticColumnWidth;
+            mii_item.State = ( pColumn->FixedWidth ) ? 0 : MENU_STATE_CHECKED;
+            menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+            //Smart column mode checkbox.
+            //
+            //Notice:
+            //Intended only for 'name and ext' column.
+            if ( index == 0 )
             {
-                CColumnConfig* colCfg = &panel->ViewTemplate->Columns[column->ID - 1];
-                if (leftPanel)
-                    colCfg->LeftFixedWidth = column->FixedWidth ? 0 : 1;
-                else
-                    colCfg->RightFixedWidth = column->FixedWidth ? 0 : 1;
-                if (column->ID == COLUMN_ID_NAME)
+                mii_item.String = LoadStr( IDS_HDR_SMARTMODE );
+                mii_item.ID = MenuItem_Id::headerLine_smartColumnMode;
+                mii_item.State = GetSmartColumnMode( pPanel ) ? MENU_STATE_CHECKED : 0;
+                menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+            }
+        }
+
+        //Choose columns text.
+        mii_item.String = LoadStr( IDS_MENU_LEFT_VIEW );
+        mii_item.ID = MenuItem_Id::headerLine_chooseColumns;
+        mii_item.State = 0;
+        menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+        //Separator.
+        menu.InsertItem( 0xffffffff, TRUE, &mii_separator );
+        break;
+    }
+    case MouseLocation::panel_left_dirLine:
+    case MouseLocation::panel_right_dirLine:
+    {
+    //Directory line
+        //Change directory text.
+        mii_item.String = LoadStr( IDS_CHANGEDIRECTORY );
+        mii_item.ID = MenuItem_Id::dirLine_changeDirectory;
+        mii_item.State = 0;
+        mii_item.ImageIndex = IDX_TB_CHANGE_DIR;
+        menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+        mii_item.ImageIndex = -1;
+
+        //Separator.
+        menu.InsertItem( 0xffffffff, TRUE, &mii_separator );
+
+        //Was it clicked on path?
+        pPanel->DirectoryLine->GetHotText( HotText, _countof( HotText ) );
+
+        if ( strlen( HotText ) > 0 )
+        {
+        //Yes -> add menu items.
+            //Assign hot paths' submenu item.
+            CMenuPopup*     menu_sub = new CMenuPopup();
+
+            if ( menu_sub != NULL)
+            {
+            //Create 'hot paths' submenu.
+                HotPaths.FillHotPathsMenu( menu_sub, MenuItem_Id::hotPaths_id_first, TRUE, FALSE, FALSE, FALSE, TRUE );
+
+           //Assign hot paths submenu.
+                mii_item.SubMenu = menu_sub;
+                mii_item.String = LoadStr( IDS_SETHOTPATH );
+                mii_item.ID = 0;            //No id it's a submenu.
+                mii_item.State = 0;
+                menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+                mii_item.SubMenu = NULL;
+            }
+
+        //Copy to clipboard text.
+            mii_item.String = LoadStr( IDS_COPYTOCLIPBOARD );
+            mii_item.ID = MenuItem_Id::dirLine_copyToClipboard;
+            mii_item.State = 0;
+            menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+        }
+
+        //Set to other panel text.
+        mii_item.String = LoadStr( IDS_TOOTHERPANEL );
+        mii_item.ID = MenuItem_Id::dirLine_toOtherPanel;
+        mii_item.State = 0;
+        menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+        //Separator.
+        menu.InsertItem( 0xffffffff, TRUE, &mii_separator );
+        break;
+    }
+    case MouseLocation::panel_left_statusLine:
+    case MouseLocation::panel_right_statusLine:
+    {
+    //Status line.
+        pPanel->StatusLine->GetHotText( HotText, _countof( HotText ) );
+
+        if ( strlen( HotText ) > 0 )
+        {
+        //Copy to clipboard text.
+            mii_item.String = LoadStr( IDS_COPYTOCLIPBOARD );
+            mii_item.ID = MenuItem_Id::statusLine_copyToClipboard;
+            mii_item.State = 0;
+            menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+        //Separator.
+            menu.InsertItem( 0xffffffff, TRUE, &mii_separator );
+        }
+        break;
+    }
+    //case MouseLocation::panel_left_workingArea:
+    //case MouseLocation::panel_right_workingArea:
+    //{
+    //    break;
+    //}
+    }
+
+    //Directory line checkbox.
+    mii_item.String = LoadStr( IDS_DIRECTORYLINE );
+    mii_item.ID = MenuItem_Id::show_directoryLine;
+    mii_item.State = ( pPanel->DirectoryLine->HWindow != NULL ) ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //Header line checkbox.
+    mii_item.String = LoadStr( IDS_HEADERLINE );
+    mii_item.ID = MenuItem_Id::show_headerLine;
+    mii_item.State = ( pPanel->GetViewMode() == ViewMode::detailed ? 0 : (MENU_STATE_GRAYED) ) | ( ( ( pPanel->GetViewMode() == ViewMode::detailed ) && pPanel->HeaderLineVisible ) ? MENU_STATE_CHECKED : 0 );
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //Information line (at bottom) checkbox.
+    mii_item.String = LoadStr( IDS_INFORMATIONLINE );
+    mii_item.ID = MenuItem_Id::show_informationLine;
+    mii_item.State = ( pPanel->StatusLine->HWindow != NULL ) ? MENU_STATE_CHECKED : 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+    //Separator
+    menu.InsertItem( 0xffffffff, TRUE, &mii_separator );
+
+    //Customize panel toolbar text.
+    mii_item.String = LoadStr( IDS_CUSTOMIZEPANEL );
+    mii_item.ID = 15;
+    mii_item.State = 0;
+    menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+
+//Show context menu.
+    const auto      cmd = menu.Track( MENU_TRACK_RETURNCMD | MENU_TRACK_RIGHTBUTTON, point_screen.x, point_screen.y, HWindow, NULL );
+
+    if ( cmd == 0 )
+    {
+    //No item was clicked -> stop execution.
+        return;
+    }
+
+//Handle mouse click.
+    int     cm = 0;
+
+    switch ( cmd )
+    {
+    case MenuItem_Id::headerLine_automaticColumnWidth:
+    {
+    //Automatic column width.
+        CColumn* column = &pPanel->Columns[index_headerLineItem];
+
+        if (column->ID != COLUMN_ID_CUSTOM)
+        {
+            CColumnConfig* colCfg = &pPanel->ViewTemplate->Columns[column->ID - 1];
+            if (panel == Panel::left)
+                colCfg->LeftFixedWidth = column->FixedWidth ? 0 : 1;
+            else
+                colCfg->RightFixedWidth = column->FixedWidth ? 0 : 1;
+            if (column->ID == COLUMN_ID_NAME)
+            {
+                if (panel == Panel::left)
                 {
-                    if (leftPanel)
-                    {
-                        if (colCfg->LeftFixedWidth)
-                            colCfg->LeftWidth = panel->GetResidualColumnWidth();
-                        else
-                            panel->ViewTemplate->LeftSmartMode = FALSE;
-                    }
+                    if (colCfg->LeftFixedWidth)
+                        colCfg->LeftWidth = pPanel->GetResidualColumnWidth();
                     else
-                    {
-                        if (colCfg->RightFixedWidth)
-                            colCfg->RightWidth = panel->GetResidualColumnWidth();
-                        else
-                            panel->ViewTemplate->RightSmartMode = FALSE;
-                    }
+                        pPanel->ViewTemplate->LeftSmartMode = FALSE;
                 }
                 else
                 {
-                    if (leftPanel)
-                        colCfg->LeftWidth = column->Width;
+                    if (colCfg->RightFixedWidth)
+                        colCfg->RightWidth = pPanel->GetResidualColumnWidth();
                     else
-                        colCfg->RightWidth = column->Width;
+                        pPanel->ViewTemplate->RightSmartMode = FALSE;
                 }
             }
             else
             {
-                if (panel->PluginData.NotEmpty()) // "always true"
-                    panel->PluginData.ColumnFixedWidthShouldChange(leftPanel, column, column->FixedWidth ? 0 : 1);
+                if (panel == Panel::left)
+                    colCfg->LeftWidth = column->Width;
+                else
+                    colCfg->RightWidth = column->Width;
             }
-            // user cosi menil v konfiguraci pohledu - nechame znovu sestavit sloupce
-            if (leftPanel)
-                LeftPanel->SelectViewTemplate(LeftPanel->GetViewTemplateIndex(), TRUE, FALSE);
-            else
-                RightPanel->SelectViewTemplate(RightPanel->GetViewTemplateIndex(), TRUE, FALSE);
-            break;
         }
-
-        case 2:
+        else
         {
-            PostMessage(HWindow, WM_USER_CONFIGURATION, 4,
-                        (leftPanel ? LeftPanel : RightPanel)->GetViewTemplateIndex());
-            break;
+            if (pPanel->PluginData.NotEmpty()) // "always true"
+                pPanel->PluginData.ColumnFixedWidthShouldChange(panel == Panel::left, column, column->FixedWidth ? 0 : 1);
         }
-
-            /*
-      case 2: Configuration.ShowExtension = !Configuration.ShowExtension; break;
-      case 3: Configuration.ShowDosName = !Configuration.ShowDosName; break;
-      case 4: Configuration.ShowSize = !Configuration.ShowSize; break;
-      case 5: Configuration.ShowDate = !Configuration.ShowDate; break;
-      case 6: Configuration.ShowTime = !Configuration.ShowTime; break;
-      case 7: Configuration.ShowAttr = !Configuration.ShowAttr; break;
-*/
-        case 8:
-        {
-            CopyTextToClipboard(HotText);
-            panel->DirectoryLine->FlashText(TRUE);
-        }
+        // user cosi menil v konfiguraci pohledu - nechame znovu sestavit sloupce
+        if (panel == Panel::left)
+            LeftPanel->SelectViewTemplate(LeftPanel->GetViewTemplateIndex(), TRUE, FALSE);
+        else
+            RightPanel->SelectViewTemplate(RightPanel->GetViewTemplateIndex(), TRUE, FALSE);
         break;
-        case 9:
-        {
-            CopyTextToClipboard(HotText);
-            panel->StatusLine->FlashText(TRUE);
-        }
+    }
+    case MenuItem_Id::headerLine_chooseColumns:
+    {
+        PostMessage(HWindow, WM_USER_CONFIGURATION, 4, ( ( panel == Panel::left ) ? LeftPanel : RightPanel)->GetViewTemplateIndex());
         break;
-        case 11:
-            cm = leftPanel ? CM_LEFTDIRLINE : CM_RIGHTDIRLINE;
-            break;
-        case 12:
-            cm = leftPanel ? CM_LEFTHEADER : CM_RIGHTHEADER;
-            break;
-        case 13:
-            cm = leftPanel ? CM_LEFTSTATUS : CM_RIGHTSTATUS;
-            break;
-        case 15:
-            cm = leftPanel ? CM_CUSTOMIZELEFT : CM_CUSTOMIZERIGHT;
-            break;
-        case 16:
-            cm = leftPanel ? CM_LEFT_CHANGEDIR : CM_RIGHT_CHANGEDIR;
-            break;
-        case 17:
-            cm = leftPanel ? CM_LEFT_SMARTMODE : CM_RIGHT_SMARTMODE;
-            break;
-        }
+    }
+    case MenuItem_Id::dirLine_copyToClipboard:
+    {
+    //Directory line: copy to clipboard
+        CopyTextToClipboard( HotText );
 
-        // odchytneme hot paths
-        if (cmd >= 20 && cmd < 50)
+        pPanel->DirectoryLine->FlashText( TRUE );
+        break;
+    }
+    case MenuItem_Id::statusLine_copyToClipboard:
+    {
+    //Status line: copy to clipboard
+        CopyTextToClipboard( HotText );
+
+        pPanel->StatusLine->FlashText( TRUE );
+        break;
+    }
+    case MenuItem_Id::show_directoryLine:
+    {
+    //Show check: directory line
+        cm = ( panel == Panel::left ) ? CM_LEFTDIRLINE : CM_RIGHTDIRLINE;
+        break;
+    }
+    case MenuItem_Id::show_headerLine:
+    {
+    //Show check: header line
+        cm = ( panel == Panel::left ) ? CM_LEFTHEADER : CM_RIGHTHEADER;
+        break;
+    }
+    case MenuItem_Id::show_informationLine:
+    {
+    //Show check: information line
+        cm = ( panel == Panel::left ) ? CM_LEFTSTATUS : CM_RIGHTSTATUS;
+        break;
+    }
+    case 15:
+    {
+    //Customize panel toolbar
+        cm = ( panel == Panel::left ) ? CM_CUSTOMIZELEFT : CM_CUSTOMIZERIGHT;
+        break;
+    }
+    case MenuItem_Id::dirLine_changeDirectory:
+    {
+    //Change directory.
+        cm = ( panel == Panel::left ) ? CM_LEFT_CHANGEDIR : CM_RIGHT_CHANGEDIR;
+        break;
+    }
+    case MenuItem_Id::dirLine_toOtherPanel:
+    {
+    //Set current path to other panel.
+        CPanelWindow*   pPanel_nonActive = ( panel == Panel::left ) ? RightPanel : LeftPanel;
+
+        pPanel_nonActive->ChangePathToOtherPanelPath( pPanel, HotText );
+        break;
+    }
+    case MenuItem_Id::headerLine_smartColumnMode:
+    {
+        cm = ( panel == Panel::left ) ? CM_LEFT_SMARTMODE : CM_RIGHT_SMARTMODE;
+        break;
+    }
+    default:
+    {
+    //Is it hot path assignment?
+        if (
+            ( cmd >= MenuItem_Id::hotPaths_id_first )
+            &&
+            ( cmd < ( MenuItem_Id::hotPaths_id_first + HOT_PATHS_COUNT ) )
+        )
         {
             SetUnescapedHotPath(cmd - 20, HotText);
-            if (!Configuration.HotPathAutoConfig)
-                panel->DirectoryLine->FlashText(TRUE);
-        }
 
-        if (cm != 0)
-        {
-            PostMessage(HWindow, WM_COMMAND, MAKEWPARAM(cm, 0), 0);
-            return;
+            if (!Configuration.HotPathAutoConfig)
+            {
+                pPanel->DirectoryLine->FlashText(TRUE);
+            }
         }
+        break;
     }
+    }
+    if ( cm != 0 )
+    {
+        PostMessage( HWindow, WM_COMMAND, MAKEWPARAM( cm, 0 ), 0 );
+        return;
+    }
+}
+void CMainWindow::OnWmContextMenu_SplitLine( const POINT& point_screen )
+{
+//Initialize menu.
+    CMenuPopup      menu;
+
+    menu.SetImageList( HGrayToolBarImageList, TRUE );
+    menu.SetHotImageList( HHotToolBarImageList, TRUE );
+
+    //Initialize menu item info structures.
+    MENU_ITEM_INFO  mii_item =
+    {
+        .Mask = MENU_MASK_TYPE | MENU_MASK_ID | MENU_MASK_STATE | MENU_MASK_STRING | MENU_MASK_SUBMENU | MENU_MASK_IMAGEINDEX,
+        .Type = MENU_TYPE_STRING,
+        .State = 0,
+        .SubMenu = NULL,
+        .ImageIndex = -1
+    };
+
+//Insert menu items.
+    char    buff[20];
+
+    for ( int i = 2; i < 9; i++ )
+    {
+    //Get text.
+    //
+    //Example: 20 / 80
+        sprintf( buff, "&%d0 / %d0", i, 10 - i );
+
+    //Insert nenu item.
+        mii_item.ID = i;
+        mii_item.State = ( i == 5 ) ? MENU_STATE_DEFAULT : 0;
+        mii_item.String = buff;
+
+        menu.InsertItem( 0xffffffff, TRUE, &mii_item );
+    }
+
+//Show context menu.
+    const auto      cmd = menu.Track( MENU_TRACK_RETURNCMD | MENU_TRACK_RIGHTBUTTON, point_screen.x, point_screen.y, HWindow, NULL );
+
+    if ( cmd == 0 )
+    {
+    //No item was clicked -> stop execution.
+        return;
+    }
+
+//Update panel widths.
+    SplitPosition = ( (double)cmd ) / 10.0;
+
+//Redraw windows.
+    LayoutWindows();
 }
 
 static DWORD CheckerViewMode = 0xFFFFFFFF;
@@ -2710,8 +2926,8 @@ void CMainWindow_RefreshCommandStates(CMainWindow* obj)
     int selCount = 0;
     int unselCount = 0;
 
-    CFilesWindow* activePanel = obj->GetActivePanel();
-    CFilesWindow* nonActivePanel = obj->GetNonActivePanel();
+    CPanelWindow* activePanel = obj->GetActivePanel();
+    CPanelWindow* nonActivePanel = obj->GetNonActivePanel();
     if (activePanel != NULL && nonActivePanel != NULL && obj->LeftPanel != NULL && obj->RightPanel != NULL)
     {
         hasForward = activePanel->PathHistory->HasForward();
@@ -2725,7 +2941,7 @@ void CMainWindow_RefreshCommandStates(CMainWindow* obj)
         encrypt = activePanel->FileBasedEncryption;
         archive = activePanel->Is(ptZIPArchive);
         targetArchive = nonActivePanel->Is(ptZIPArchive);
-        selCount = activePanel->GetSelCount();
+        selCount = activePanel->GetSelectedCount();
         onDisk = activePanel->Is(ptDisk);
         dirHistory = obj->DirHistory->HasPaths();
         sortType = activePanel->SortType;
@@ -2781,10 +2997,10 @@ void CMainWindow_RefreshCommandStates(CMainWindow* obj)
                     files = (activePanel->Dirs->Count + activePanel->Files->Count > 0);
                 else
                 {
-                    int count = activePanel->GetSelCount();
+                    int count = activePanel->GetSelectedCount();
                     if (count == 1)
                     {
-                        files = (activePanel->GetSel(0) == FALSE);
+                        files = (activePanel->GetSelected(0) == FALSE);
                     }
                     else
                         files = (count > 0);

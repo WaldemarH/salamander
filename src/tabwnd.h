@@ -9,13 +9,13 @@
 class CTabWindow : public CWindow
 {
 public:
-    CFilesWindow* FilesWindow;
+    CPanelWindow* PanelWindow;
 
     //  protected:
     //    TDirectArray<CTabItem> TabItems;
 
 public:
-    CTabWindow(CFilesWindow* filesWindow);
+    CTabWindow(CPanelWindow* filesWindow);
     ~CTabWindow();
 
     void DestroyWindow();

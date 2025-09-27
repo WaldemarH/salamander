@@ -17,17 +17,17 @@
 #include "pack.h"
 #include "viewer.h"
 #include "codetbl.h"
-#include "find.h"
+#include "find.old.h"
 #include "menu.h"
 
 //
 // ****************************************************************************
-// CFilesWindow
+// CPanelWindow
 //
 
-void CFilesWindow::Convert()
+void CPanelWindow::Convert()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::Convert()");
+    CALL_STACK_MESSAGE1("CPanelWindow::Convert()");
     if (Dirs->Count + Files->Count == 0)
         return;
     BeginStopRefresh(); // cmuchal si da pohov
@@ -82,7 +82,7 @@ void CFilesWindow::Convert()
                 //---  zjisteni jake adresare a soubory jsou oznacene
                 int* indexes = NULL;
                 CFileData* f = NULL;
-                int count = GetSelCount();
+                int count = GetSelectedCount();
                 if (count != 0)
                 {
                     indexes = new int[count];
@@ -93,7 +93,7 @@ void CFilesWindow::Convert()
                         EndStopRefresh(); // ted uz zase cmuchal nastartuje
                         return;
                     }
-                    GetSelItems(count, indexes);
+                    GetSelectedItems(count, indexes);
                 }
                 else // nic neni oznaceno
                 {
@@ -155,7 +155,7 @@ void CFilesWindow::Convert()
                                           MB_OK | MB_ICONINFORMATION);
 
                             // zadny ze souboru nemusel projit pres mask filtr
-                            SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                            SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                             PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                         }
                         UpdateWindow(MainWindow->HWindow);
@@ -165,7 +165,7 @@ void CFilesWindow::Convert()
                     }
                     else // odstraneni sel. indexu (necekame az operace dobehne, bezi v jinem threadu)
                     {
-                        SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                        SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                         PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                         UpdateWindow(MainWindow->HWindow);
                     }
@@ -182,19 +182,19 @@ void CFilesWindow::Convert()
     EndStopRefresh(); // ted uz zase cmuchal nastartuje
 }
 
-void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncryption, BOOL encrypted)
+void CPanelWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncryption, BOOL encrypted)
 {
-    CALL_STACK_MESSAGE5("CFilesWindow::ChangeAttr(%d, %d, %d, %d)", setCompress, compressed, setEncryption, encrypted);
+    CALL_STACK_MESSAGE5("CPanelWindow::ChangeAttr(%d, %d, %d, %d)", setCompress, compressed, setEncryption, encrypted);
     if (Dirs->Count + Files->Count == 0)
         return;
-    int selectedCount = GetSelCount();
+    int selectedCount = GetSelectedCount();
     if (selectedCount == 0 || selectedCount == 1)
     {
         int index;
         if (selectedCount == 0)
             index = GetCaretIndex();
         else
-            GetSelItems(1, &index);
+            GetSelectedItems(1, &index);
         // focus na UpDiru -- neni co convertit
         if (Dirs->Count > 0 && index == 0 && strcmp(Dirs->At(0).Name, "..") == 0)
             return;
@@ -228,14 +228,14 @@ void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncrypt
             SYSTEMTIME timeAccessed;
             if (!setCompress && !setEncryption)
             {
-                int count = GetSelCount();
+                int count = GetSelectedCount();
                 if (count == 1 || count == 0)
                 {
                     int index;
                     if (count == 0)
                         index = GetCaretIndex();
                     else
-                        GetSelItems(1, &index);
+                        GetSelectedItems(1, &index);
                     if (index >= 0 && index < Files->Count + Dirs->Count)
                     {
                         CFileData* f = (index < Dirs->Count) ? &Dirs->At(index) : &Files->At(index - Dirs->Count);
@@ -351,7 +351,7 @@ void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncrypt
                 {
                     char subject[MAX_PATH + 100];
                     char expanded[200];
-                    int count = GetSelCount();
+                    int count = GetSelectedCount();
                     char path[MAX_PATH];
                     if (count > 1)
                     {
@@ -383,7 +383,7 @@ void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncrypt
                         if (count == 0)
                             index = GetCaretIndex();
                         else
-                            GetSelItems(1, &index);
+                            GetSelectedItems(1, &index);
 
                         BOOL isDir = index < Dirs->Count;
                         CFileData* f = isDir ? &Dirs->At(index) : &Files->At(index - Dirs->Count);
@@ -456,7 +456,7 @@ void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncrypt
                 //---  zjisteni jake adresare a soubory jsou oznacene
                 int* indexes = NULL;
                 CFileData* f = NULL;
-                int count = GetSelCount();
+                int count = GetSelectedCount();
                 if (count != 0)
                 {
                     indexes = new int[count];
@@ -469,7 +469,7 @@ void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncrypt
                         EndStopRefresh(); // ted uz zase cmuchal nastartuje
                         return;
                     }
-                    GetSelItems(count, indexes);
+                    GetSelectedItems(count, indexes);
                 }
                 else // nic neni oznaceno
                 {
@@ -508,7 +508,7 @@ void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncrypt
                     if (chDlg.Encrypted == 1)
                     {
                         if (chDlg.Compressed != 0)
-                            TRACE_E("CFilesWindow::ChangeAttr(): unexpected value of chDlg.Compressed!");
+                            TRACE_E("CPanelWindow::ChangeAttr(): unexpected value of chDlg.Compressed!");
                         chDlg.Compressed = 0;
                     }
                     else
@@ -516,7 +516,7 @@ void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncrypt
                         if (chDlg.Compressed == 1)
                         {
                             if (chDlg.Encrypted != 0)
-                                TRACE_E("CFilesWindow::ChangeAttr(): unexpected value of chDlg.Encrypted!");
+                                TRACE_E("CPanelWindow::ChangeAttr(): unexpected value of chDlg.Encrypted!");
                             chDlg.Encrypted = 0;
                         }
                     }
@@ -605,7 +605,7 @@ void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncrypt
                     }
                     else // odstraneni sel. indexu (necekame az operace dobehne, bezi v jinem threadu)
                     {
-                        SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                        SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                         PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                         UpdateWindow(MainWindow->HWindow);
                     }
@@ -629,7 +629,7 @@ void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncrypt
 
             int panel = MainWindow->LeftPanel == this ? PANEL_LEFT : PANEL_RIGHT;
 
-            int count = GetSelCount();
+            int count = GetSelectedCount();
             int selectedDirs = 0;
             if (count > 0)
             {
@@ -652,7 +652,7 @@ void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncrypt
 
             if (success) // uspech -> unselect
             {
-                SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                 PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                 UpdateWindow(MainWindow->HWindow);
             }
@@ -664,24 +664,36 @@ void CFilesWindow::ChangeAttr(BOOL setCompress, BOOL compressed, BOOL setEncrypt
     EndStopRefresh(); // ted uz zase cmuchal nastartuje
 }
 
-void CFilesWindow::FindFile()
+void CPanelWindow::FindFile()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::FindFile()");
-    if (Is(ptDisk) && CheckPath(TRUE) != ERROR_SUCCESS)
-        return;
+    CALL_STACK_MESSAGE1("CPanelWindow::FindFile()");
 
-    if (Is(ptPluginFS) && GetPluginFS()->NotEmpty() &&
-        GetPluginFS()->IsServiceSupported(FS_SERVICE_OPENFINDDLG))
-    { // zkusime otevrit Find pro FS v panelu, pokud se povede, nema uz smysl otevirat standardni Find
+    if (
+        Is( ptDisk )
+        &&
+        ( CheckPath(TRUE) != ERROR_SUCCESS )
+    )
+    {
+        return;
+    }
+
+    if (
+        Is( ptPluginFS )
+        &&
+        GetPluginFS()->NotEmpty()
+        &&
+        GetPluginFS()->IsServiceSupported(FS_SERVICE_OPENFINDDLG)
+    )
+    {
+    //Let's try opening Find for FS in the panel, if it works, there's no point in opening the standard Find anymore
         SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
-        BOOL done = GetPluginFS()->OpenFindDialog(GetPluginFS()->GetPluginFSName(),
-                                                  this == MainWindow->LeftPanel ? PANEL_LEFT : PANEL_RIGHT);
+        BOOL done = GetPluginFS()->OpenFindDialog(GetPluginFS()->GetPluginFSName(), this == MainWindow->LeftPanel ? PANEL_LEFT : PANEL_RIGHT);
         SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
         if (done)
             return;
     }
 
-    if (SystemPolicies.GetNoFind() || SystemPolicies.GetNoShellSearchButton())
+    if ( SystemPolicies.GetNoFind() || SystemPolicies.GetNoShellSearchButton() )
     {
         MSGBOXEX_PARAMS params;
         memset(&params, 0, sizeof(params));
@@ -695,13 +707,12 @@ void CFilesWindow::FindFile()
         return;
     }
 
-    OpenFindDialog(MainWindow->HWindow, Is(ptDisk) ? GetPath() : "");
+    OpenFindDialog( MainWindow->HWindow, Is( ptDisk ) ? GetPath() : "" );
 }
 
-void CFilesWindow::ViewFile(char* name, BOOL altView, DWORD handlerID, int enumFileNamesSourceUID,
-                            int enumFileNamesLastFileIndex)
+void CPanelWindow::ViewFile(char* name, BOOL altView, DWORD handlerID, int enumFileNamesSourceUID, int enumFileNamesLastFileIndex)
 {
-    CALL_STACK_MESSAGE6("CFilesWindow::ViewFile(%s, %d, %u, %d, %d)", name, altView, handlerID,
+    CALL_STACK_MESSAGE6("CPanelWindow::ViewFile(%s, %d, %u, %d, %d)", name, altView, handlerID,
                         enumFileNamesSourceUID, enumFileNamesLastFileIndex);
     // overime si jestli je soubor na pristupne ceste
     char path[MAX_PATH + 10];
@@ -924,7 +935,7 @@ void CFilesWindow::ViewFile(char* name, BOOL altView, DWORD handlerID, int enumF
                     }
                     else
                     {
-                        TRACE_E("Incorrect call to CFilesWindow::ViewFile()");
+                        TRACE_E("Incorrect call to CPanelWindow::ViewFile()");
                         return;
                     }
                 }
@@ -1225,12 +1236,12 @@ BOOL ViewFileInt(HWND parent, const char* name, BOOL altView, DWORD handlerID, B
     return success;
 }
 
-void CFilesWindow::EditFile(char* name, DWORD handlerID)
+void CPanelWindow::EditFile(char* name, DWORD handlerID)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::EditFile(%s, %u)", name, handlerID);
+    CALL_STACK_MESSAGE3("CPanelWindow::EditFile(%s, %u)", name, handlerID);
     if (!Is(ptDisk) && name == NULL)
     {
-        TRACE_E("Incorrect call to CFilesWindow::EditFile()");
+        TRACE_E("Incorrect call to CPanelWindow::EditFile()");
         return;
     }
 
@@ -1321,7 +1332,7 @@ void CFilesWindow::EditFile(char* name, DWORD handlerID)
     char* namePart = strrchr(name, '\\');
     if (namePart == NULL)
     {
-        TRACE_E("Invalid parameter CFilesWindow::EditFile(): " << name);
+        TRACE_E("Invalid parameter CPanelWindow::EditFile(): " << name);
         return;
     }
     namePart++;
@@ -1471,9 +1482,9 @@ void CFilesWindow::EditFile(char* name, DWORD handlerID)
     }
 }
 
-void CFilesWindow::EditNewFile()
+void CPanelWindow::EditNewFile()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::EditNewFile()");
+    CALL_STACK_MESSAGE1("CPanelWindow::EditNewFile()");
     BeginStopRefresh(); // cmuchal si da pohov
 
     // obnova DefaultDir
@@ -1588,9 +1599,9 @@ void CFilesWindow::EditNewFile()
 }
 
 // na zaklade dostupnych vieweru naplni popup
-void CFilesWindow::FillViewWithMenu(CMenuPopup* popup)
+void CPanelWindow::FillViewWithMenu(CMenuPopup* popup)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::FillViewWithMenu()");
+    CALL_STACK_MESSAGE1("CPanelWindow::FillViewWithMenu()");
 
     // sestrelime existujici polozky
     popup->RemoveAllItems();
@@ -1645,7 +1656,7 @@ void CFilesWindow::FillViewWithMenu(CMenuPopup* popup)
         popup->AssignHotKeys();
 }
 
-BOOL CFilesWindow::FillViewWithData(TDirectArray<CViewerMasksItem*>* items)
+BOOL CPanelWindow::FillViewWithData(TDirectArray<CViewerMasksItem*>* items)
 {
     // merge probehne pres normalni i alternate viewers
     int type;
@@ -1703,7 +1714,7 @@ BOOL CFilesWindow::FillViewWithData(TDirectArray<CViewerMasksItem*>* items)
     return TRUE;
 }
 
-void CFilesWindow::OnViewFileWith(int index)
+void CPanelWindow::OnViewFileWith(int index)
 {
     BeginStopRefresh(); // cmuchal si da pohov
 
@@ -1728,10 +1739,10 @@ void CFilesWindow::OnViewFileWith(int index)
     EndStopRefresh(); // ted uz zase cmuchal nastartuje
 }
 
-void CFilesWindow::ViewFileWith(char* name, HWND hMenuParent, const POINT* menuPoint, DWORD* handlerID,
+void CPanelWindow::ViewFileWith(char* name, HWND hMenuParent, const POINT* menuPoint, DWORD* handlerID,
                                 int enumFileNamesSourceUID, int enumFileNamesLastFileIndex)
 {
-    CALL_STACK_MESSAGE5("CFilesWindow::ViewFileWith(%s, , , %s, %d, %d)", name,
+    CALL_STACK_MESSAGE5("CPanelWindow::ViewFileWith(%s, , , %s, %d, %d)", name,
                         (handlerID == NULL ? "NULL" : "non-NULL"), enumFileNamesSourceUID,
                         enumFileNamesLastFileIndex);
     BeginStopRefresh(); // cmuchal si da pohov
@@ -1762,9 +1773,9 @@ void CFilesWindow::ViewFileWith(char* name, HWND hMenuParent, const POINT* menuP
     EndStopRefresh(); // ted uz zase cmuchal nastartuje
 }
 
-void CFilesWindow::FillEditWithMenu(CMenuPopup* popup)
+void CPanelWindow::FillEditWithMenu(CMenuPopup* popup)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::FillEditWithMenu()");
+    CALL_STACK_MESSAGE1("CPanelWindow::FillEditWithMenu()");
 
     // sestrelime existujici polozky
     popup->RemoveAllItems();
@@ -1823,7 +1834,7 @@ void CFilesWindow::FillEditWithMenu(CMenuPopup* popup)
         popup->AssignHotKeys();
 }
 
-void CFilesWindow::OnEditFileWith(int index)
+void CPanelWindow::OnEditFileWith(int index)
 {
     BeginStopRefresh(); // cmuchal si da pohov
 
@@ -1843,9 +1854,9 @@ void CFilesWindow::OnEditFileWith(int index)
     EndStopRefresh(); // ted uz zase cmuchal nastartuje
 }
 
-void CFilesWindow::EditFileWith(char* name, HWND hMenuParent, const POINT* menuPoint, DWORD* handlerID)
+void CPanelWindow::EditFileWith(char* name, HWND hMenuParent, const POINT* menuPoint, DWORD* handlerID)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::EditFileWith(%s, , , %s)", name,
+    CALL_STACK_MESSAGE3("CPanelWindow::EditFileWith(%s, , , %s)", name,
                         (handlerID == NULL ? "NULL" : "non-NULL"));
     BeginStopRefresh(); // cmuchal si da pohov
     if (handlerID != NULL)
@@ -1943,9 +1954,9 @@ BOOL CutDoubleQuotesFromBothSides(char* path)
     return FALSE;
 }
 
-void CFilesWindow::CreateDir(CFilesWindow* target)
+void CPanelWindow::CreateDir(CPanelWindow* target)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::CreateDir()");
+    CALL_STACK_MESSAGE1("CPanelWindow::CreateDir()");
     BeginStopRefresh(); // cmuchal si da pohov
 
     char path[2 * MAX_PATH], nextFocus[MAX_PATH];
@@ -2105,7 +2116,7 @@ void CFilesWindow::CreateDir(CFilesWindow* target)
     EndStopRefresh(); // ted uz zase cmuchal nastartuje
 }
 
-void CFilesWindow::RenameFileInternal(CFileData* f, const char* formatedFileName, BOOL* mayChange, BOOL* tryAgain)
+void CPanelWindow::RenameFileInternal(CFileData* f, const char* formatedFileName, BOOL* mayChange, BOOL* tryAgain)
 {
     *tryAgain = TRUE;
     const char* s = formatedFileName;
@@ -2142,7 +2153,7 @@ void CFilesWindow::RenameFileInternal(CFileData* f, const char* formatedFileName
             BOOL ret = FALSE;
 
             BOOL handsOFF = FALSE;
-            CFilesWindow* otherPanel = MainWindow->GetNonActivePanel();
+            CPanelWindow* otherPanel = MainWindow->GetNonActivePanel();
             int otherPanelPathLen = (int)strlen(otherPanel->GetPath());
             int pathLen = (int)strlen(path);
             // menime cestu druhemu panelu?
@@ -2226,13 +2237,13 @@ void CFilesWindow::RenameFileInternal(CFileData* f, const char* formatedFileName
                                     BOOL moveDone = SalMoveFile(path, tgtPath);
                                     if (!SalMoveFile(tmpName, origFullName))
                                     { // toto se zjevne muze stat, nepochopitelne, ale Windows vytvori misto 'tgtPath' (dos name) soubor se jmenem origFullName
-                                        TRACE_I("CFilesWindow::RenameFileInternal(): Unexpected situation: unable to rename file from tmp-name to original long file name! " << origFullName);
+                                        TRACE_I("CPanelWindow::RenameFileInternal(): Unexpected situation: unable to rename file from tmp-name to original long file name! " << origFullName);
                                         if (moveDone)
                                         {
                                             if (SalMoveFile(tgtPath, path))
                                                 moveDone = FALSE;
                                             if (!SalMoveFile(tmpName, origFullName))
-                                                TRACE_E("CFilesWindow::RenameFileInternal(): Fatal unexpected situation: unable to rename file from tmp-name to original long file name! " << origFullName);
+                                                TRACE_E("CPanelWindow::RenameFileInternal(): Fatal unexpected situation: unable to rename file from tmp-name to original long file name! " << origFullName);
                                         }
                                     }
 
@@ -2241,7 +2252,7 @@ void CFilesWindow::RenameFileInternal(CFileData* f, const char* formatedFileName
                                 }
                             }
                             else
-                                TRACE_E("CFilesWindow::RenameFileInternal(): Original full file name is too long, unable to bypass only-dos-name-overwrite problem!");
+                                TRACE_E("CPanelWindow::RenameFileInternal(): Original full file name is too long, unable to bypass only-dos-name-overwrite problem!");
                         }
                     }
                 }
@@ -2326,9 +2337,9 @@ void CFilesWindow::RenameFileInternal(CFileData* f, const char* formatedFileName
                       MB_OK | MB_ICONEXCLAMATION);
 }
 
-void CFilesWindow::RenameFile(int specialIndex)
+void CPanelWindow::RenameFile(int specialIndex)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::RenameFile(%d)", specialIndex);
+    CALL_STACK_MESSAGE2("CPanelWindow::RenameFile(%d)", specialIndex);
 
     int i;
     if (specialIndex != -1)
@@ -2515,19 +2526,19 @@ void CFilesWindow::RenameFile(int specialIndex)
     }
 }
 
-void CFilesWindow::CancelUI()
+void CPanelWindow::CancelUI()
 {
     if (QuickSearchMode)
         EndQuickSearch();
     QuickRenameEnd();
 }
 
-BOOL CFilesWindow::IsQuickRenameActive()
+BOOL CPanelWindow::IsQuickRenameActive()
 {
     return QuickRenameWindow.HWindow != NULL;
 }
 
-void CFilesWindow::AdjustQuickRenameRect(const char* text, RECT* r)
+void CPanelWindow::AdjustQuickRenameRect(const char* text, RECT* r)
 {
     // namerim delku textu
     HDC hDC = HANDLES(GetDC(ListBox->HWindow));
@@ -2559,7 +2570,7 @@ void CFilesWindow::AdjustQuickRenameRect(const char* text, RECT* r)
         r->right = maxR.right;
 }
 
-void CFilesWindow::AdjustQuickRenameWindow()
+void CPanelWindow::AdjustQuickRenameWindow()
 {
     if (!IsQuickRenameActive())
     {
@@ -2583,7 +2594,7 @@ void CFilesWindow::AdjustQuickRenameWindow()
 // narazil jsem na problem s razenim, vista necha polozky na svem miste, ale salamander je potrebuje zaradit
 // takze vec zatim davam k ledu
 void
-CFilesWindow::QuickRenameOnIndex(int index)
+CPanelWindow::QuickRenameOnIndex(int index)
 {
   if (index >= 0 && index < Dirs->Count + Files->Count)
   {
@@ -2601,9 +2612,9 @@ CFilesWindow::QuickRenameOnIndex(int index)
 }
 */
 
-void CFilesWindow::QuickRenameBegin(int index, const RECT* labelRect)
+void CPanelWindow::QuickRenameBegin(int index, const RECT* labelRect)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::QuickRenameBegin(%d, )", index);
+    CALL_STACK_MESSAGE2("CPanelWindow::QuickRenameBegin(%d, )", index);
 
     if (!(Is(ptDisk) || Is(ptPluginFS) && GetPluginFS()->NotEmpty() &&
                             GetPluginFS()->IsServiceSupported(FS_SERVICE_QUICKRENAME)))
@@ -2720,9 +2731,9 @@ void CFilesWindow::QuickRenameBegin(int index, const RECT* labelRect)
     return;
 }
 
-void CFilesWindow::QuickRenameEnd()
+void CPanelWindow::QuickRenameEnd()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::QuickRenameEnd()");
+    CALL_STACK_MESSAGE1("CPanelWindow::QuickRenameEnd()");
     if (QuickRenameWindow.HWindow != NULL && QuickRenameWindow.GetCloseEnabled())
     {
         // pokud je aktivni nejaky okno salamandra, konci suspend mode
@@ -2738,9 +2749,9 @@ void CFilesWindow::QuickRenameEnd()
     }
 }
 
-BOOL CFilesWindow::HandeQuickRenameWindowKey(WPARAM wParam)
+BOOL CPanelWindow::HandeQuickRenameWindowKey(WPARAM wParam)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::HandeQuickRenameWindowKey(0x%IX)", wParam);
+    CALL_STACK_MESSAGE2("CPanelWindow::HandeQuickRenameWindowKey(0x%IX)", wParam);
 
     if (wParam == VK_ESCAPE)
     {
@@ -2824,7 +2835,7 @@ BOOL CFilesWindow::HandeQuickRenameWindowKey(WPARAM wParam)
     }
 }
 
-void CFilesWindow::KillQuickRenameTimer()
+void CPanelWindow::KillQuickRenameTimer()
 {
     if (QuickRenameTimer != 0)
     {
@@ -2841,14 +2852,14 @@ void CFilesWindow::KillQuickRenameTimer()
 CQuickRenameWindow::CQuickRenameWindow()
     : CWindow(ooStatic)
 {
-    FilesWindow = NULL;
+    PanelWindow = NULL;
     CloseEnabled = TRUE;
     SkipNextCharacter = FALSE;
 }
 
-void CQuickRenameWindow::SetPanel(CFilesWindow* filesWindow)
+void CQuickRenameWindow::SetPanel(CPanelWindow* filesWindow)
 {
-    FilesWindow = filesWindow;
+    PanelWindow = filesWindow;
 }
 
 void CQuickRenameWindow::SetCloseEnabled(BOOL closeEnabled)
@@ -2876,7 +2887,7 @@ CQuickRenameWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         if (wParam == VK_ESCAPE || wParam == VK_RETURN /*|| wParam == VK_TAB*/)
         {
-            FilesWindow->HandeQuickRenameWindowKey(wParam);
+            PanelWindow->HandeQuickRenameWindowKey(wParam);
             return 0;
         }
         break;

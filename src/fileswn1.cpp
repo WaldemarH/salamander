@@ -73,12 +73,12 @@ CFilesWindowAncestor::~CFilesWindowAncestor()
     }
 }
 
-DWORD
-CFilesWindowAncestor::CheckPath(BOOL echo, const char* path, DWORD err, BOOL postRefresh, HWND parent)
+DWORD CFilesWindowAncestor::CheckPath(BOOL echo, const char* path, DWORD err, BOOL postRefresh, HWND parent)
 {
-    CALL_STACK_MESSAGE5("CFilesWindowAncestor::CheckPath(%d, %s, 0x%X, %d, )", echo, path, err, postRefresh);
+    CALL_STACK_MESSAGE5( "CFilesWindowAncestor::CheckPath(%d, %s, 0x%X, %d, )", echo, path, err, postRefresh );
 
     parent = (parent == NULL) ? HWindow : parent;
+
     if (path == NULL)
         path = GetPath();
 
@@ -89,9 +89,8 @@ void CFilesWindowAncestor::ReleaseListing()
 {
     CALL_STACK_MESSAGE_NONE
 
-        ((CFilesWindow*)this)
-            ->VisibleItemsArray.InvalidateArr();
-    ((CFilesWindow*)this)->VisibleItemsArraySurround.InvalidateArr();
+    ((CPanelWindow*)this)->VisibleItemsArray.InvalidateArr();
+    ((CPanelWindow*)this)->VisibleItemsArraySurround.InvalidateArr();
     if (OnlyDetachFSListing)
     {
         // odpojime z panelu listing vcetne ikon
@@ -100,8 +99,8 @@ void CFilesWindowAncestor::ReleaseListing()
         SetPluginFSDir(NewFSPluginFSDir);
         PluginData.Init(NULL, NULL, NULL, NULL, 0);
         if (NewFSIconCache != NULL)
-            ((CFilesWindow*)this)->IconCache = NewFSIconCache;
-        ((CFilesWindow*)this)->SetValidFileData(GetPluginFSDir()->GetValidData());
+            ((CPanelWindow*)this)->IconCache = NewFSIconCache;
+        ((CPanelWindow*)this)->SetValidFileData(GetPluginFSDir()->GetValidData());
 
         OnlyDetachFSListing = FALSE;
         NewFSFiles = NULL;
@@ -220,7 +219,7 @@ void CFilesWindowAncestor::SetPath(const char* path)
     CALL_STACK_MESSAGE2("CFilesWindowAncestor::SetPath(%s)", path);
     if (SuppressAutoRefresh && (!Is(ptDisk) || !IsTheSamePath(path, Path)))
         SuppressAutoRefresh = FALSE;
-    DetachDirectory((CFilesWindow*)this);
+    DetachDirectory((CPanelWindow*)this);
     strcpy(Path, path);
 
     //--- zjisteni file-based komprese/sifrovani a FAT32
@@ -228,15 +227,15 @@ void CFilesWindowAncestor::SetPath(const char* path)
     if ((Is(ptDisk) || Is(ptZIPArchive)) &&
         MyGetVolumeInformation(path, NULL, NULL, NULL, NULL, 0, NULL, &dummy1, &flags, NULL, 0))
     {
-        ((CFilesWindow*)this)->FileBasedCompression = (flags & FS_FILE_COMPRESSION) != 0 && Is(ptDisk);
-        ((CFilesWindow*)this)->FileBasedEncryption = (flags & FILE_SUPPORTS_ENCRYPTION) != 0 && Is(ptDisk);
-        ((CFilesWindow*)this)->SupportACLS = (flags & FS_PERSISTENT_ACLS) != 0 && Is(ptDisk);
+        ((CPanelWindow*)this)->FileBasedCompression = (flags & FS_FILE_COMPRESSION) != 0 && Is(ptDisk);
+        ((CPanelWindow*)this)->FileBasedEncryption = (flags & FILE_SUPPORTS_ENCRYPTION) != 0 && Is(ptDisk);
+        ((CPanelWindow*)this)->SupportACLS = (flags & FS_PERSISTENT_ACLS) != 0 && Is(ptDisk);
     }
     else
     {
-        ((CFilesWindow*)this)->FileBasedCompression = FALSE;
-        ((CFilesWindow*)this)->FileBasedEncryption = FALSE;
-        ((CFilesWindow*)this)->SupportACLS = FALSE;
+        ((CPanelWindow*)this)->FileBasedCompression = FALSE;
+        ((CPanelWindow*)this)->FileBasedEncryption = FALSE;
+        ((CPanelWindow*)this)->SupportACLS = FALSE;
     }
 
     MonitorChanges = FALSE;
@@ -284,15 +283,15 @@ void CFilesWindowAncestor::SetPath(const char* path)
             MonitorChanges = FALSE;
 
         if (MonitorChanges)
-            AddDirectory((CFilesWindow*)this, Path, DriveType == DRIVE_REMOVABLE || DriveType == DRIVE_FIXED);
+            AddDirectory((CPanelWindow*)this, Path, DriveType == DRIVE_REMOVABLE || DriveType == DRIVE_FIXED);
         else // pokud zmeny nemonitorujeme, nezavola snooper SetAutomaticRefresh -> udelame to tady
         {
-            ((CFilesWindow*)this)->SetAutomaticRefresh(FALSE, TRUE);
+            ((CPanelWindow*)this)->SetAutomaticRefresh(FALSE, TRUE);
         }
     }
     else // ptPluginFS - nebudeme provadet zadne refreshe - plug-in si refreshovani ridi sam
     {
-        ((CFilesWindow*)this)->SetAutomaticRefresh(TRUE, TRUE);
+        ((CPanelWindow*)this)->SetAutomaticRefresh(TRUE, TRUE);
     }
 }
 
@@ -368,10 +367,10 @@ BOOL CFilesWindowAncestor::SamePath(CFilesWindowAncestor* other)
 
 //
 // ****************************************************************************
-// CFilesWindow
+// CPanelWindow
 //
 
-void IconThreadThreadFBodyAux(const char* path, SHFILEINFO& shi, CIconSizeEnum iconSize)
+void IconThreadThreadFBodyAux(const char* path, SHFILEINFO& shi, IconSize::Value iconSize)
 {
     CALL_STACK_MESSAGE_NONE
     __try
@@ -398,7 +397,7 @@ unsigned IconThreadThreadFBody(void* parameter)
 
     SetThreadNameInVCAndTrace("IconsReader");
     TRACE_I("Begin");
-    CFilesWindow* window = (CFilesWindow*)parameter;
+    CPanelWindow* window = (CPanelWindow*)parameter;
 
     // aby chodily shell-extensiony tahajici ikony pres IconHandler a dalsi COM/OLE sracky
     if (OleInitialize(NULL) != S_OK)
@@ -453,7 +452,7 @@ unsigned IconThreadThreadFBody(void* parameter)
                 //          TRACE_I("Start reading.");
                 window->ICWorking = TRUE;
 
-                CIconSizeEnum iconSize = window->GetIconSizeForCurrentViewMode();
+                IconSize::Value iconSize = window->GetIconSizeForCurrentViewMode();
 
                 CIconList* iconList;
                 int iconListIndex;
@@ -1306,10 +1305,9 @@ DWORD WINAPI IconThreadThreadF(void* param)
     return IconThreadThreadFEH(param);
 }
 
-CFilesWindow::CFilesWindow(CMainWindow* parent)
-    : Columns(20, 10), ColumnsTemplate(20, 10), VisibleItemsArray(FALSE), VisibleItemsArraySurround(TRUE)
+CPanelWindow::CPanelWindow(CMainWindow* parent) : Columns(20, 10), ColumnsTemplate(20, 10), VisibleItemsArray(FALSE), VisibleItemsArraySurround(TRUE)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::CFilesWindow()");
+    CALL_STACK_MESSAGE1("CPanelWindow::CPanelWindow()");
     NarrowedNameColumn = FALSE;
     FullWidthOfNameCol = 0;
     WidthOfMostOfNames = 0;
@@ -1461,12 +1459,12 @@ CFilesWindow::CFilesWindow(CMainWindow* parent)
     IconOvrRefreshTimerSet = FALSE;
 }
 
-CFilesWindow::~CFilesWindow()
+CPanelWindow::~CPanelWindow()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::~CFilesWindow()");
+    CALL_STACK_MESSAGE1("CPanelWindow::~CPanelWindow()");
 
     if (DeviceNotification != NULL)
-        TRACE_E("CFilesWindow::~CFilesWindow(): unexpected situation: DeviceNotification != NULL");
+        TRACE_E("CPanelWindow::~CPanelWindow(): unexpected situation: DeviceNotification != NULL");
 
     ClearHistory();
 
@@ -1477,7 +1475,7 @@ CFilesWindow::~CFilesWindow()
     {
         SetEvent(ICEventTerminate); // nacitaci ikonek terminuj se !
         if (WaitForSingleObject(IconCacheThread, 1000) == WAIT_TIMEOUT)
-        { // ma sekundu na jednoduchy odchod, pak nutny kill (window se dealokuje)
+        { // has a second to simply exit, then a necessary kill (window is deallocated)
             TRACE_E("Terminating Icon Thread");
             TerminateThread(IconCacheThread, 666);
             WaitForSingleObject(IconCacheThread, INFINITE); // pockame az thread skutecne skonci, nekdy mu to dost trva
@@ -1501,7 +1499,7 @@ CFilesWindow::~CFilesWindow()
         HANDLES(CloseHandle(ExecuteAssocEvent));
 }
 
-void CFilesWindow::ClearHistory()
+void CPanelWindow::ClearHistory()
 {
     if (PathHistory != NULL)
         PathHistory->ClearHistory();
@@ -1509,9 +1507,9 @@ void CFilesWindow::ClearHistory()
     OldSelection.Clear();
 }
 
-void CFilesWindow::SleepIconCacheThread()
+void CPanelWindow::SleepIconCacheThread()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::SleepIconCacheThread()");
+    CALL_STACK_MESSAGE1("CPanelWindow::SleepIconCacheThread()");
     ICSleep = TRUE;          // pro preruseni smycky nacitani ikon (ICSleepSection nemusi vubec opustit)
     ICStopWork = TRUE;       // pro preruseni smycky nacitani ikon pokud uz je ICStopWork zpracovany
     ResetEvent(ICEventWork); // pro preruseni smycky nacitani ikon pokud jeste neni ICStopWork zpracovany
@@ -1521,7 +1519,7 @@ void CFilesWindow::SleepIconCacheThread()
     HANDLES(LeaveCriticalSection(&ICSleepSection));
 }
 
-void CFilesWindow::WakeupIconCacheThread()
+void CPanelWindow::WakeupIconCacheThread()
 {
     CALL_STACK_MESSAGE_NONE
     ICStopWork = FALSE;    // aby se prace hned nazacatku neprerusila
@@ -1531,9 +1529,9 @@ void CFilesWindow::WakeupIconCacheThread()
         ;
 }
 
-BOOL CFilesWindow::CheckAndRestorePath(const char* path)
+BOOL CPanelWindow::CheckAndRestorePath(const char* path)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::CheckAndRestorePath(%s)", path);
+    CALL_STACK_MESSAGE2("CPanelWindow::CheckAndRestorePath(%s)", path);
 
     // sitove cesty nebudeme testovat, pokud jsme na ne zrovna pristupovali
     BOOL tryNet = (!Is(ptDisk) && !Is(ptZIPArchive)) || !HasTheSameRootPath(path, GetPath());
@@ -1541,9 +1539,9 @@ BOOL CFilesWindow::CheckAndRestorePath(const char* path)
     return SalCheckAndRestorePath(HWindow, path, tryNet);
 }
 
-BOOL CFilesWindow::CanUnloadPlugin(HWND parent, CPluginInterfaceAbstract* plugin)
+BOOL CPanelWindow::CanUnloadPlugin(HWND parent, CPluginInterfaceAbstract* plugin)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::CanUnloadPlugin()");
+    CALL_STACK_MESSAGE1("CPanelWindow::CanUnloadPlugin()");
 
     if (Is(ptDisk))
     {
@@ -1570,7 +1568,7 @@ BOOL CFilesWindow::CanUnloadPlugin(HWND parent, CPluginInterfaceAbstract* plugin
                 }
             }
             else
-                TRACE_E("CFilesWindow::CanUnloadPlugin(): Unexpected situation!");
+                TRACE_E("CPanelWindow::CanUnloadPlugin(): Unexpected situation!");
         }
     }
     else
@@ -1647,15 +1645,15 @@ BOOL CFilesWindow::CanUnloadPlugin(HWND parent, CPluginInterfaceAbstract* plugin
     return TRUE;
 }
 
-void CFilesWindow::RedrawFocusedIndex()
+void CPanelWindow::RedrawFocusedIndex()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::RedrawFocusedIndex()");
+    CALL_STACK_MESSAGE1("CPanelWindow::RedrawFocusedIndex()");
     RedrawIndex(FocusedIndex);
 }
 
-void CFilesWindow::DirectoryLineSetText()
+void CPanelWindow::DirectoryLineSetText()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::DirectoryLineSetText()");
+    CALL_STACK_MESSAGE1("CPanelWindow::DirectoryLineSetText()");
     char ZIPbuf[2 * MAX_PATH];
     const char* path = NULL;
     if (Is(ptZIPArchive))
@@ -1668,13 +1666,13 @@ void CFilesWindow::DirectoryLineSetText()
             strcat(ZIPbuf, GetZIPPath());
         }
         path = ZIPbuf;
-        PathHistory->AddPath(1, GetZIPArchive(), GetZIPPath(), NULL, NULL);
+        PathHistory->AddPath( CPathHistoryItem::Type::archiv, GetZIPArchive(), GetZIPPath(), NULL, NULL);
     }
     else
     {
         if (Is(ptDisk))
         {
-            PathHistory->AddPath(0, GetPath(), NULL, NULL, NULL);
+            PathHistory->AddPath( CPathHistoryItem::Type::disk, GetPath(), NULL, NULL, NULL);
             path = GetPath();
         }
         else
@@ -1688,8 +1686,7 @@ void CFilesWindow::DirectoryLineSetText()
                     ZIPbuf[l] = 0;
                 else
                 {
-                    PathHistory->AddPath(2, GetPluginFS()->GetPluginFSName(), ZIPbuf + l,
-                                         GetPluginFS()->GetInterface(), GetPluginFS());
+                    PathHistory->AddPath( CPathHistoryItem::Type::fs, GetPluginFS()->GetPluginFSName(), ZIPbuf + l, GetPluginFS()->GetInterface(), GetPluginFS());
                 }
                 path = ZIPbuf;
             }
@@ -1730,9 +1727,9 @@ void CFilesWindow::DirectoryLineSetText()
     }
 }
 
-void CFilesWindow::SelectUnselect(BOOL forceIncludeDirs, BOOL select, BOOL showMaskDlg)
+void CPanelWindow::SelectUnselect(BOOL forceIncludeDirs, BOOL select, BOOL showMaskDlg)
 {
-    CALL_STACK_MESSAGE4("CFilesWindow::SelectUnselect(%d, %d, %d)", forceIncludeDirs, select, showMaskDlg);
+    CALL_STACK_MESSAGE4("CPanelWindow::SelectUnselect(%d, %d, %d)", forceIncludeDirs, select, showMaskDlg);
     if (showMaskDlg)
     {
         BeginStopRefresh(); // cmuchal si da pohov
@@ -1762,7 +1759,7 @@ void CFilesWindow::SelectUnselect(BOOL forceIncludeDirs, BOOL select, BOOL showM
                 CFileData* d = (i < dirsCount) ? &Dirs->At(i) : &Files->At(i - dirsCount);
                 if (!showMaskDlg || mask.AgreeMasks(d->Name, i < dirsCount ? NULL : d->Ext)) // v pripade *.* nebudeme volat agree mask
                 {
-                    SetSel(select, d);
+                    SetSelected(select, d);
                     changed = TRUE;
                 }
             }
@@ -1782,12 +1779,95 @@ void CFilesWindow::SelectUnselect(BOOL forceIncludeDirs, BOOL select, BOOL showM
         EndStopRefresh(); // ted uz zase cmuchal nastartuje
     }
 }
-
-void CFilesWindow::InvertSelection(BOOL forceIncludeDirs)
+void CPanelWindow::SelectFocusedAndUnselectOthers(BOOL forceIncludeDirs)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::InvertSelection(%d)", forceIncludeDirs);
+    CALL_STACK_MESSAGE2("CPanelWindow::SelectFocusedAndUnselectOthers(%d)", forceIncludeDirs);
+
+//Get focused item.
+    CFileData*      pItem_focused = nullptr;
+
+    if (
+        ( FocusedIndex >= 0 )                               //Is focus defined?
+        &&
+        ( FocusedIndex < ( Dirs->Count + Files->Count ) )   //Focused index is in range?
+    )
+    {
+    //An item is focused -> get it.
+        BOOL    isDirFocused = ( FocusedIndex < Dirs->Count );
+
+        pItem_focused = isDirFocused ? &Dirs->At( FocusedIndex ) : &Files->At( FocusedIndex - Dirs->Count );
+    }
+    else
+    {
+    //Nothing is focused -> ignore.
+        return;
+    }
+
+//Get first item's index.
+    BOOL    includeDirs = Configuration.IncludeDirs | forceIncludeDirs;
+    int     index_first = 0;
+
+    if ( includeDirs )
+    {
+    //Include dirs in the unselect.
+        if (
+            ( Dirs->Count > 0 )                         //Any dirs selected?
+            &&
+            ( strcmp( Dirs->At(0).Name, ".." ) == 0 )   //Skip '..' dir?
+        )
+        {
+            index_first = 1;
+        }
+    }
+    else
+    {
+    //Skip dirs.
+        index_first = Dirs->Count;
+    }
+
+//Define last available index.
+    const int index_last = Dirs->Count + Files->Count - 1;
+
+//Deselect unfocused.
+    if ( index_first <= index_last )
+    {
+    //Deselect all.
+        //Dirs
+        for ( int i = index_first, i_max = Dirs->Count; i < i_max; ++i )
+        {
+        //Get item.
+            CFileData*  pItem = &Dirs->At( i );
+
+        //Unselect it.
+            SetSelected( FALSE, pItem );
+        }
+
+        //Files
+        for ( int i = 0, i_max = Files->Count; i < i_max; ++i )
+        {
+        //Get item.
+            CFileData*  pItem = &Files->At( i );
+
+        //Unselect it.
+            SetSelected( FALSE, pItem );
+        }
+
+    //Select focused.
+        SetSelected( TRUE, pItem_focused );
+
+    //Repaint items.
+        RepaintListBox( DRAWFLAG_DIRTY_ONLY | DRAWFLAG_SKIP_VISTEST );
+
+    //Notify that selection has changed.
+        PostMessage( HWindow, WM_USER_SELCHANGED, 0, 0 );
+    }
+}
+
+void CPanelWindow::InvertSelection(BOOL forceIncludeDirs)
+{
+    CALL_STACK_MESSAGE2("CPanelWindow::InvertSelection(%d)", forceIncludeDirs);
     BOOL includeDirs = Configuration.IncludeDirs | forceIncludeDirs;
-    int count = GetSelCount();
+    int count = GetSelectedCount();
     int firstIndex = 0;
     if (includeDirs)
     {
@@ -1806,16 +1886,16 @@ void CFilesWindow::InvertSelection(BOOL forceIncludeDirs)
         for (i = firstIndex; i <= lastIndex; i++)
         {
             CFileData* item = (i < Dirs->Count) ? &Dirs->At(i) : &Files->At(i - Dirs->Count);
-            SetSel(item->Selected != 1, item);
+            SetSelected(item->Selected != 1, item);
         }
         RepaintListBox(DRAWFLAG_DIRTY_ONLY | DRAWFLAG_SKIP_VISTEST);
         PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
     }
 }
 
-void CFilesWindow::SelectUnselectByFocusedItem(BOOL select, BOOL byName)
+void CPanelWindow::SelectUnselectByFocusedItem(BOOL select, BOOL byName)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::SelectUnselectByFocusedItem(%d, %d)", select, byName);
+    CALL_STACK_MESSAGE3("CPanelWindow::SelectUnselectByFocusedItem(%d, %d)", select, byName);
     if (FocusedIndex >= 0 && FocusedIndex < Dirs->Count + Files->Count)
     {
 
@@ -1853,7 +1933,7 @@ void CFilesWindow::SelectUnselectByFocusedItem(BOOL select, BOOL byName)
             if (!itemIsDir && byName && *item->Ext != 0)
                 len--; // preskocim '.'
             if (len == focusedLen && StrNICmp(str, focusedStr, len) == 0)
-                SetSel(select, item);
+                SetSelected(select, item);
         }
         if (SelectedCount != lastSelectdCount)
         {
@@ -1863,10 +1943,10 @@ void CFilesWindow::SelectUnselectByFocusedItem(BOOL select, BOOL byName)
     }
 }
 
-void CFilesWindow::StoreGlobalSelection()
+void CPanelWindow::StoreGlobalSelection()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::StoreGlobalSelection()");
-    int count = GetSelCount();
+    CALL_STACK_MESSAGE1("CPanelWindow::StoreGlobalSelection()");
+    int count = GetSelectedCount();
     if (count != 0)
     {
         BeginStopRefresh(); // cmuchal si da pohov
@@ -1937,9 +2017,9 @@ void CFilesWindow::StoreGlobalSelection()
     }
 }
 
-void CFilesWindow::RestoreGlobalSelection()
+void CPanelWindow::RestoreGlobalSelection()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::RestoreGlobalSelection()");
+    CALL_STACK_MESSAGE1("CPanelWindow::RestoreGlobalSelection()");
 
     BOOL clipboardValid = IsTextOnClipboard();
     BOOL globalValid = GlobalSelection.GetCount() > 0;
@@ -1973,27 +2053,27 @@ void CFilesWindow::RestoreGlobalSelection()
                 {
                 case lsoCOPY:
                 {
-                    SetSel(selection->Contains(isDir, file->Name), file);
+                    SetSelected(selection->Contains(isDir, file->Name), file);
                     break;
                 }
 
                 case lsoOR:
                 {
                     if (selection->Contains(isDir, file->Name))
-                        SetSel(TRUE, file);
+                        SetSelected(TRUE, file);
                     break;
                 }
 
                 case lsoDIFF:
                 {
                     if (file->Selected)
-                        SetSel(!selection->Contains(isDir, file->Name), file);
+                        SetSelected(!selection->Contains(isDir, file->Name), file);
                     break;
                 }
 
                 case lsoAND:
                 {
-                    SetSel(file->Selected && selection->Contains(isDir, file->Name), file);
+                    SetSelected(file->Selected && selection->Contains(isDir, file->Name), file);
                     break;
                 }
 
@@ -2012,11 +2092,11 @@ void CFilesWindow::RestoreGlobalSelection()
     }
 }
 
-void CFilesWindow::StoreSelection()
+void CPanelWindow::StoreSelection()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::StoreSelection()");
+    CALL_STACK_MESSAGE1("CPanelWindow::StoreSelection()");
     OldSelection.Clear();
-    int count = GetSelCount();
+    int count = GetSelectedCount();
     if (count != 0)
     {
         OldSelection.SetCaseSensitive(IsCaseSensitive());
@@ -2037,9 +2117,9 @@ void CFilesWindow::StoreSelection()
     }
 }
 
-void CFilesWindow::Reselect()
+void CPanelWindow::Reselect()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::Reselect()");
+    CALL_STACK_MESSAGE1("CPanelWindow::Reselect()");
     int count = Files->Count + Dirs->Count;
     int i;
     for (i = 0; i < count; i++)
@@ -2047,15 +2127,15 @@ void CFilesWindow::Reselect()
         BOOL isDir = i < Dirs->Count;
         CFileData* file = isDir ? &Dirs->At(i) : &Files->At(i - Dirs->Count);
         if (OldSelection.Contains(isDir, file->Name))
-            SetSel(TRUE, file);
+            SetSelected(TRUE, file);
         else
-            SetSel(FALSE, file);
+            SetSelected(FALSE, file);
     }
     RepaintListBox(DRAWFLAG_DIRTY_ONLY | DRAWFLAG_SKIP_VISTEST);
     PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
 }
 
-void CFilesWindow::ShowHideNames(int mode)
+void CPanelWindow::ShowHideNames(int mode)
 {
     BOOL refreshPanel = FALSE;
     switch (mode)
@@ -2072,7 +2152,7 @@ void CFilesWindow::ShowHideNames(int mode)
 
     case 1: // hide selected names
     {
-        int count = GetSelCount();
+        int count = GetSelectedCount();
         if (count > 0)
         {
             int totalCount = Files->Count + Dirs->Count;
@@ -2134,7 +2214,7 @@ void CFilesWindow::ShowHideNames(int mode)
     }
 }
 
-void CFilesWindow::SetAutomaticRefresh(BOOL value, BOOL force)
+void CPanelWindow::SetAutomaticRefresh(BOOL value, BOOL force)
 {
     CALL_STACK_MESSAGE_NONE
     if (force || AutomaticRefresh != value)
@@ -2148,9 +2228,9 @@ void CFilesWindow::SetAutomaticRefresh(BOOL value, BOOL force)
     }
 }
 
-void CFilesWindow::GotoRoot()
+void CPanelWindow::GotoRoot()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::GotoRoot()");
+    CALL_STACK_MESSAGE1("CPanelWindow::GotoRoot()");
     TopIndexMem.Clear(); // dlouhy skok
 
     char root[MAX_PATH];
@@ -2189,9 +2269,9 @@ void CFilesWindow::GotoRoot()
     }
 }
 
-void CFilesWindow::GotoHotPath(int index)
+void CPanelWindow::GotoHotPath(int index)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::GotoHotPath(%d)", index);
+    CALL_STACK_MESSAGE2("CPanelWindow::GotoHotPath(%d)", index);
     if (index < 0 || index >= HOT_PATHS_COUNT)
         return;
     //---  prepnuti na hot-path
@@ -2200,9 +2280,9 @@ void CFilesWindow::GotoHotPath(int index)
         ChangeDir(path);
 }
 
-void CFilesWindow::SetUnescapedHotPath(int index)
+void CPanelWindow::SetUnescapedHotPath(int index)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::SetUnescapedHotPath(%d)", index);
+    CALL_STACK_MESSAGE2("CPanelWindow::SetUnescapedHotPath(%d)", index);
     if (index < 0 || index >= HOT_PATHS_COUNT)
         return;
     char path[2 * MAX_PATH];
@@ -2210,9 +2290,9 @@ void CFilesWindow::SetUnescapedHotPath(int index)
     MainWindow->SetUnescapedHotPath(index, path);
 }
 
-BOOL CFilesWindow::SetUnescapedHotPathToEmptyPos()
+BOOL CPanelWindow::SetUnescapedHotPathToEmptyPos()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::SetUnescapedHotPathToEmptyPos()");
+    CALL_STACK_MESSAGE1("CPanelWindow::SetUnescapedHotPathToEmptyPos()");
     int index = MainWindow->GetUnassignedHotPathIndex();
     if (index != -1)
     {
@@ -2234,9 +2314,9 @@ BOOL AreNextPathComponents(const char* relPath, const char* nextComp)
 
 #endif // _WIN64
 
-void CFilesWindow::OpenActiveFolder()
+void CPanelWindow::OpenActiveFolder()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::OpenActiveFolder()");
+    CALL_STACK_MESSAGE1("CPanelWindow::OpenActiveFolder()");
     if (Is(ptDisk) && CheckPath(TRUE) != ERROR_USER_TERMINATED)
     {
         UserWorkedOnThisPath = TRUE;
@@ -2319,10 +2399,10 @@ void CFilesWindow::OpenActiveFolder()
     }
 }
 
-BOOL CFilesWindow::CommonRefresh(HWND parent, int suggestedTopIndex, const char* suggestedFocusName,
+BOOL CPanelWindow::CommonRefresh(HWND parent, int suggestedTopIndex, const char* suggestedFocusName,
                                  BOOL refreshListBox, BOOL readDirectory, BOOL isRefresh)
 {
-    CALL_STACK_MESSAGE6("CFilesWindow::CommonRefresh(, %d, %s, %d, %d, %d)", suggestedTopIndex,
+    CALL_STACK_MESSAGE6("CPanelWindow::CommonRefresh(, %d, %s, %d, %d, %d)", suggestedTopIndex,
                         suggestedFocusName, refreshListBox, readDirectory, isRefresh);
 
     //TRACE_I("common refresh: begin");

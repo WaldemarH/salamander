@@ -2,111 +2,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "precomp.h"
-
 #include "mainwnd.h"
 
 CRegistryWorkerThread RegistryWorkerThread;
 
-// ****************************************************************************
-
-BOOL ClearKeyAux(HKEY key)
-{
-    char name[MAX_PATH];
-    HKEY subKey;
-    while (RegEnumKey(key, 0, name, MAX_PATH) == ERROR_SUCCESS)
-    {
-        if (HANDLES_Q(RegOpenKeyEx(key, name, 0, KEY_READ | KEY_WRITE, &subKey)) == ERROR_SUCCESS)
-        {
-            BOOL ret = ClearKeyAux(subKey);
-            HANDLES(RegCloseKey(subKey));
-            if (!ret || RegDeleteKey(key, name) != ERROR_SUCCESS)
-                return FALSE;
-        }
-        else
-            return FALSE;
-    }
-
-    DWORD size = MAX_PATH;
-    while (RegEnumValue(key, 0, name, &size, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-        if (RegDeleteValue(key, name) != ERROR_SUCCESS)
-        {
-            TRACE_E("Unable to delete values in specified key (in registry).");
-            break;
-        }
-        else
-            size = MAX_PATH;
-
-    return TRUE;
-}
-
-// ****************************************************************************
-
-BOOL CreateKeyAux(HWND parent, HKEY hKey, const char* name, HKEY& createdKey, BOOL quiet)
-{
-    DWORD createType; // info jestli byl klic vytvoren nebo jen otevren
-    LONG res = HANDLES(RegCreateKeyEx(hKey, name, 0, NULL, REG_OPTION_NON_VOLATILE,
-                                      KEY_READ | KEY_WRITE, NULL, &createdKey,
-                                      &createType));
-    if (res == ERROR_SUCCESS)
-        return TRUE;
-    else
-    {
-        if (!quiet)
-        {
-            if (HLanguage == NULL)
-            {
-                MessageBox(parent, GetErrorText(res), "Error Saving Configuration",
-                           MB_OK | MB_ICONEXCLAMATION);
-            }
-            else
-            {
-                SalMessageBox(parent, GetErrorText(res), LoadStr(IDS_ERRORSAVECONFIG),
-                              MB_OK | MB_ICONEXCLAMATION);
-            }
-        }
-        return FALSE;
-    }
-}
-
-// ****************************************************************************
-
-BOOL OpenKeyAux(HWND parent, HKEY hKey, const char* name, HKEY& openedKey, BOOL quiet)
-{
-    LONG res = HANDLES_Q(RegOpenKeyEx(hKey, name, 0, KEY_READ, &openedKey));
-    if (res == ERROR_SUCCESS)
-        return TRUE;
-    else
-    {
-        if (!quiet && res != ERROR_FILE_NOT_FOUND)
-        {
-            if (HLanguage == NULL)
-            {
-                MessageBox(parent, GetErrorText(res),
-                           "Error Loading Configuration", MB_OK | MB_ICONEXCLAMATION);
-            }
-            else
-            {
-                SalMessageBox(parent, GetErrorText(res),
-                              LoadStr(IDS_ERRORLOADCONFIG), MB_OK | MB_ICONEXCLAMATION);
-            }
-        }
-        return FALSE;
-    }
-}
-
-// ****************************************************************************
-
-void CloseKeyAux(HKEY hKey)
-{
-    HANDLES(RegCloseKey(hKey));
-}
-
-// ****************************************************************************
-
-BOOL DeleteKeyAux(HKEY hKey, const char* name)
-{
-    return RegDeleteKey(hKey, name) == ERROR_SUCCESS;
-}
 
 // ****************************************************************************
 
@@ -123,8 +22,7 @@ BOOL GetValueAux(HWND parent, HKEY hKey, const char* name, DWORD type, void* buf
             {
                 if (HLanguage == NULL)
                 {
-                    MessageBox(parent, "Unexpected value type.",
-                               "Error Loading Configuration", MB_OK | MB_ICONEXCLAMATION);
+                    MessageBox(parent, "Unexpected value type.","Error Loading Configuration", MB_OK | MB_ICONEXCLAMATION);
                 }
                 else
                 {
@@ -142,13 +40,11 @@ BOOL GetValueAux(HWND parent, HKEY hKey, const char* name, DWORD type, void* buf
             {
                 if (HLanguage == NULL)
                 {
-                    MessageBox(parent, GetErrorText(res),
-                               "Error Loading Configuration", MB_OK | MB_ICONEXCLAMATION);
+                    MessageBox(parent, GetErrorText(res),"Error Loading Configuration", MB_OK | MB_ICONEXCLAMATION);
                 }
                 else
                 {
-                    SalMessageBox(parent, GetErrorText(res),
-                                  LoadStr(IDS_ERRORLOADCONFIG), MB_OK | MB_ICONEXCLAMATION);
+                    SalMessageBox(parent, GetErrorText(res),LoadStr(IDS_ERRORLOADCONFIG), MB_OK | MB_ICONEXCLAMATION);
                 }
             }
         }
@@ -170,13 +66,11 @@ BOOL GetValue2Aux(HWND parent, HKEY hKey, const char* name, DWORD type1, DWORD t
         {
             if (HLanguage == NULL)
             {
-                MessageBox(parent, "Unexpected value type.",
-                           "Error Loading Configuration", MB_OK | MB_ICONEXCLAMATION);
+                MessageBox(parent, "Unexpected value type.","Error Loading Configuration", MB_OK | MB_ICONEXCLAMATION);
             }
             else
             {
-                SalMessageBox(parent, LoadStr(IDS_UNEXPECTEDVALUETYPE),
-                              LoadStr(IDS_ERRORLOADCONFIG), MB_OK | MB_ICONEXCLAMATION);
+                SalMessageBox(parent, LoadStr(IDS_UNEXPECTEDVALUETYPE),LoadStr(IDS_ERRORLOADCONFIG), MB_OK | MB_ICONEXCLAMATION);
             }
             return FALSE;
         }
@@ -186,28 +80,20 @@ BOOL GetValue2Aux(HWND parent, HKEY hKey, const char* name, DWORD type1, DWORD t
         {
             if (HLanguage == NULL)
             {
-                MessageBox(parent, GetErrorText(res),
-                           "Error Loading Configuration", MB_OK | MB_ICONEXCLAMATION);
+                MessageBox(parent, GetErrorText(res), "Error Loading Configuration", MB_OK | MB_ICONEXCLAMATION);
             }
             else
             {
-                SalMessageBox(parent, GetErrorText(res),
-                              LoadStr(IDS_ERRORLOADCONFIG), MB_OK | MB_ICONEXCLAMATION);
+                SalMessageBox(parent, GetErrorText(res), LoadStr(IDS_ERRORLOADCONFIG), MB_OK | MB_ICONEXCLAMATION);
             }
         }
         return FALSE;
     }
 }
 
-BOOL GetValueDontCheckTypeAux(HKEY hKey, const char* name, void* buffer, DWORD bufferSize)
-{
-    return SalRegQueryValueEx(hKey, name, 0, NULL, (BYTE*)buffer, &bufferSize) == ERROR_SUCCESS;
-}
-
 // ****************************************************************************
 
-BOOL SetValueAux(HWND parent, HKEY hKey, const char* name, DWORD type,
-                 const void* data, DWORD dataSize, BOOL quiet)
+BOOL SetValueAux(HWND parent, HKEY hKey, const char* name, DWORD type, const void* data, DWORD dataSize, BOOL quiet)
 {
     if (dataSize == -1)
         dataSize = (DWORD)strlen((char*)data) + 1;
@@ -220,62 +106,11 @@ BOOL SetValueAux(HWND parent, HKEY hKey, const char* name, DWORD type,
         {
             if (HLanguage == NULL)
             {
-                MessageBox(parent, GetErrorText(res),
-                           "Error Saving Configuration", MB_OK | MB_ICONEXCLAMATION);
+                MessageBox(parent, GetErrorText(res), "Error Saving Configuration", MB_OK | MB_ICONEXCLAMATION);
             }
             else
             {
-                SalMessageBox(parent, GetErrorText(res),
-                              LoadStr(IDS_ERRORSAVECONFIG), MB_OK | MB_ICONEXCLAMATION);
-            }
-        }
-        return FALSE;
-    }
-}
-
-// ****************************************************************************
-
-BOOL DeleteValueAux(HKEY hKey, const char* name)
-{
-    return RegDeleteValue(hKey, name) == ERROR_SUCCESS;
-}
-
-// ****************************************************************************
-
-BOOL GetSizeAux(HWND parent, HKEY hKey, const char* name, DWORD type, DWORD& bufferSize)
-{
-    DWORD gettedType;
-    LONG res = SalRegQueryValueEx(hKey, name, 0, &gettedType, NULL, &bufferSize);
-    if (res == ERROR_SUCCESS)
-        if (gettedType == type)
-            return TRUE;
-        else
-        {
-            if (HLanguage == NULL)
-            {
-                MessageBox(parent, "Unexpected value type.",
-                           "Error Loading Configuration", MB_OK | MB_ICONEXCLAMATION);
-            }
-            else
-            {
-                SalMessageBox(parent, LoadStr(IDS_UNEXPECTEDVALUETYPE),
-                              LoadStr(IDS_ERRORLOADCONFIG), MB_OK | MB_ICONEXCLAMATION);
-            }
-            return FALSE;
-        }
-    else
-    {
-        if (res != ERROR_FILE_NOT_FOUND)
-        {
-            if (HLanguage == NULL)
-            {
-                MessageBox(parent, GetErrorText(res),
-                           "Error Loading Configuration", MB_OK | MB_ICONEXCLAMATION);
-            }
-            else
-            {
-                SalMessageBox(parent, GetErrorText(res),
-                              LoadStr(IDS_ERRORLOADCONFIG), MB_OK | MB_ICONEXCLAMATION);
+                SalMessageBox(parent, GetErrorText(res), LoadStr(IDS_ERRORSAVECONFIG), MB_OK | MB_ICONEXCLAMATION);
             }
         }
         return FALSE;
@@ -342,7 +177,7 @@ BOOL CRegistryWorkerThread::StartThread()
             Thread = HANDLES(CreateThread(NULL, 0, CRegistryWorkerThread::ThreadBody, (void*)this, 0, &threadID));
             if (Thread != NULL)
             {
-                OwnerTID = GetCurrentThreadId(); // povolime pouzivani pro tento thread
+                OwnerTID = GetCurrentThreadId(); // we allow use for this thread
                 StopWorkerSkipCount = 0;
                 int level = GetThreadPriority(GetCurrentThread());
                 SetThreadPriority(Thread, level);
@@ -440,7 +275,9 @@ BOOL CRegistryWorkerThread::ClearKey(HKEY key)
         return LastWorkSuccess;
     }
     else
-        return ClearKeyAux(key);
+    {
+        return Registry::Silent_Key_Delete_Branch( key );
+    }
 }
 
 BOOL CRegistryWorkerThread::CreateKey(HKEY key, const char* name, HKEY& createdKey)
@@ -459,7 +296,16 @@ BOOL CRegistryWorkerThread::CreateKey(HKEY key, const char* name, HKEY& createdK
         return LastWorkSuccess;
     }
     else
-        return CreateKeyAux(MainWindow != NULL ? MainWindow->HWindow : NULL, key, name, createdKey, FALSE);
+    {
+        if ( MainWindow != NULL )
+        {
+            return Registry::Noisy_Key_Create( MainWindow->HWindow, key, String_TChar_View( name ), createdKey );
+        }
+        else
+        {
+            return Registry::Silent_Key_Create( key, String_TChar_View( name ), createdKey );
+        }
+    }
 }
 
 BOOL CRegistryWorkerThread::OpenKey(HKEY key, const char* name, HKEY& openedKey)
@@ -479,8 +325,14 @@ BOOL CRegistryWorkerThread::OpenKey(HKEY key, const char* name, HKEY& openedKey)
     }
     else
     {
-        return OpenKeyAux(MainWindow != NULL ? MainWindow->HWindow : NULL,
-                          key, name, openedKey, FALSE);
+        if ( MainWindow != NULL )
+        {
+            return Registry::Noisy_Key_Open( MainWindow->HWindow, key, String_TChar_View( name ), openedKey );
+        }
+        else
+        {
+            return Registry::Silent_Key_Open( key, String_TChar_View( name ), openedKey );
+        }
     }
 }
 
@@ -495,7 +347,7 @@ void CRegistryWorkerThread::CloseKey(HKEY key)
         WaitForWorkDoneWithMessageLoop();
     }
     else
-        CloseKeyAux(key);
+        Registry::Silent_Key_Close(key);
 }
 
 BOOL CRegistryWorkerThread::DeleteKey(HKEY key, const char* name)
@@ -512,7 +364,7 @@ BOOL CRegistryWorkerThread::DeleteKey(HKEY key, const char* name)
         return LastWorkSuccess;
     }
     else
-        return DeleteKeyAux(key, name);
+        return Registry::Silent_Key_Delete(key, String_TChar_View( name ) );
 }
 
 BOOL CRegistryWorkerThread::GetValue(HKEY key, const char* name, DWORD type, void* buffer, DWORD bufferSize)
@@ -533,8 +385,7 @@ BOOL CRegistryWorkerThread::GetValue(HKEY key, const char* name, DWORD type, voi
     }
     else
     {
-        return GetValueAux(MainWindow != NULL ? MainWindow->HWindow : NULL,
-                           key, name, type, buffer, bufferSize, FALSE);
+        return GetValueAux(MainWindow != NULL ? MainWindow->HWindow : NULL, key, name, type, buffer, bufferSize, FALSE);
     }
 }
 
@@ -558,8 +409,7 @@ BOOL CRegistryWorkerThread::GetValue2(HKEY key, const char* name, DWORD type1, D
     }
     else
     {
-        return GetValue2Aux(MainWindow != NULL ? MainWindow->HWindow : NULL,
-                            key, name, type1, type2, returnedType, buffer, bufferSize);
+        return GetValue2Aux(MainWindow != NULL ? MainWindow->HWindow : NULL, key, name, type1, type2, returnedType, buffer, bufferSize);
     }
 }
 
@@ -597,7 +447,9 @@ BOOL CRegistryWorkerThread::DeleteValue(HKEY key, const char* name)
         return LastWorkSuccess;
     }
     else
-        return DeleteValueAux(key, name);
+    {
+        return Registry::Silent_Value_Delete( key, String_TChar_View( name ) );
+    }
 }
 
 BOOL CRegistryWorkerThread::GetSize(HKEY key, const char* name, DWORD type, DWORD& bufferSize)
@@ -617,11 +469,19 @@ BOOL CRegistryWorkerThread::GetSize(HKEY key, const char* name, DWORD type, DWOR
         return LastWorkSuccess;
     }
     else
-        return GetSizeAux(MainWindow != NULL ? MainWindow->HWindow : NULL, key, name, type, bufferSize);
+    {
+        if ( MainWindow != NULL )
+        {
+            return Registry::Noisy_Size_Get( MainWindow->HWindow, key, String_TChar_View( name ), bufferSize );
+        }
+        else
+        {
+            return Registry::Silent_Size_Get( key, String_TChar_View( name ), bufferSize );
+        }
+    }
 }
 
-unsigned
-CRegistryWorkerThread::Body()
+unsigned CRegistryWorkerThread::Body()
 {
     CALL_STACK_MESSAGE1("CRegistryWorkerThread::Body()");
     SetThreadNameInVCAndTrace("RegistryWorker");
@@ -648,19 +508,19 @@ CRegistryWorkerThread::Body()
             }
 
             case rwtClearKey:
-                LastWorkSuccess = ClearKeyAux(Key);
+                LastWorkSuccess = Registry::Silent_Key_Delete_Branch( Key );
                 break;
             case rwtCreateKey:
-                LastWorkSuccess = CreateKeyAux(NULL, Key, Name, OpenedKey, FALSE);
+                LastWorkSuccess = Registry::Silent_Key_Create( Key, String_TChar_View( Name ), OpenedKey );
                 break;
             case rwtOpenKey:
-                LastWorkSuccess = OpenKeyAux(NULL, Key, Name, OpenedKey, FALSE);
+                LastWorkSuccess = Registry::Silent_Key_Open( Key, String_TChar_View( Name ), OpenedKey );
                 break;
             case rwtCloseKey:
-                CloseKeyAux(Key);
+                Registry::Silent_Key_Close(Key);
                 break;
             case rwtDeleteKey:
-                LastWorkSuccess = DeleteKeyAux(Key, Name);
+                LastWorkSuccess = Registry::Silent_Key_Delete( Key, String_TChar_View( Name ) );
                 break;
             case rwtGetValue:
                 LastWorkSuccess = GetValueAux(NULL, Key, Name, ValueType, Buffer, BufferSize, FALSE);
@@ -672,10 +532,10 @@ CRegistryWorkerThread::Body()
                 LastWorkSuccess = SetValueAux(NULL, Key, Name, ValueType, Data, DataSize, FALSE);
                 break;
             case rwtDeleteValue:
-                LastWorkSuccess = DeleteValueAux(Key, Name);
+                LastWorkSuccess = Registry::Silent_Value_Delete( Key, String_TChar_View( Name ) );
                 break;
             case rwtGetSize:
-                LastWorkSuccess = GetSizeAux(NULL, Key, Name, ValueType, BufferSize);
+                LastWorkSuccess = Registry::Silent_Size_Get( Key, String_TChar_View( Name ), BufferSize );
                 break;
             }
             WorkType = rwtNone;
@@ -686,8 +546,7 @@ CRegistryWorkerThread::Body()
     }
 }
 
-unsigned
-CRegistryWorkerThread::ThreadBodyFEH(void* param)
+unsigned CRegistryWorkerThread::ThreadBodyFEH(void* param)
 {
 #ifndef CALLSTK_DISABLE
     __try
@@ -706,34 +565,11 @@ CRegistryWorkerThread::ThreadBodyFEH(void* param)
 #endif // CALLSTK_DISABLE
 }
 
-DWORD WINAPI
-CRegistryWorkerThread::ThreadBody(void* param)
+DWORD WINAPI CRegistryWorkerThread::ThreadBody(void* param)
 {
 #ifndef CALLSTK_DISABLE
     CCallStack stack;
 #endif // CALLSTK_DISABLE
     ThreadBodyFEH(param);
     return 0;
-}
-
-CRegistryWorkerThread::CInUseHandler::~CInUseHandler()
-{
-    if (T != NULL)
-        T->InUse = FALSE;
-}
-
-BOOL CRegistryWorkerThread::CInUseHandler::CanUseThread(CRegistryWorkerThread* t)
-{
-    if (t->Thread != NULL && t->OwnerTID == GetCurrentThreadId())
-    { // prace ve workerovi se tyka jen threadu, ktery ho nastartoval
-        BOOL ret = !t->InUse;
-        if (ret) // prace se muze spustit v threadu registry workera
-        {
-            t->InUse = TRUE;
-            T = t; // v destruktoru se da T->InUse = FALSE
-        }
-        // else  // rekurzivni volani (diky message-loope a tim distribuci zprav) = praci v threadu odmitneme
-        return ret;
-    }
-    return FALSE;
 }

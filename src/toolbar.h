@@ -438,7 +438,7 @@ public:
 
     // zamackne ikonku odpovidajici ceste; pokud takovou nenalezne, nebude
     // zamackla zadna; promenna force vyradi cache
-    void SetCheckedDrive(CFilesWindow* panel, BOOL force = FALSE);
+    void SetCheckedDrive(CPanelWindow* panel, BOOL force = FALSE);
 
     // pokud prijde notifikace o pridani/odstraneni disku, je treba znovu naplnit seznam;
     // neni-li 'copyDrivesListFrom' NULL, maji se data o discich kopirovat misto znovu ziskavat

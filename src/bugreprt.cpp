@@ -497,8 +497,7 @@ const char* FindModuleName(char* buf, void* address, BOOL unloadedName = FALSE)
 
 static CModulesInfo ModulesInfo;
 
-void CCallStack::PrintBugReport(EXCEPTION_POINTERS* Exception, DWORD ThreadID, DWORD ShellExtCrashID,
-                                FPrintLine PrintLine, void* param)
+void CCallStack::PrintBugReport(EXCEPTION_POINTERS* Exception, DWORD ThreadID, DWORD ShellExtCrashID, FPrintLine PrintLine, void* param)
 {
     //  static TDirectArray<DWORD> knownThreads(20, 10);
     if (Exception != NULL)
@@ -1414,7 +1413,7 @@ void CCallStack::PrintBugReport(EXCEPTION_POINTERS* Exception, DWORD ThreadID, D
         int panelNum;
         for (panelNum = 0; MainWindow != NULL && panelNum < 2; panelNum++)
         {
-            CFilesWindow* panel = panelNum == 0 ? MainWindow->LeftPanel : MainWindow->RightPanel;
+            CPanelWindow* panel = panelNum == 0 ? MainWindow->LeftPanel : MainWindow->RightPanel;
             if (panel != NULL)
             {
                 sprintf(buf, "%s panel (%s):", panelNum == 0 ? "Left" : "Right",
@@ -1769,38 +1768,42 @@ void CCallStack::PrintBugReport(EXCEPTION_POINTERS* Exception, DWORD ThreadID, D
     HKEY hKey;
     __try
     {
-        if (NOHANDLES(RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Internet Explorer", 0,
-                                   KEY_READ, &hKey)) == ERROR_SUCCESS)
+        if (NOHANDLES(RegOpenKeyEx( HKEY_LOCAL_MACHINE, TEXT( "Software\\Microsoft\\Internet Explorer" ), 0,KEY_READ, &hKey)) == ERROR_SUCCESS)
         {
-            static char iver[50];
-            static char build[50];
-            static char version[50];
-            iver[0] = 0;
-            build[0] = 0;
-            version[0] = 0;
-            GetValueAux(NULL, hKey, "IVer", REG_SZ, iver, 50);
-            GetValueAux(NULL, hKey, "Build", REG_SZ, build, 50);
-            GetValueAux(NULL, hKey, "Version", REG_SZ, version, 50);
+            static String_TChar    build;
+            static String_TChar    iver;
+            static String_TChar    version;
 
-            if (iver[0] != 0 || build[0] != 0 || version[0] != 0)
+            Registry::Silent_Value_Get( hKey, TEXT_VIEW( "Build" ), build );
+            Registry::Silent_Value_Get( hKey, TEXT_VIEW( "IVer" ), iver );
+            Registry::Silent_Value_Get( hKey, TEXT_VIEW( "Version" ), version );
+
+            if (
+                ( build.Size_CodeUnits() > 0 )
+                ||
+                ( iver.Size_CodeUnits() > 0 )
+                ||
+                ( version.Size_CodeUnits() > 0 )
+            )
             {
-                lstrcpy(buf, "IE ");
-                if (version[0] != 0)
+                lstrcpy( buf, "IE " );
+
+                if ( version.Size_CodeUnits() > 0 )
                 {
                     lstrcat(buf, "Version: ");
-                    lstrcat(buf, version);
+                    lstrcat(buf, version.Text_Get());
                     lstrcat(buf, " ");
                 }
-                if (build[0] != 0)
+                if ( build.Size_CodeUnits() > 0 )
                 {
                     lstrcat(buf, "Build: ");
-                    lstrcat(buf, build);
+                    lstrcat(buf, build.Text_Get());
                     lstrcat(buf, " ");
                 }
-                if (iver[0] != 0)
+                if ( iver.Size_CodeUnits() > 0 )
                 {
                     lstrcat(buf, "IVer: ");
-                    lstrcat(buf, iver);
+                    lstrcat(buf, iver.Text_Get());
                 }
                 PrintLine(param, buf, TRUE);
             }
@@ -1811,20 +1814,18 @@ void CCallStack::PrintBugReport(EXCEPTION_POINTERS* Exception, DWORD ThreadID, D
         sprintf(buf, "COMCTL32.DLL Version: %u.%u", CCVerMajor, CCVerMinor);
         PrintLine(param, buf, TRUE);
 
-        if (NOHANDLES(RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-                                   "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0,
-                                   KEY_READ, &hKey)) == ERROR_SUCCESS)
+        if (NOHANDLES(RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT( "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion" ), 0, KEY_READ, &hKey)) == ERROR_SUCCESS)
         {
-            char myBuff[100];
+            String_TChar    text;
 
-            if (GetValueAux(NULL, hKey, "ProductName", REG_SZ, myBuff, 100))
+            if ( Registry::Silent_Value_Get( hKey, TEXT_VIEW( "ProductName" ), text ) )
             {
-                sprintf(buf, "ProductName (from registry): %s", myBuff);
+                sprintf(buf, "ProductName (from registry): %s", text.Text_Get());
                 PrintLine(param, buf, TRUE);
             }
-            if (GetValueAux(NULL, hKey, "CurrentVersion", REG_SZ, myBuff, 100))
+            if ( Registry::Silent_Value_Get( hKey, TEXT_VIEW( "CurrentVersion" ), text ) )
             {
-                sprintf(buf, "CurrentVersion (from registry): %s", myBuff);
+                sprintf(buf, "CurrentVersion (from registry): %s", text.Text_Get());
                 PrintLine(param, buf, TRUE);
             }
             NOHANDLES(RegCloseKey(hKey));
@@ -1909,31 +1910,41 @@ void CCallStack::PrintBugReport(EXCEPTION_POINTERS* Exception, DWORD ThreadID, D
         PrintLine(param, buf, TRUE);
         sprintf(buf, "Processor Level: %u", si.wProcessorLevel);
         PrintLine(param, buf, TRUE);
-        if (NOHANDLES(RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Hardware\\Description\\System\\CentralProcessor\\0", 0,
-                                   KEY_READ, &hKey)) == ERROR_SUCCESS)
+        if (NOHANDLES(RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Hardware\\Description\\System\\CentralProcessor\\0", 0,KEY_READ, &hKey)) == ERROR_SUCCESS)
         {
-            static char processorName[200];
-            static char vendorName[200];
+            static String_TChar processorName;
+            static String_TChar vendorName;
             DWORD mhz;
 
-            if (!GetValueAux(NULL, hKey, "ProcessorNameString", REG_SZ, processorName, 200))
-                if (!GetValueAux(NULL, hKey, "Identifier", REG_SZ, processorName, 200)) // pod W2K+ asi zbytecny
-                    processorName[0] = 0;
-            if (!GetValueAux(NULL, hKey, "VendorIdentifier", REG_SZ, vendorName, 200))
-                vendorName[0] = 0;
-            if (!GetValueAux(NULL, hKey, "~MHz", REG_DWORD, &mhz, sizeof(DWORD)))
+            if (!Registry::Silent_Value_Get( hKey, TEXT_VIEW( "ProcessorNameString" ), processorName ))
+            {
+                if (!Registry::Silent_Value_Get( hKey, TEXT_VIEW( "Identifier" ), processorName )) // pod W2K+ asi zbytecny
+                {
+                    processorName.Clear();
+                }
+            }
+            if (!Registry::Silent_Value_Get( hKey, TEXT_VIEW( "VendorIdentifier" ), vendorName ))
+            {
+                vendorName.Clear();
+            }
+            if (!Registry::Silent_Value_Get( hKey, TEXT_VIEW( "~MHz" ), mhz ))
             {
                 if (!GetProcessorSpeed(&mhz))
                     mhz = 0;
             }
-            if (vendorName[0] != 0)
-                sprintf(buf, "Processor Vendor Name: %s", vendorName);
-            PrintLine(param, buf, TRUE);
-            if (processorName[0] != 0)
+            if (vendorName.Size_CodeUnits() > 0)
             {
-                char* ss = processorName;
+                sprintf(buf, "Processor Vendor Name: %s", vendorName.Text_Get());
+            }
+            PrintLine(param, buf, TRUE);
+
+            if (processorName.Size_CodeUnits() > 0 )
+            {
+                auto* ss = processorName.Text_Get();
                 while (*ss == ' ')
+                {
                     ss++; // Intel vklada pred nazev procesoru mezery, aby to lepe vypadalo v System okne z control panelu
+                }
                 sprintf(buf, "Processor Name: %s", ss);
                 PrintLine(param, buf, TRUE);
             }

@@ -3,6 +3,7 @@
 
 #pragma once
 
+
 #define HOT_PATHS_COUNT 30
 
 #define TASKBAR_ICON_ID 0x0000
@@ -25,7 +26,7 @@ void CALLBACK MessageBoxHelpCallback(LPHELPINFO helpInfo);
 // ****************************************************************************
 
 class CEditWindow;
-class CFilesWindow;
+class CPanelWindow;
 struct CUserMenuItem;
 class CUserMenuItems;
 class CViewerMasks;
@@ -65,10 +66,13 @@ protected:
 //
 // CHotPathItem
 //
-
 // slouzi pro konfiguracni dialog a udava maximalni zadatelnou delku CHotPathItem::Path
 // nechavame rezervu, protoze cesta muze obsahovat dlouhe promenne, ktere se po "expanzi" smrsknou na par znaku,
 // napriklad $[SystemDrive] -> C:
+//
+// serves for the configuration dialog and specifies the maximum enterable length of CHotPathItem::Path
+// we leave a reserve, because the path can contain long variables, which after "expansion" shrink to a couple of characters,
+// for example $[SystemDrive] -> C:
 #define HOTPATHITEM_MAXPATH (4 * MAX_PATH)
 
 struct CHotPathItem
@@ -250,11 +254,11 @@ typedef BOOL (*UM_GetNextFileName)(int index, char* path, char* name, void* para
 
 struct CUMDataFromPanel
 {
-    CFilesWindow* Window;
+    CPanelWindow* Window;
     int* Index;
     int Count;
 
-    CUMDataFromPanel(CFilesWindow* window)
+    CUMDataFromPanel(CPanelWindow* window)
     {
         Count = -1;
         Index = NULL;
@@ -275,16 +279,16 @@ struct IContextMenu2;
 class CMainWindowAncestor : public CWindow
 {
 private:
-    CFilesWindow* ActivePanel; // bud LeftPanel nebo RightPanel
+    CPanelWindow* ActivePanel; // bud LeftPanel nebo RightPanel
 
 public:
     // POZOR: volat az pokud nejde pozadavek resit pomoci FocusPanel a ChangePanel (hodi se
     // je-li EditMode TRUE); pri volani zjistit jestli je dost siroky panel, atd. (viz FocusPanel)
-    void SetActivePanel(CFilesWindow* active)
+    void SetActivePanel(CPanelWindow* active)
     {
         ActivePanel = active;
     }
-    CFilesWindow* GetActivePanel()
+    CPanelWindow* GetActivePanel()
     {
         return ActivePanel;
     }
@@ -294,31 +298,6 @@ public:
 class CDetachedFSList;
 class CPathHistory;
 
-enum CMainWindowsHitTestEnum
-{
-    mwhteNone,
-    mwhteTopRebar,      // je to v rebaru, ale na zadnem bandu
-    mwhteMenu,          // v rebaru na bendu Menu
-    mwhteTopToolbar,    // v rebaru na bendu TopToolbar
-    mwhtePluginsBar,    // v rebaru na bendu PluginsBar
-    mwhteMiddleToolbar, // Middle Bar na split bare
-    mwhteUMToolbar,     // v rebaru na bendu UserMenuBar
-    mwhteHPToolbar,     // v rebaru na bendu HotPathsBar
-    mwhteDriveBar,      // v rebaru na bendu Drive Bar
-    mwhteWorker,        // v rebaru na bendu Worker
-    mwhteCmdLine,
-    mwhteBottomToolbar,
-    mwhteSplitLine,
-    mwhteLeftDirLine,
-    mwhteLeftHeaderLine,
-    mwhteLeftStatusLine,
-    mwhteLeftWorkingArea,
-    mwhteRightDirLine,
-    mwhteRightHeaderLine,
-    mwhteRightStatusLine,
-    mwhteRightWorkingArea,
-};
-
 struct CChangeNotifData
 {
     char Path[MAX_PATH];
@@ -326,36 +305,6 @@ struct CChangeNotifData
 };
 
 typedef TDirectArray<CChangeNotifData> CChangeNotifArray;
-
-//
-// ****************************************************************************
-// CDynString
-//
-// pomocny objekt pro dynamicky alokovany string
-
-struct CDynString
-{
-    char* Buffer;
-    int Length;
-    int Allocated;
-
-    CDynString()
-    {
-        Buffer = NULL;
-        Length = 0;
-        Allocated = 0;
-    }
-
-    ~CDynString()
-    {
-        if (Buffer != NULL)
-            free(Buffer);
-    }
-
-    BOOL Append(const char* str, int len); // vraci TRUE pri uspechu; je-li 'len' -1, bere se "len=strlen(str)"
-
-    const char* GetString() const { return Buffer; }
-};
 
 // flagy pro metody CompareDirectories
 #define COMPARE_DIRECTORIES_BYTIME 0x00000001       // porovname podle datumu a casu
@@ -370,13 +319,53 @@ struct CDynString
 
 class CMainWindow : public CMainWindowAncestor
 {
+//Defines
+    protected: struct MouseLocation
+    {
+    //Defines
+        public: enum Value
+        {
+            none,
+
+            commandLine,
+            menu,
+
+            panel_left_dirLine,
+            panel_left_headerLine,
+            panel_left_statusLine,
+            panel_left_workingArea,
+
+            panel_right_dirLine,
+            panel_right_headerLine,
+            panel_right_statusLine,
+            panel_right_workingArea,
+
+            rebar_top,
+
+            splitLine_middleToolbar,
+
+            toolbar_bottom,
+            toolbar_drive,
+            toolbar_hotPaths,
+            toolbar_middle,
+            toolbar_plugins,
+            toolbar_top,
+            toolbar_userMenu,
+
+            //???
+            worker,        // v rebaru na bendu Worker
+        };
+
+    //Functions
+    };
+
 public:
     BOOL EditMode;             // aktivni editwindow, zbytek jen simuluje
     BOOL EditPermanentVisible; // editwindow je stale viditelne
     BOOL HelpMode;             // if TRUE, then Shift+F1 help mode is active
 
-    CFilesWindow *LeftPanel,
-        *RightPanel;
+    CPanelWindow *LeftPanel;
+    CPanelWindow *RightPanel;
     CEditWindow* EditWindow;
     CMainToolBar* TopToolBar;
     CPluginsBar* PluginsBar;
@@ -441,7 +430,7 @@ public:
 
     RECT WindowRect; // aktualni pozice okna
 
-    BOOL CaptionIsActive; // je caption hlavniho okna aktivni?
+    BOOL CaptionIsActive; // Is the main window caption active?
 
     // promenne tykajici se rozesilani zprav o zmenach na cestach (jak FS, tak diskove cesty)
     CChangeNotifArray ChangeNotifArray;    // pole se zpravami o zmenach na cestach
@@ -485,7 +474,7 @@ public:
 
     void EnterViewerMasksCS() { HANDLES(EnterCriticalSection(&ViewerMasksCS)); }
     void LeaveViewerMasksCS() { HANDLES(LeaveCriticalSection(&ViewerMasksCS)); }
-    BOOL GetViewersAssoc(int wantedViewerType, CDynString* strViewerMasks); // pomocna metoda: posbira vsechny masky asociovane pro viewer-type 'wantedViewerType'; vraci TRUE pri uspechu (pri dostatku pameti pro string)
+    BOOL GetViewersAssoc(int wantedViewerType, String_TChar& strViewerMasks); // pomocna metoda: posbira vsechny masky asociovane pro viewer-type 'wantedViewerType'; vraci TRUE pri uspechu (pri dostatku pameti pro string)
 
     void ClearHistory(); // promaze vsechny historie
 
@@ -499,22 +488,22 @@ public:
     // mozne volat z lib. threadu
     void PostChangeOnPathNotification(const char* path, BOOL includingSubdirs);
 
-    // tyto funkce nedopadnou, pokud neni splnena podminka CFilesWindow::CanBeFocused
+    // tyto funkce nedopadnou, pokud neni splnena podminka CPanelWindow::CanBeFocused
     void ChangePanel(BOOL force = FALSE);                                   // cti EditMode; aktivuje neaktivni panel; (pokud je force==TRUE, ignoruje ZOOM)
-    void FocusPanel(CFilesWindow* focus, BOOL testIfMainWndActive = FALSE); // sejme EditMode, protoze do panelu umisti focus
+    void FocusPanel(CPanelWindow* focus, BOOL testIfMainWndActive = FALSE); // sejme EditMode, protoze do panelu umisti focus
     void FocusLeftPanel();                                                  // vola FocusPanel pro levy panel
 
     // porovna adresare v levem a pravem panelu
     void CompareDirectories(DWORD flags); // flags je kombinaci COMPARE_DIRECTORIES_xxx
 
     // zajisti volani DirHistory->AddPathUnique a zaroven spravne nastaveni SetHistory panelu
-    void DirHistoryAddPathUnique(int type, const char* pathOrArchiveOrFSName,
+    void DirHistoryAddPathUnique(CPathHistoryItem::Type::Value type, const char* pathOrArchiveOrFSName,
                                  const char* archivePathOrFSUserPart, HICON hIcon,
                                  CPluginFSInterfaceAbstract* pluginFS,
                                  CPluginFSInterfaceEncapsulation* curPluginFS);
 
     // zajisti volani DirHistory->RemoveActualPath a zaroven spravne nastaveni SetHistory panelu
-    void DirHistoryRemoveActualPath(CFilesWindow* panel);
+    void DirHistoryRemoveActualPath(CPanelWindow* panel);
 
     // vraci TRUE pokud se podarilo uzavrit odpojene FS (vola TryCloseOrDetach, ReleaseObject a pak CloseFS),
     // pokud plug-in nechce FS zavrit, pta se usera jestli zavrit nasilne (ala canForce==TRUE)
@@ -529,8 +518,8 @@ public:
 
     void SaveConfig(HWND parent = NULL); // parent: NULL = MainWindow->HWindow
     BOOL LoadConfig(BOOL importingOldConfig, const CCommandLineParams* cmdLineParams);
-    void SavePanelConfig(CFilesWindow* panel, HKEY hSalamander, const char* reg);
-    void LoadPanelConfig(char* panelPath, CFilesWindow* panel, HKEY hSalamander, const char* reg);
+    void SavePanelConfig(CPanelWindow* panel, HKEY hSalamander, const char* reg);
+    void LoadPanelConfig(char* panelPath, CPanelWindow* panel, HKEY hSalamander, const char* reg);
     void DeleteOldConfigurations(BOOL* deleteConfigurations, BOOL autoImportConfig,
                                  const char* autoImportConfigFromKey, BOOL doNotDeleteImportedCfg);
 
@@ -563,7 +552,7 @@ public:
     HWND GetActivePanelHWND();
     int GetDirectoryLineHeight();
 
-    CFilesWindow* GetOtherPanel(CFilesWindow* panel)
+    CPanelWindow* GetOtherPanel(CPanelWindow* panel)
     {
         return panel == LeftPanel ? RightPanel : LeftPanel;
     }
@@ -633,9 +622,12 @@ public:
 
     void GetWindowSplitRect(RECT& r);
     BOOL PtInChild(HWND hChild, POINT p);
-    void OnWmContextMenu(HWND hWnd, int xPos, int yPos);
+    void OnWmContextMenu( const HWND hWnd, const POINT point );
+    void OnWmContextMenu_Main( const HWND hWnd, const POINT& point_screen, MouseLocation::Value location );
+    void OnWmContextMenu_Panel( const HWND hWnd, const POINT& point_screen, MouseLocation::Value location );
+    void OnWmContextMenu_SplitLine( const POINT& point_screen );
 
-    CFilesWindow* GetNonActivePanel()
+    CPanelWindow* GetNonActivePanel()
     {
         return (GetActivePanel() == LeftPanel) ? RightPanel : LeftPanel;
     }
@@ -678,7 +670,7 @@ public:
     DWORD MapClientArea(POINT point);
     DWORD MapNonClientArea(int iHit);
 
-    CMainWindowsHitTestEnum HitTest(int xPos, int yPos); // scree souradnice
+    MouseLocation::Value MouseLocation( POINT point );
 
     // podle cest v panelech zamackne tlacitka v drive bars
     void UpdateDriveBars();
@@ -712,9 +704,9 @@ public:
     BOOL IsPanelZoomed(BOOL leftPanel);
 
     // prepne Smart Column mode pro dany panel
-    void ToggleSmartColumnMode(CFilesWindow* panel);
+    void ToggleSmartColumnMode(CPanelWindow* panel);
     // vrati Smart Column mode (TRUE/FALSE) pro dany panel
-    BOOL GetSmartColumnMode(CFilesWindow* panel);
+    BOOL GetSmartColumnMode(CPanelWindow* panel);
 
     // pripojeni a odpojeni hlavniho okna k odberu notifikaci o zmenach v shellu (pridani/odebrani disku)
     BOOL SHChangeNotifyInitialize();
@@ -729,7 +721,7 @@ public:
     BOOL HasLockedUI() { return LockedUI; }
     void BringLockedUIToolWnd();
 
-    CFilesWindow* GetPanel(int panel);
+    CPanelWindow* GetPanel(int panel);
     void PostFocusNameInPanel(int panel, const char* path, const char* name);
 
     friend void CMainWindow_RefreshCommandStates(CMainWindow* obj);

@@ -2461,9 +2461,7 @@ void ResolveNetHoodPath(char* path)
     }
 }
 
-BOOL GetTargetDirectory(HWND parent, HWND hCenterWindow,
-                        const char* title, const char* comment,
-                        char* path, BOOL onlyNet, const char* initDir)
+BOOL GetTargetDirectory(HWND parent, HWND hCenterWindow, const char* title, const char* comment, char* path, BOOL onlyNet, const char* initDir)
 {
     CALL_STACK_MESSAGE5("GetTargetDirectory(, , %s, %s, , %d, %s)", title, comment, onlyNet, initDir);
     BOOL ret = GetTargetDirectoryAux(parent, hCenterWindow, title, comment, path, onlyNet, initDir);

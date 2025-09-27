@@ -1291,8 +1291,7 @@ MENU_TEMPLATE_ITEM HyperLinkMenu[] =
 */
     HMENU hMenu = CreatePopupMenu();
     InsertMenu(hMenu, 0, MF_BYPOSITION, 1, LoadStr(IDS_COPYTOCLIPBOARD));
-    DWORD cmd = TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON,
-                                 x, y, HWindow, NULL);
+    DWORD cmd = TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, HWindow, NULL);
     DestroyMenu(hMenu);
     if (cmd == 1)
     {
@@ -1744,17 +1743,19 @@ void CButton::PaintFrame(HDC hDC, const RECT* r, BOOL down)
 void CButton::PaintDrop(HDC hDC, const RECT* r, BOOL enabled)
 {
     SIZE sz;
-    SVGArrowDropDown.GetSize(&sz);
-    SVGArrowDropDown.AlphaBlend(hDC,
-                                r->left + (r->right - r->left - sz.cx) / 2,
-                                r->top + (r->bottom - r->top - sz.cy) / 2,
-                                -1, -1,
-                                enabled ? SVGSTATE_ENABLED : SVGSTATE_DISABLED);
+    SVGArrowDropDown_Buttons.GetSize(&sz);
+    SVGArrowDropDown_Buttons.AlphaBlend(
+        hDC,
+        r->left + (r->right - r->left - sz.cx) / 2,
+        r->top + (r->bottom - r->top - sz.cy) / 2,
+        -1, -1,
+        enabled ? SVGSTATE_ENABLED_OR_NORMAL : SVGSTATE_DISABLED_OR_FOCUSED
+    );
 }
 
 int CButton::GetDropPartWidth()
 {
-    return (int)((double)SVGArrowDropDown.GetWidth() * 1.6);
+    return (int)((double)SVGArrowDropDown_Buttons.GetWidth() * 1.6);
 }
 
 int CButton::HitTest(LPARAM lParam)
@@ -1880,7 +1881,7 @@ void CButton::PaintFace(HDC hdc, const RECT* rect, BOOL enabled)
                                  r.left + (r.right - r.left - sz.cx) / 2,
                                  r.top + (r.bottom - r.top - sz.cy) / 2,
                                  -1, -1,
-                                 enabled ? SVGSTATE_ENABLED : SVGSTATE_DISABLED);
+                                 enabled ? SVGSTATE_ENABLED_OR_NORMAL : SVGSTATE_DISABLED_OR_FOCUSED);
     }
 
     if (Flags & BTF_MORE)
@@ -1896,7 +1897,7 @@ void CButton::PaintFace(HDC hdc, const RECT* rect, BOOL enabled)
                            r.left + (r.right - r.left - sz.cx) / 2,
                            r.top + (r.bottom - r.top - sz.cy) / 2,
                            -1, -1,
-                           enabled ? SVGSTATE_ENABLED : SVGSTATE_DISABLED);
+                           enabled ? SVGSTATE_ENABLED_OR_NORMAL : SVGSTATE_DISABLED_OR_FOCUSED);
     }
 }
 
@@ -2622,7 +2623,7 @@ void CColorArrowButton::PaintFace(HDC hdc, const RECT* rect, BOOL enabled)
                                       r.right + (rect->right - r.right - (int)((double)arrowSize.cx * 0.6)) / 2,
                                       r.top + (r.bottom - r.top - arrowSize.cy) / 2,
                                       -1, -1,
-                                      enabled ? SVGSTATE_ENABLED : SVGSTATE_DISABLED);
+                                      enabled ? SVGSTATE_ENABLED_OR_NORMAL : SVGSTATE_DISABLED_OR_FOCUSED);
     }
 }
 
@@ -2665,7 +2666,7 @@ CToolbarHeader::CToolbarHeader(HWND hDlg, int ctrlID, HWND hAlignWindow, DWORD b
         {5, "MoveItemDown"},
     };
 
-    int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+    int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
     HBITMAP hTmpMaskBitmap;
     HBITMAP hTmpGrayBitmap;
     HBITMAP hTmpColorBitmap;
@@ -2729,7 +2730,7 @@ void CToolbarHeader::CreateImageLists(HIMAGELIST* enabled, HIMAGELIST* disabled)
 {
     HIMAGELIST hEnabled;
     HIMAGELIST hDisabled;
-    int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16); // small icon size
+    int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16); // small icon size
 
     // http://stackoverflow.com/questions/2640823/is-it-possible-to-create-a-cimagelist-with-alpha-blending-transparency
     hEnabled = ImageList_Create(iconSize, iconSize,
@@ -2755,7 +2756,7 @@ void CToolbarHeader::CreateImageLists(HIMAGELIST* enabled, HIMAGELIST* disabled)
                                             DIB_RGB_COLORS, &lpBits, NULL, 0));
 
     NSVGrasterizer* rast = nsvgCreateRasterizer();
-    // JRYFIXME: docasne cteme ze souboru, prejit na spolecne uloziste s toolbars
+    // JRYFIXME: temporarily reading from file, go to shared storage with toolbars
     const char* svgNames[] = {"Modify", "New_Insert", "Delete", "SortByName", "MoveItemUp", "MoveItemDown"};
     for (int j = 0; j < 2; j++)
     {
@@ -3790,7 +3791,7 @@ HIMAGELIST CreateCheckboxImagelist(int itemSize)
 // SalLoadIcon()
 //
 
-HICON SalLoadIcon(HINSTANCE hInst, LPCTSTR iconName, CIconSizeEnum iconSize)
+HICON SalLoadIcon(HINSTANCE hInst, LPCTSTR iconName, IconSize::Value iconSize)
 {
     int width = IconSizes[iconSize];
     HICON hIcon = NULL;

@@ -5359,7 +5359,7 @@ COPY_AGAIN:
                                         continue;
                                     }
 
-                                    // na cilovych cestach podporujicich ADS provedeme jeste mazani ADSek na cilovem souboru (CREATE_ALWAYS by je mel smazat, ale na domacich W2K i XP zkratka zustavaji, netusim proc, W2K a XP z VMWare ADSka normalne mazou)
+                                    // on target paths supporting ADS, we will also delete ADSs on the target file (CREATE_ALWAYS should delete them, but on home W2K and XP the shortcut remains, I don't know why, W2K and XP from VMWare delete ADSs normally)
                                     if (script->TargetPathSupADS && !DeleteAllADS(out, op->TargetName))
                                     {
                                         HANDLES(CloseHandle(out));

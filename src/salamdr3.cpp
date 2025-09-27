@@ -841,7 +841,7 @@ pokud bude jeste nekdy potreba ozivit tenhle kod, vyuzit toho, ze lze nahradit (
         if (--StopRefresh == 0)
         {
             //      TRACE_I("End stop refresh mode");
-            // pokud jsme vyblokovali nejaky refresh, dame mu prilezitost probehnout
+            // if we have blocked any refresh, we will give it the opportunity to run
             if (postRefresh && MainWindow != NULL)
             {
                 if (MainWindow->LeftPanel != NULL)
@@ -860,6 +860,7 @@ pokud bude jeste nekdy potreba ozivit tenhle kod, vyuzit toho, ze lze nahradit (
                 MainWindow->NeedToResentDispachChangeNotif = FALSE;
 
                 // postneme zadost o rozeslani zprav o zmenach na cestach
+                //we will make sure to send out reports about changes on the roads
                 HANDLES(EnterCriticalSection(&TimeCounterSection));
                 int t1 = MyTimeCounter++;
                 HANDLES(LeaveCriticalSection(&TimeCounterSection));
@@ -1056,9 +1057,7 @@ void RemoveEmptyDirs(const char* dir)
 
 // ****************************************************************************
 
-BOOL CheckAndCreateDirectory(const char* dir, HWND parent, BOOL quiet, char* errBuf,
-                             int errBufSize, char* newDir, BOOL noRetryButton,
-                             BOOL manualCrDir)
+BOOL CheckAndCreateDirectory(const char* dir, HWND parent, BOOL quiet, char* errBuf, int errBufSize, char* newDir, BOOL noRetryButton, BOOL manualCrDir)
 {
     CALL_STACK_MESSAGE2("CheckAndCreateDirectory(%s)", dir);
 AGAIN:
@@ -1275,71 +1274,101 @@ CToolTipWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 // ****************************************************************************
 // CPathHistoryItem
 //
-
-CPathHistoryItem::CPathHistoryItem(int type, const char* pathOrArchiveOrFSName,
-                                   const char* archivePathOrFSUserPart, HICON hIcon,
-                                   CPluginFSInterfaceAbstract* pluginFS)
+CPathHistoryItem::CPathHistoryItem(  Type::Value type, const char* pPathOrArchiveOrFSName, const char* pArchivePathOrFSUserPart, HICON hIcon, CPluginFSInterfaceAbstract* pPluginFS )
 {
-    Type = type;
-    HIcon = hIcon;
-    PluginFS = NULL;
+//Initialize variables.
+    m_Type = type;
+    m_HIcon = hIcon;
+    m_pPluginFS = NULL;
 
     TopIndex = -1;
     FocusedName = NULL;
 
-    if (Type == 0) // disk
+    switch ( m_Type )
     {
-        char root[MAX_PATH];
-        GetRootPath(root, pathOrArchiveOrFSName);
-        const char* e = pathOrArchiveOrFSName + strlen(pathOrArchiveOrFSName);
-        if ((int)strlen(root) < e - pathOrArchiveOrFSName || // neni to root cesta
-            pathOrArchiveOrFSName[0] == '\\')                // je to UNC cesta
+    case Type::fs:
+    {
+    //FS
+        m_pPluginFS = pPluginFS;
+
+    //Continue on next case.
+        [[fallthrough]];
+    }
+    case Type::archiv:
+    {
+    //Archiv & FS
+        //Duplica paths.
+        m_pPathOrArchiveOrFSName = DupStr( pPathOrArchiveOrFSName );
+        m_pArchivePathOrFSUserPart = DupStr( pArchivePathOrFSUserPart );
+
+        if (
+            ( m_pPathOrArchiveOrFSName == NULL )
+            ||
+            ( m_pArchivePathOrFSUserPart == NULL )
+        )
+        {
+        //Failed to duplicate strings.
+            TRACE_E(LOW_MEMORY);
+
+            if ( m_pPathOrArchiveOrFSName != NULL )
+            {
+                free( m_pPathOrArchiveOrFSName );
+            }
+            if ( m_pArchivePathOrFSUserPart != NULL )
+            {
+                free( m_pArchivePathOrFSUserPart );
+            }
+            m_pPathOrArchiveOrFSName = NULL;
+            m_pArchivePathOrFSUserPart = NULL;
+            m_HIcon = NULL;
+        }
+        break;
+    }
+    case Type::disk:
+    {
+    //Duplicate path.
+        char    root[MAX_PATH];
+
+        GetRootPath(root, pPathOrArchiveOrFSName);
+
+        const char* e = pPathOrArchiveOrFSName + strlen( pPathOrArchiveOrFSName );
+        if (
+            ( (int)strlen(root) < e - pPathOrArchiveOrFSName )      // neni to root cesta
+            ||
+            ( pPathOrArchiveOrFSName[0] == '\\' )                   // je to UNC cesta
+        )
         {
             if (*(e - 1) == '\\')
                 e--;
-            PathOrArchiveOrFSName = (char*)malloc((e - pathOrArchiveOrFSName) + 1);
-            if (PathOrArchiveOrFSName != NULL)
+
+            m_pPathOrArchiveOrFSName = (char*)malloc( ( e - pPathOrArchiveOrFSName ) + 1 );
+
+            if ( m_pPathOrArchiveOrFSName != NULL)
             {
-                memcpy(PathOrArchiveOrFSName, pathOrArchiveOrFSName, e - pathOrArchiveOrFSName);
-                PathOrArchiveOrFSName[e - pathOrArchiveOrFSName] = 0;
+                memcpy( m_pPathOrArchiveOrFSName, pPathOrArchiveOrFSName, e - pPathOrArchiveOrFSName );
+                m_pPathOrArchiveOrFSName[e - pPathOrArchiveOrFSName] = 0;
             }
         }
         else // je to normal root cesta (c:\)
         {
-            PathOrArchiveOrFSName = DupStr(root);
+            m_pPathOrArchiveOrFSName = DupStr(root);
         }
-        if (PathOrArchiveOrFSName == NULL)
+        if ( m_pPathOrArchiveOrFSName == NULL)
         {
             TRACE_E(LOW_MEMORY);
-            if (PathOrArchiveOrFSName != NULL)
-                free(PathOrArchiveOrFSName);
-            PathOrArchiveOrFSName = NULL;
-            HIcon = NULL;
+            if ( m_pPathOrArchiveOrFSName != NULL )
+                free( m_pPathOrArchiveOrFSName);
+            m_pPathOrArchiveOrFSName = NULL;
+            m_HIcon = NULL;
         }
-        ArchivePathOrFSUserPart = NULL;
+        m_pArchivePathOrFSUserPart = NULL;
+        break;
     }
-    else
+    default:
     {
-        if (Type == 1 || Type == 2) // archiv nebo FS (jen kopie obou stringu)
-        {
-            if (Type == 2)
-                PluginFS = pluginFS;
-            PathOrArchiveOrFSName = DupStr(pathOrArchiveOrFSName);
-            ArchivePathOrFSUserPart = DupStr(archivePathOrFSUserPart);
-            if (PathOrArchiveOrFSName == NULL || ArchivePathOrFSUserPart == NULL)
-            {
-                TRACE_E(LOW_MEMORY);
-                if (PathOrArchiveOrFSName != NULL)
-                    free(PathOrArchiveOrFSName);
-                if (ArchivePathOrFSUserPart != NULL)
-                    free(ArchivePathOrFSUserPart);
-                PathOrArchiveOrFSName = NULL;
-                ArchivePathOrFSUserPart = NULL;
-                HIcon = NULL;
-            }
-        }
-        else
-            TRACE_E("CPathHistoryItem::CPathHistoryItem(): unknown 'type'");
+        TRACE_E("CPathHistoryItem::CPathHistoryItem(): unknown 'type'");
+        break;
+    }
     }
 }
 
@@ -1347,12 +1376,12 @@ CPathHistoryItem::~CPathHistoryItem()
 {
     if (FocusedName != NULL)
         free(FocusedName);
-    if (PathOrArchiveOrFSName != NULL)
-        free(PathOrArchiveOrFSName);
-    if (ArchivePathOrFSUserPart != NULL)
-        free(ArchivePathOrFSUserPart);
-    if (HIcon != NULL)
-        HANDLES(DestroyIcon(HIcon));
+    if (m_pPathOrArchiveOrFSName != NULL)
+        free(m_pPathOrArchiveOrFSName);
+    if (m_pArchivePathOrFSUserPart != NULL)
+        free(m_pArchivePathOrFSUserPart);
+    if (m_HIcon != NULL)
+        HANDLES(DestroyIcon(m_HIcon));
 }
 
 void CPathHistoryItem::ChangeData(int topIndex, const char* focusedName)
@@ -1375,26 +1404,34 @@ void CPathHistoryItem::GetPath(char* buffer, int bufferSize)
     char* origBuffer = buffer;
     if (bufferSize == 0)
         return;
-    if (PathOrArchiveOrFSName == NULL)
+    if (m_pPathOrArchiveOrFSName == NULL)
     {
         buffer[0] = 0;
         return;
     }
-    int l = (int)strlen(PathOrArchiveOrFSName) + 1;
+    int l = (int)strlen(m_pPathOrArchiveOrFSName) + 1;
     if (l > bufferSize)
         l = bufferSize;
-    memcpy(buffer, PathOrArchiveOrFSName, l - 1);
+    memcpy(buffer, m_pPathOrArchiveOrFSName, l - 1);
     buffer[l - 1] = 0;
-    if (Type == 1 || Type == 2) // archiv nebo FS
+    if (
+        ( m_Type == Type::archiv )
+        ||
+        ( m_Type == Type::fs ) // archiv nebo FS
+    )
     {
         buffer += l - 1;
         bufferSize -= l - 1;
-        char* s = ArchivePathOrFSUserPart;
-        if (*s != 0 || Type == 2)
+        char* s = m_pArchivePathOrFSUserPart;
+        if (
+            ( *s != 0 )
+            ||
+            ( m_Type == Type::fs )
+        )
         {
             if (bufferSize >= 2) // doplnime '\\' nebo ':'
             {
-                *buffer++ = Type == 1 ? '\\' : ':';
+                *buffer++ = ( m_Type == Type::archiv ) ? '\\' : ':';
                 *buffer = 0;
                 bufferSize--;
             }
@@ -1413,7 +1450,7 @@ void CPathHistoryItem::GetPath(char* buffer, int bufferSize)
 HICON
 CPathHistoryItem::GetIcon()
 {
-    return HIcon;
+    return m_HIcon;
 }
 
 BOOL DuplicateAmpersands(char* buffer, int bufferSize, BOOL skipFirstAmpersand)
@@ -1487,18 +1524,20 @@ void RemoveAmpersands(char* text)
     }
 }
 
-BOOL CPathHistoryItem::Execute(CFilesWindow* panel)
+BOOL CPathHistoryItem::Execute(CPanelWindow* panel)
 {
     BOOL ret = TRUE; // standardne vracime uspech
     char errBuf[MAX_PATH + 200];
-    if (PathOrArchiveOrFSName != NULL) // jsou platna data
+    if (m_pPathOrArchiveOrFSName != NULL) // jsou platna data
     {
         int failReason;
         BOOL clear = TRUE;
-        if (Type == 0) // disk
+
+        switch ( m_Type )
         {
-            if (!panel->ChangePathToDisk(panel->HWindow, PathOrArchiveOrFSName, TopIndex, FocusedName, NULL,
-                                         TRUE, FALSE, FALSE, &failReason))
+        case Type::disk:
+        {
+            if (!panel->ChangePathToDisk(panel->HWindow, m_pPathOrArchiveOrFSName, TopIndex, FocusedName, NULL, TRUE, FALSE, FALSE, &failReason))
             {
                 if (failReason == CHPPFR_CANNOTCLOSEPATH)
                 {
@@ -1506,120 +1545,85 @@ BOOL CPathHistoryItem::Execute(CFilesWindow* panel)
                     clear = FALSE; // zadny skok, neni treba mazat top-indexy
                 }
             }
+            break;
         }
-        else
+        case Type::archiv:
         {
-            if (Type == 1) // archiv
+            if (!panel->ChangePathToArchive(m_pPathOrArchiveOrFSName, m_pArchivePathOrFSUserPart, TopIndex, FocusedName, FALSE, NULL, TRUE, &failReason, FALSE, FALSE, TRUE))
             {
-                if (!panel->ChangePathToArchive(PathOrArchiveOrFSName, ArchivePathOrFSUserPart, TopIndex,
-                                                FocusedName, FALSE, NULL, TRUE, &failReason, FALSE, FALSE, TRUE))
+                if (failReason == CHPPFR_CANNOTCLOSEPATH)
                 {
-                    if (failReason == CHPPFR_CANNOTCLOSEPATH)
+                    ret = FALSE;   // zustavame na miste
+                    clear = FALSE; // zadny skok, neni treba mazat top-indexy
+                }
+                else
+                {
+                    if (failReason == CHPPFR_SHORTERPATH || failReason == CHPPFR_FILENAMEFOCUSED)
                     {
-                        ret = FALSE;   // zustavame na miste
-                        clear = FALSE; // zadny skok, neni treba mazat top-indexy
-                    }
-                    else
-                    {
-                        if (failReason == CHPPFR_SHORTERPATH || failReason == CHPPFR_FILENAMEFOCUSED)
-                        {
-                            sprintf(errBuf, LoadStr(IDS_PATHINARCHIVENOTFOUND), ArchivePathOrFSUserPart);
-                            SalMessageBox(panel->HWindow, errBuf, LoadStr(IDS_ERRORCHANGINGDIR),
-                                          MB_OK | MB_ICONEXCLAMATION);
-                        }
+                        sprintf(errBuf, LoadStr(IDS_PATHINARCHIVENOTFOUND), m_pArchivePathOrFSUserPart);
+                        SalMessageBox(panel->HWindow, errBuf, LoadStr(IDS_ERRORCHANGINGDIR), MB_OK | MB_ICONEXCLAMATION);
                     }
                 }
             }
-            else
+            break;
+        }
+        case Type::fs:
+        {
+            BOOL done = FALSE;
+            // pokud je znamy FS interface, ve kterem byla cesta naposledy otevrena, zkusime
+            // ho najit mezi odpojenymi a pouzit
+            if (MainWindow != NULL && m_pPluginFS != NULL && // pokud je znamy FS interface
+                (!panel->Is(ptPluginFS) ||                // a pokud neni prave v panelu
+                 !panel->GetPluginFS()->Contains(m_pPluginFS)))
             {
-                if (Type == 2) // FS
+                CDetachedFSList* list = MainWindow->DetachedFSList;
+                int i;
+                for (i = 0; i < list->Count; i++)
                 {
-                    BOOL done = FALSE;
-                    // pokud je znamy FS interface, ve kterem byla cesta naposledy otevrena, zkusime
-                    // ho najit mezi odpojenymi a pouzit
-                    if (MainWindow != NULL && PluginFS != NULL && // pokud je znamy FS interface
-                        (!panel->Is(ptPluginFS) ||                // a pokud neni prave v panelu
-                         !panel->GetPluginFS()->Contains(PluginFS)))
+                    if (list->At(i)->Contains(m_pPluginFS))
                     {
-                        CDetachedFSList* list = MainWindow->DetachedFSList;
-                        int i;
-                        for (i = 0; i < list->Count; i++)
+                        done = TRUE;
+                        // zkusime zmenu na pozadovanou cestu (posledne tam byla, nemusime testovat IsOurPath),
+                        // zaroven pripojime odpojene FS
+                        if (!panel->ChangePathToDetachedFS(i, TopIndex, FocusedName, TRUE, &failReason,
+                                                           m_pPathOrArchiveOrFSName, m_pArchivePathOrFSUserPart))
                         {
-                            if (list->At(i)->Contains(PluginFS))
+                            if (failReason == CHPPFR_CANNOTCLOSEPATH)
                             {
-                                done = TRUE;
-                                // zkusime zmenu na pozadovanou cestu (posledne tam byla, nemusime testovat IsOurPath),
-                                // zaroven pripojime odpojene FS
-                                if (!panel->ChangePathToDetachedFS(i, TopIndex, FocusedName, TRUE, &failReason,
-                                                                   PathOrArchiveOrFSName, ArchivePathOrFSUserPart))
-                                {
-                                    if (failReason == CHPPFR_CANNOTCLOSEPATH)
-                                    {
-                                        ret = FALSE;   // zustavame na miste
-                                        clear = FALSE; // zadny skok, neni treba mazat top-indexy
-                                    }
-                                }
-
-                                break; // konec, dalsi shoda s PluginFS uz nepripada v uvahu
+                                ret = FALSE;   // zustavame na miste
+                                clear = FALSE; // zadny skok, neni treba mazat top-indexy
                             }
                         }
+
+                        break; // konec, dalsi shoda s m_pPluginFS uz nepripada v uvahu
                     }
+                }
+            }
 
-                    // pokud predchozi cast neuspela a cestu nelze vylistovat ve FS interfacu v panelu,
-                    // zkusime najit odpojeny FS interface, ktery by cestu umel vylistovat (aby se
-                    // zbytecne neoteviral novy FS)
-                    int fsNameIndex;
-                    BOOL convertPathToInternalDummy = FALSE;
-                    if (!done && MainWindow != NULL &&
-                        (!panel->Is(ptPluginFS) || // FS interface v panelu cestu neumi vylistovat
-                         !panel->GetPluginFS()->Contains(PluginFS) &&
-                             !panel->IsPathFromActiveFS(PathOrArchiveOrFSName, ArchivePathOrFSUserPart,
-                                                        fsNameIndex, convertPathToInternalDummy)))
+            // pokud predchozi cast neuspela a cestu nelze vylistovat ve FS interfacu v panelu,
+            // zkusime najit odpojeny FS interface, ktery by cestu umel vylistovat (aby se
+            // zbytecne neoteviral novy FS)
+            int fsNameIndex;
+            BOOL convertPathToInternalDummy = FALSE;
+            if (!done && MainWindow != NULL &&
+                (!panel->Is(ptPluginFS) || // FS interface v panelu cestu neumi vylistovat
+                 !panel->GetPluginFS()->Contains(m_pPluginFS) &&
+                     !panel->IsPathFromActiveFS(m_pPathOrArchiveOrFSName, m_pArchivePathOrFSUserPart, fsNameIndex, convertPathToInternalDummy)))
+            {
+                CDetachedFSList* list = MainWindow->DetachedFSList;
+                int i;
+                for (i = 0; i < list->Count; i++)
+                {
+                    if (list->At(i)->IsPathFromThisFS(m_pPathOrArchiveOrFSName, m_pArchivePathOrFSUserPart))
                     {
-                        CDetachedFSList* list = MainWindow->DetachedFSList;
-                        int i;
-                        for (i = 0; i < list->Count; i++)
+                        done = TRUE;
+                        // zkusime zmenu na pozadovanou cestu, zaroven pripojime odpojene FS
+                        if (!panel->ChangePathToDetachedFS(i, TopIndex, FocusedName, TRUE, &failReason, m_pPathOrArchiveOrFSName, m_pArchivePathOrFSUserPart))
                         {
-                            if (list->At(i)->IsPathFromThisFS(PathOrArchiveOrFSName, ArchivePathOrFSUserPart))
-                            {
-                                done = TRUE;
-                                // zkusime zmenu na pozadovanou cestu, zaroven pripojime odpojene FS
-                                if (!panel->ChangePathToDetachedFS(i, TopIndex, FocusedName, TRUE, &failReason,
-                                                                   PathOrArchiveOrFSName, ArchivePathOrFSUserPart))
-                                {
-                                    if (failReason == CHPPFR_SHORTERPATH) // temer uspech (cesta je jen zkracena) (CHPPFR_FILENAMEFOCUSED tu nehrozi)
-                                    {                                     // obnovime zaznam o FS interfacu
-                                        if (panel->Is(ptPluginFS))
-                                            PluginFS = panel->GetPluginFS()->GetInterface();
-                                    }
-                                    if (failReason == CHPPFR_CANNOTCLOSEPATH)
-                                    {
-                                        ret = FALSE;   // zustavame na miste
-                                        clear = FALSE; // zadny skok, neni treba mazat top-indexy
-                                    }
-                                }
-                                else // uplny uspech
-                                {    // obnovime zaznam o FS interfacu
-                                    if (panel->Is(ptPluginFS))
-                                        PluginFS = panel->GetPluginFS()->GetInterface();
-                                }
-
-                                break;
-                            }
-                        }
-                    }
-
-                    // kdyz to nejde jinak, otevreme novy FS interface nebo jen zmenime cestu na aktivnim FS interfacu
-                    if (!done)
-                    {
-                        if (!panel->ChangePathToPluginFS(PathOrArchiveOrFSName, ArchivePathOrFSUserPart, TopIndex,
-                                                         FocusedName, FALSE, 2, NULL, TRUE, &failReason))
-                        {
-                            if (failReason == CHPPFR_SHORTERPATH ||   // temer uspech (cesta je jen zkracena)
-                                failReason == CHPPFR_FILENAMEFOCUSED) // temer uspech (cesta se jen zmenila na soubor a ten byl vyfokusen)
-                            {                                         // obnovime zaznam o FS interfacu
+                            if (failReason == CHPPFR_SHORTERPATH) // temer uspech (cesta je jen zkracena) (CHPPFR_FILENAMEFOCUSED tu nehrozi)
+                            {                                     // obnovime zaznam o FS interfacu
                                 if (panel->Is(ptPluginFS))
-                                    PluginFS = panel->GetPluginFS()->GetInterface();
+                                    m_pPluginFS = panel->GetPluginFS()->GetInterface();
                             }
                             if (failReason == CHPPFR_CANNOTCLOSEPATH)
                             {
@@ -1630,11 +1634,39 @@ BOOL CPathHistoryItem::Execute(CFilesWindow* panel)
                         else // uplny uspech
                         {    // obnovime zaznam o FS interfacu
                             if (panel->Is(ptPluginFS))
-                                PluginFS = panel->GetPluginFS()->GetInterface();
+                                m_pPluginFS = panel->GetPluginFS()->GetInterface();
                         }
+
+                        break;
                     }
                 }
             }
+
+            // kdyz to nejde jinak, otevreme novy FS interface nebo jen zmenime cestu na aktivnim FS interfacu
+            if (!done)
+            {
+                if (!panel->ChangePathToPluginFS(m_pPathOrArchiveOrFSName, m_pArchivePathOrFSUserPart, TopIndex, FocusedName, FALSE, 2, NULL, TRUE, &failReason))
+                {
+                    if (failReason == CHPPFR_SHORTERPATH ||   // temer uspech (cesta je jen zkracena)
+                        failReason == CHPPFR_FILENAMEFOCUSED) // temer uspech (cesta se jen zmenila na soubor a ten byl vyfokusen)
+                    {                                         // obnovime zaznam o FS interfacu
+                        if (panel->Is(ptPluginFS))
+                            m_pPluginFS = panel->GetPluginFS()->GetInterface();
+                    }
+                    if (failReason == CHPPFR_CANNOTCLOSEPATH)
+                    {
+                        ret = FALSE;   // zustavame na miste
+                        clear = FALSE; // zadny skok, neni treba mazat top-indexy
+                    }
+                }
+                else // uplny uspech
+                {    // obnovime zaznam o FS interfacu
+                    if (panel->Is(ptPluginFS))
+                        m_pPluginFS = panel->GetPluginFS()->GetInterface();
+                }
+            }
+            break;
+        }
         }
         if (clear)
             panel->TopIndexMem.Clear(); // dlouhy skok
@@ -1647,48 +1679,54 @@ BOOL CPathHistoryItem::IsTheSamePath(CPathHistoryItem& item, CPluginFSInterfaceE
 {
     char buf1[2 * MAX_PATH];
     char buf2[2 * MAX_PATH];
-    if (Type == item.Type)
+
+    if ( m_Type == item.m_Type )
     {
-        if (Type == 0) // disk
+        switch ( m_Type )
         {
+        case Type::disk:
+        {
+        //Disk
             GetPath(buf1, 2 * MAX_PATH);
             item.GetPath(buf2, 2 * MAX_PATH);
             if (StrICmp(buf1, buf2) == 0)
                 return TRUE;
+
+            break;
         }
-        else
+        case Type::archiv:
         {
-            if (Type == 1) // archiv
+        //Archiv
+            if (StrICmp(m_pPathOrArchiveOrFSName, item.m_pPathOrArchiveOrFSName) == 0 &&  // soubor archivu je "case-insensitive"
+                strcmp(m_pArchivePathOrFSUserPart, item.m_pArchivePathOrFSUserPart) == 0) // cesta v archivu je "case-sensitive"
             {
-                if (StrICmp(PathOrArchiveOrFSName, item.PathOrArchiveOrFSName) == 0 &&  // soubor archivu je "case-insensitive"
-                    strcmp(ArchivePathOrFSUserPart, item.ArchivePathOrFSUserPart) == 0) // cesta v archivu je "case-sensitive"
-                {
-                    return TRUE;
-                }
+                return TRUE;
             }
-            else
+            break;
+        }
+        case Type::fs:
+        {
+        //FS
+            if (StrICmp(m_pPathOrArchiveOrFSName, item.m_pPathOrArchiveOrFSName) == 0) // fs-name je "case-insensitive"
             {
-                if (Type == 2) // FS
+                if (strcmp(m_pArchivePathOrFSUserPart, item.m_pArchivePathOrFSUserPart) == 0) // fs-user-part je "case-sensitive"
+                    return TRUE;
+                if (curPluginFS != NULL && // resime jeste pripad, kdy jsou obe fs-user-part shodne z duvodu, ze pro ne FS vrati TRUE z IsCurrentPath (obecne bysme museli zavest metodu pro porovnani dvou fs-user-part, coz se mi ale jen kvuli historiim nechce, treba casem...)
+                    StrICmp(m_pPathOrArchiveOrFSName, curPluginFS->GetPluginFSName()) == 0)
                 {
-                    if (StrICmp(PathOrArchiveOrFSName, item.PathOrArchiveOrFSName) == 0) // fs-name je "case-insensitive"
+                    int fsNameInd = curPluginFS->GetPluginFSNameIndex();
+                    if (curPluginFS->IsCurrentPath(fsNameInd, fsNameInd, m_pArchivePathOrFSUserPart) &&
+                        curPluginFS->IsCurrentPath(fsNameInd, fsNameInd, item.m_pArchivePathOrFSUserPart))
                     {
-                        if (strcmp(ArchivePathOrFSUserPart, item.ArchivePathOrFSUserPart) == 0) // fs-user-part je "case-sensitive"
-                            return TRUE;
-                        if (curPluginFS != NULL && // resime jeste pripad, kdy jsou obe fs-user-part shodne z duvodu, ze pro ne FS vrati TRUE z IsCurrentPath (obecne bysme museli zavest metodu pro porovnani dvou fs-user-part, coz se mi ale jen kvuli historiim nechce, treba casem...)
-                            StrICmp(PathOrArchiveOrFSName, curPluginFS->GetPluginFSName()) == 0)
-                        {
-                            int fsNameInd = curPluginFS->GetPluginFSNameIndex();
-                            if (curPluginFS->IsCurrentPath(fsNameInd, fsNameInd, ArchivePathOrFSUserPart) &&
-                                curPluginFS->IsCurrentPath(fsNameInd, fsNameInd, item.ArchivePathOrFSUserPart))
-                            {
-                                return TRUE;
-                            }
-                        }
+                        return TRUE;
                     }
                 }
             }
+            break;
+        }
         }
     }
+
     return FALSE;
 }
 
@@ -1724,16 +1762,22 @@ void CPathHistory::ClearHistory()
 
 void CPathHistory::ClearPluginFSFromHistory(CPluginFSInterfaceAbstract* fs)
 {
-    if (NewItem != NULL && NewItem->PluginFS == fs)
+    if (NewItem != NULL && NewItem->m_pPluginFS == fs)
     {
-        NewItem->PluginFS = NULL; // fs byl prave zavren -> NULLovani
+        NewItem->m_pPluginFS = NULL; // fs byl prave zavren -> NULLovani
     }
     int i;
     for (i = 0; i < Paths.Count; i++)
     {
         CPathHistoryItem* item = Paths[i];
-        if (item->Type == 2 && item->PluginFS == fs)
-            item->PluginFS = NULL; // fs byl prave zavren -> NULLovani
+        if (
+            ( item->m_Type == CPathHistoryItem::Type::fs )
+            &&
+            ( item->m_pPluginFS == fs)
+        )
+        {
+            item->m_pPluginFS = NULL; // fs byl prave zavren -> NULLovani
+        }
     }
 }
 
@@ -1776,8 +1820,7 @@ void CPathHistory::FillBackForwardPopupMenu(CMenuPopup* popup, BOOL forward)
     }
 }
 
-void CPathHistory::FillHistoryPopupMenu(CMenuPopup* popup, DWORD firstID, int maxCount,
-                                        BOOL separator)
+void CPathHistory::FillHistoryPopupMenu(CMenuPopup* popup, DWORD firstID, int maxCount, BOOL separator)
 {
     char buffer[2 * MAX_PATH];
 
@@ -1816,7 +1859,7 @@ void CPathHistory::FillHistoryPopupMenu(CMenuPopup* popup, DWORD firstID, int ma
     }
 }
 
-void CPathHistory::Execute(int index, BOOL forward, CFilesWindow* panel, BOOL allItems, BOOL removeItem)
+void CPathHistory::Execute(int index, BOOL forward, CPanelWindow* panel, BOOL allItems, BOOL removeItem)
 {
     if (Lock)
         return;
@@ -1869,9 +1912,8 @@ void CPathHistory::Execute(int index, BOOL forward, CFilesWindow* panel, BOOL al
 
     if (NewItem != NULL)
     {
-        AddPathUnique(NewItem->Type, NewItem->PathOrArchiveOrFSName, NewItem->ArchivePathOrFSUserPart,
-                      NewItem->HIcon, NewItem->PluginFS, NULL);
-        NewItem->HIcon = NULL; // zodpovednost za destrukci ikony si prebrala metoda AddPathUnique
+        AddPathUnique(NewItem->m_Type, NewItem->m_pPathOrArchiveOrFSName, NewItem->m_pArchivePathOrFSUserPart, NewItem->m_HIcon, NewItem->m_pPluginFS, NULL);
+        NewItem->m_HIcon = NULL; // zodpovednost za destrukci ikony si prebrala metoda AddPathUnique
         delete NewItem;
         NewItem = NULL;
     }
@@ -1899,15 +1941,11 @@ void CPathHistory::Execute(int index, BOOL forward, CFilesWindow* panel, BOOL al
     }
 }
 
-void CPathHistory::ChangeActualPathData(int type, const char* pathOrArchiveOrFSName,
-                                        const char* archivePathOrFSUserPart,
-                                        CPluginFSInterfaceAbstract* pluginFS,
-                                        CPluginFSInterfaceEncapsulation* curPluginFS,
-                                        int topIndex, const char* focusedName)
+void CPathHistory::ChangeActualPathData( CPathHistoryItem::Type::Value type, const char* pathOrArchiveOrFSName, const char* archivePathOrFSUserPart, CPluginFSInterfaceAbstract* pluginFS, CPluginFSInterfaceEncapsulation* curPluginFS, int topIndex, const char* focusedName) 
 {
     if (Paths.Count > 0)
     {
-        CPathHistoryItem n(type, pathOrArchiveOrFSName, archivePathOrFSUserPart, NULL, pluginFS);
+        CPathHistoryItem n( type, pathOrArchiveOrFSName, archivePathOrFSUserPart, NULL, pluginFS);
         CPathHistoryItem* n2 = NULL;
         if (ForwardIndex != -1)
         {
@@ -1924,7 +1962,7 @@ void CPathHistory::ChangeActualPathData(int type, const char* pathOrArchiveOrFSN
     }
 }
 
-void CPathHistory::RemoveActualPath(int type, const char* pathOrArchiveOrFSName,
+void CPathHistory::RemoveActualPath(CPathHistoryItem::Type::Value type, const char* pathOrArchiveOrFSName,
                                     const char* archivePathOrFSUserPart,
                                     CPluginFSInterfaceAbstract* pluginFS,
                                     CPluginFSInterfaceEncapsulation* curPluginFS)
@@ -1945,14 +1983,12 @@ void CPathHistory::RemoveActualPath(int type, const char* pathOrArchiveOrFSName,
     }
 }
 
-void CPathHistory::AddPath(int type, const char* pathOrArchiveOrFSName, const char* archivePathOrFSUserPart,
-                           CPluginFSInterfaceAbstract* pluginFS, CPluginFSInterfaceEncapsulation* curPluginFS)
+void CPathHistory::AddPath(CPathHistoryItem::Type::Value type, const char* pathOrArchiveOrFSName, const char* archivePathOrFSUserPart, CPluginFSInterfaceAbstract* pluginFS, CPluginFSInterfaceEncapsulation* curPluginFS)
 {
     if (Lock)
         return;
 
-    CPathHistoryItem* n = new CPathHistoryItem(type, pathOrArchiveOrFSName, archivePathOrFSUserPart,
-                                               NULL, pluginFS);
+    CPathHistoryItem* n = new CPathHistoryItem(type, pathOrArchiveOrFSName, archivePathOrFSUserPart, NULL, pluginFS);
     if (n == NULL)
     {
         TRACE_E(LOW_MEMORY);
@@ -1999,12 +2035,11 @@ void CPathHistory::AddPath(int type, const char* pathOrArchiveOrFSName, const ch
     }
 }
 
-void CPathHistory::AddPathUnique(int type, const char* pathOrArchiveOrFSName, const char* archivePathOrFSUserPart,
+void CPathHistory::AddPathUnique(CPathHistoryItem::Type::Value type, const char* pathOrArchiveOrFSName, const char* archivePathOrFSUserPart,
                                  HICON hIcon, CPluginFSInterfaceAbstract* pluginFS,
                                  CPluginFSInterfaceEncapsulation* curPluginFS)
 {
-    CPathHistoryItem* n = new CPathHistoryItem(type, pathOrArchiveOrFSName, archivePathOrFSUserPart,
-                                               hIcon, pluginFS);
+    CPathHistoryItem* n = new CPathHistoryItem(type, pathOrArchiveOrFSName, archivePathOrFSUserPart, hIcon, pluginFS);
     if (Lock)
     {
         if (NewItem != NULL)
@@ -2034,7 +2069,7 @@ void CPathHistory::AddPathUnique(int type, const char* pathOrArchiveOrFSName, co
             {
                 if (type == 2 && pluginFS != NULL)
                 { // jde o FS, nahradime pluginFS (aby se cesta otevrela na poslednim FS teto cesty)
-                    item->PluginFS = pluginFS;
+                    item->m_pPluginFS = pluginFS;
                 }
                 delete n;
                 if (i < Paths.Count - 1)
@@ -2088,23 +2123,23 @@ void CPathHistory::SaveToRegistry(HKEY hKey, const char* name, BOOL onlyClear)
             for (i = 0; i < Paths.Count; i++)
             {
                 CPathHistoryItem* item = Paths[i];
-                switch (item->Type)
+                switch (item->m_Type)
                 {
-                case 0: // disk
+                case CPathHistoryItem::Type::disk:
                 {
-                    strcpy(path, item->PathOrArchiveOrFSName);
+                    strcpy(path, item->m_pPathOrArchiveOrFSName);
                     break;
                 }
 
                 // archive & FS: pouzijeme znak ':' jako oddelovac dvou casti cesty
                 // behem loadu podle tohoto znaku urcime, o jaky typ cesty se jedna
-                case 1: // archive
-                case 2: // FS
+                case CPathHistoryItem::Type::archiv:
+                case CPathHistoryItem::Type::fs:
                 {
-                    strcpy(path, item->PathOrArchiveOrFSName);
+                    strcpy(path, item->m_pPathOrArchiveOrFSName);
                     StrNCat(path, ":", 2 * MAX_PATH);
-                    if (item->ArchivePathOrFSUserPart != NULL)
-                        StrNCat(path, item->ArchivePathOrFSUserPart, 2 * MAX_PATH);
+                    if (item->m_pArchivePathOrFSUserPart != NULL)
+                        StrNCat(path, item->m_pArchivePathOrFSUserPart, 2 * MAX_PATH);
                     break;
                 }
                 default:
@@ -2133,7 +2168,7 @@ void CPathHistory::LoadFromRegistry(HKEY hKey, const char* name)
         const char* pathOrArchiveOrFSName = path;
         const char* archivePathOrFSUserPart = NULL;
         char buf[10];
-        int type;
+        CPathHistoryItem::Type::Value   type;
         int i;
         for (i = 0;; i++)
         {
@@ -2146,21 +2181,30 @@ void CPathHistory::LoadFromRegistry(HKEY hKey, const char* name)
                     // 0 (disk): "C:\???" nebo "\\server\???"
                     // 1 (archive): "C:\???:" nebo "\\server\???:"
                     // 2 (FS): "XY:???"
-                    type = -1; // nepridavat
-                    if ((path[0] == '\\' && path[1] == '\\') || path[1] == ':')
+                    type = CPathHistoryItem::Type::not_set;
+
+                    if (
+                        (
+                            ( path[0] == '\\' )
+                            &&
+                            ( path[1] == '\\' )
+                        )
+                        ||
+                        ( path[1] == ':' )
+                    )
                     {
                         // jde o type==0 (disk) nebo type==1 (archive)
                         pathOrArchiveOrFSName = path;
                         char* separator = strchr(path + 2, ':');
                         if (separator == NULL)
                         {
-                            type = 0;
+                            type = CPathHistoryItem::Type::disk;
                             archivePathOrFSUserPart = NULL;
                         }
                         else
                         {
                             *separator = 0;
-                            type = 1;
+                            type = CPathHistoryItem::Type::archiv;
                             archivePathOrFSUserPart = separator + 1;
                         }
                     }
@@ -2170,10 +2214,10 @@ void CPathHistory::LoadFromRegistry(HKEY hKey, const char* name)
                         if (IsPluginFSPath(path, fsName, &archivePathOrFSUserPart))
                         {
                             pathOrArchiveOrFSName = fsName;
-                            type = 2;
+                            type = CPathHistoryItem::Type::fs;
                         }
                     }
-                    if (type != -1)
+                    if ( type != CPathHistoryItem::Type::not_set )
                         AddPath(type, pathOrArchiveOrFSName, archivePathOrFSUserPart, NULL, NULL);
                     else
                         TRACE_E("CPathHistory::LoadFromRegistry() invalid path: " << path);
@@ -2711,7 +2755,7 @@ BOOL CUserMenuItem::GetIconHandle(CUserMenuIconDataArr* bkgndReaderData, BOOL ge
     }
 
     // vytahnu implicitni ikonu z shell32.dll
-    UMIcon = SalLoadImage(2, 1, IconSizes[ICONSIZE_16], IconSizes[ICONSIZE_16], IconLRFlags);
+    UMIcon = SalLoadImage(2, 1, IconSizes[IconSize::size_16x16], IconSizes[IconSize::size_16x16], IconLRFlags);
     return TRUE;
 }
 
@@ -3807,7 +3851,7 @@ void InvokeDirectoryMenuCommand(DWORD cmd, HWND hDialog, int editID, int editBuf
     case DIRECTORY_COMMAND_RIGHT:
     {
         // left/right panel directory
-        CFilesWindow* panel = (cmd == DIRECTORY_COMMAND_LEFT) ? MainWindow->LeftPanel : MainWindow->RightPanel;
+        CPanelWindow* panel = (cmd == DIRECTORY_COMMAND_LEFT) ? MainWindow->LeftPanel : MainWindow->RightPanel;
         if (panel != NULL)
         {
             panel->GetGeneralPath(path, 2 * MAX_PATH, TRUE);

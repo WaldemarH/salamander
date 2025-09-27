@@ -106,7 +106,7 @@ const SPackModifyTable PackModifyTable[] =
 
 //
 // ****************************************************************************
-// BOOL PackCompress(HWND parent, CFilesWindow *panel, const char *archiveFileName,
+// BOOL PackCompress(HWND parent, CPanelWindow *panel, const char *archiveFileName,
 //                   const char *archiveRoot, BOOL move, const char *sourceDir,
 //                   SalEnumSelection2 nextName, void *param)
 //
@@ -124,7 +124,7 @@ const SPackModifyTable PackModifyTable[] =
 //        param jsou parametry pro enumeracni funkci
 //   OUT:
 
-BOOL PackCompress(HWND parent, CFilesWindow* panel, const char* archiveFileName,
+BOOL PackCompress(HWND parent, CPanelWindow* panel, const char* archiveFileName,
                   const char* archiveRoot, BOOL move, const char* sourceDir,
                   SalEnumSelection2 nextName, void* param)
 {
@@ -549,7 +549,7 @@ BOOL PackUniversalCompress(HWND parent, const char* command, TPackErrorTable* co
 
 //
 // ****************************************************************************
-// BOOL PackDelFromArc(HWND parent, CFilesWindow *panel, const char *archiveFileName,
+// BOOL PackDelFromArc(HWND parent, CPanelWindow *panel, const char *archiveFileName,
 //                     CPluginDataInterfaceAbstract *pluginData,
 //                     const char *archiveRoot, SalEnumSelection nextName,
 //                     void *param)
@@ -566,7 +566,7 @@ BOOL PackUniversalCompress(HWND parent, const char* command, TPackErrorTable* co
 //        param jsou parametry pro enumeracni funkci
 //   OUT:
 
-BOOL PackDelFromArc(HWND parent, CFilesWindow* panel, const char* archiveFileName,
+BOOL PackDelFromArc(HWND parent, CPanelWindow* panel, const char* archiveFileName,
                     CPluginDataInterfaceAbstract* pluginData,
                     const char* archiveRoot, SalEnumSelection nextName,
                     void* param)

@@ -1382,7 +1382,7 @@ CPluginKeys::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 // CArchiveUpdateDlg
 //
 
-CArchiveUpdateDlg::CArchiveUpdateDlg(HWND hParent, CFileTimeStamps* fileStamps, CFilesWindow* panel)
+CArchiveUpdateDlg::CArchiveUpdateDlg(HWND hParent, CFileTimeStamps* fileStamps, CPanelWindow* panel)
     : CCommonDialog(HLanguage, IDD_ARCHIVEUPDATE, IDD_ARCHIVEUPDATE, hParent)
 {
     FileStamps = fileStamps;
@@ -1666,7 +1666,7 @@ void CCfgPageConfirmations::InitTree()
 HIMAGELIST
 CCfgPageConfirmations::CreateImageList()
 {
-    int iconSize = IconSizes[ICONSIZE_16];
+    int iconSize = IconSizes[IconSize::size_16x16];
     HIMAGELIST hIL = CreateCheckboxImagelist(iconSize);
 
     HICON hIcon;

@@ -29,7 +29,7 @@ struct CShellIconOverlayItem
     IShellIconOverlayIdentifier* Identifier; // objekt IShellIconOverlayIdentifier, POZOR: da se pouzit jen v hlavnim threadu
     CLSID IconOverlayIdCLSID;                // CLSID prislusneho objektu IShellIconOverlayIdentifier
     int Priority;                            // priorita tohoto icon-overlaye (0-100, nejvyssi priorita je nula)
-    HICON IconOverlay[ICONSIZE_COUNT];       // icon-overlay ve vsech velikostech
+    HICON IconOverlay[IconSize::nItems];       // icon-overlay ve vsech velikostech
     BOOL GoogleDriveOverlay;                 // TRUE = Google Drive handler (pada jim to, resime extra synchronizaci)
 
     void Cleanup();
@@ -78,7 +78,7 @@ public:
                               IShellIconOverlayIdentifier** iconReadersIconOverlayIds,
                               BOOL isGoogleDrivePath);
 
-    HICON GetIconOverlay(int iconOverlayIndex, CIconSizeEnum iconSize)
+    HICON GetIconOverlay(int iconOverlayIndex, IconSize::Value iconSize)
     {
         return Overlays[iconOverlayIndex]->IconOverlay[iconSize];
     }

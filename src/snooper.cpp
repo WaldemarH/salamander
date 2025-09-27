@@ -165,11 +165,11 @@ unsigned ThreadSnooperBody(void* /*param*/) // nevolat funkce hl. threadu (ani T
                         // volani FindCloseChangeNotification znehodnoti ostatni handly na stejnou cestu
                         // (dela u UNC cest), proto signaled-state simulujeme nasilne
                         HANDLE sameHandle = NULL; // != NULL -> handle na stejnou cestu
-                        CFilesWindow* actWin = WindowArray[index];
+                        CPanelWindow* actWin = WindowArray[index];
                         int e;
                         for (e = 0; e < WindowArray.Count; e++)
                         {
-                            CFilesWindow* w = WindowArray[e];
+                            CPanelWindow* w = WindowArray[e];
                             if (w != NULL && w != actWin && actWin->SamePath(w))
                             {
                                 sameHandle = (HANDLE)ObjectArray[e];
@@ -306,11 +306,11 @@ unsigned ThreadSnooperBody(void* /*param*/) // nevolat funkce hl. threadu (ani T
                 // volani FindNextChangeNotification znehodnoti ostatni handly na stejnou cestu
                 // (dela u UNC cest), proto signaled-state simulujeme nasilne
                 HANDLE sameHandle = NULL; // != NULL -> handle na stejnou cestu
-                CFilesWindow* actWin = WindowArray[index];
+                CPanelWindow* actWin = WindowArray[index];
                 int e;
                 for (e = 0; e < WindowArray.Count; e++)
                 {
-                    CFilesWindow* w = WindowArray[e];
+                    CPanelWindow* w = WindowArray[e];
                     if (w != NULL && w != actWin && actWin->SamePath(w))
                     {
                         sameHandle = (HANDLE)ObjectArray[e];
@@ -563,7 +563,7 @@ void TerminateThread()
     HANDLES(DeleteCriticalSection(&SafeFindCloseCS));
 }
 
-void AddDirectory(CFilesWindow* win, const char* path, BOOL registerDevNotification)
+void AddDirectory(CPanelWindow* win, const char* path, BOOL registerDevNotification)
 {
     CALL_STACK_MESSAGE3("AddDirectory(, %s, %d)", path, registerDevNotification);
     SetEvent(WantDataEvent);                       // pozadame cmuchala o uvolneni DataUsageMutexu
@@ -682,7 +682,7 @@ DWORD WINAPI ThreadFindCloseChangeNotification(void* param)
     return ThreadFindCloseChangeNotificationEH(param);
 }
 
-void ChangeDirectory(CFilesWindow* win, const char* newPath, BOOL registerDevNotification)
+void ChangeDirectory(CPanelWindow* win, const char* newPath, BOOL registerDevNotification)
 {
     CALL_STACK_MESSAGE3("ChangeDirectory(, %s, %d)", newPath, registerDevNotification);
     SetEvent(WantDataEvent);                       // pozadame cmuchala o uvolneni DataUsageMutexu
@@ -784,7 +784,7 @@ void ChangeDirectory(CFilesWindow* win, const char* newPath, BOOL registerDevNot
     WaitForSingleObject(ContinueEvent, INFINITE); // a pockame az si ho zabere
 }
 
-void DetachDirectory(CFilesWindow* win, BOOL waitForHandleClosure, BOOL closeDevNotifification)
+void DetachDirectory(CPanelWindow* win, BOOL waitForHandleClosure, BOOL closeDevNotifification)
 {
     CALL_STACK_MESSAGE3("DetachDirectory(, %d, %d)", waitForHandleClosure, closeDevNotifification);
     SetEvent(WantDataEvent);                       // pozadame cmuchala o uvolneni DataUsageMutexu

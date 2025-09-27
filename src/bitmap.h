@@ -15,20 +15,20 @@
 class CBitmap
 {
 public:
-    HBITMAP HBmp;
+    HBITMAP HBmp = NULL;
 
-    HDC HMemDC;
-    HBITMAP HOldBmp;
+    HDC HMemDC = NULL;
+    HBITMAP HOldBmp = NULL;
 
 protected:
-    int Width;
-    int Height;
-    DWORD Planes;
-    DWORD BitsPerPel;
-    BOOL BlackAndWhite;
+    int Width = 0;
+    int Height = 0;
+    DWORD Planes = 0;
+    DWORD BitsPerPel = 0;
+    BOOL BlackAndWhite = FALSE;
 
 public:
-    CBitmap();
+    //CBitmap();
     ~CBitmap();
 
     // destruction of both bitmap and DC

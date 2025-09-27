@@ -116,7 +116,7 @@ protected:
     virtual LRESULT WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     friend class CMainWindow;
-    friend class CFilesWindow;
+    friend class CPanelWindow;
     friend class CEditLine;
     friend class CInnerText;
 };

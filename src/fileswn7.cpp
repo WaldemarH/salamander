@@ -13,7 +13,7 @@
 
 //
 // ****************************************************************************
-// CFilesWindow
+// CPanelWindow
 //
 
 CPanelTmpEnumData::CPanelTmpEnumData()
@@ -384,9 +384,9 @@ const char* WINAPI PanelSalEnumSelection(HWND parent, int enumFiles, BOOL* isDir
     return _PanelSalEnumSelection(enumFiles, NULL, isDir, size, fileData, param, parent, errorOccured);
 }
 
-void CFilesWindow::UnpackZIPArchive(CFilesWindow* target, BOOL deleteOp, const char* tgtPath)
+void CPanelWindow::UnpackZIPArchive(CPanelWindow* target, BOOL deleteOp, const char* tgtPath)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::UnpackZIPArchive(, %d, %s)", deleteOp, tgtPath);
+    CALL_STACK_MESSAGE3("CPanelWindow::UnpackZIPArchive(, %d, %s)", deleteOp, tgtPath);
     if (Files->Count + Dirs->Count == 0)
         return;
 
@@ -405,7 +405,7 @@ void CFilesWindow::UnpackZIPArchive(CFilesWindow* target, BOOL deleteOp, const c
         subDir = (strcmp(Dirs->At(0).Name, "..") == 0);
     else
         subDir = FALSE;
-    data.IndexesCount = GetSelCount();
+    data.IndexesCount = GetSelectedCount();
     if (data.IndexesCount > 1) // platne oznaceni
     {
         int files = 0; // pocet oznacenych souboru
@@ -418,7 +418,7 @@ void CFilesWindow::UnpackZIPArchive(CFilesWindow* target, BOOL deleteOp, const c
         }
         else
         {
-            GetSelItems(data.IndexesCount, data.Indexes);
+            GetSelectedItems(data.IndexesCount, data.Indexes);
             int i = data.IndexesCount;
             while (i--)
             {
@@ -437,7 +437,7 @@ void CFilesWindow::UnpackZIPArchive(CFilesWindow* target, BOOL deleteOp, const c
         if (data.IndexesCount == 0)
             index = GetCaretIndex();
         else
-            GetSelItems(1, &index);
+            GetSelectedItems(1, &index);
 
         if (subDir && index == 0)
         {
@@ -669,7 +669,7 @@ void CFilesWindow::UnpackZIPArchive(CFilesWindow* target, BOOL deleteOp, const c
                     {                        // rozpakovani se povedlo
                         if (tgtPath == NULL) // pokud nejde o drag&drop (tam se odznacovani nedela)
                         {
-                            SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                            SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                             PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                         }
                     }
@@ -787,7 +787,7 @@ void CFilesWindow::UnpackZIPArchive(CFilesWindow* target, BOOL deleteOp, const c
                 if (PackDelFromArc(MainWindow->HWindow, this, GetZIPArchive(), PluginData.GetInterface(),
                                    GetZIPPath(), PanelSalEnumSelection, &data))
                 {                                                   // mazani se povedlo
-                    SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                    SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                     PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                 }
                 SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
@@ -807,9 +807,9 @@ void CFilesWindow::UnpackZIPArchive(CFilesWindow* target, BOOL deleteOp, const c
     EndStopRefresh();
 }
 
-void CFilesWindow::DeleteFromZIPArchive()
+void CPanelWindow::DeleteFromZIPArchive()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::DeleteFromZIPArchive()");
+    CALL_STACK_MESSAGE1("CPanelWindow::DeleteFromZIPArchive()");
     UnpackZIPArchive(NULL, TRUE); // jde temer o to same
 }
 
@@ -1280,9 +1280,9 @@ const char* WINAPI PanelEnumDiskSelection(HWND parent, int enumFiles, const char
     }
 }
 
-void CFilesWindow::Pack(CFilesWindow* target, int pluginIndex, const char* pluginName, int delFilesAfterPacking)
+void CPanelWindow::Pack(CPanelWindow* target, int pluginIndex, const char* pluginName, int delFilesAfterPacking)
 {
-    CALL_STACK_MESSAGE4("CFilesWindow::Pack(, %d, %s, %d)", pluginIndex, pluginName, delFilesAfterPacking);
+    CALL_STACK_MESSAGE4("CPanelWindow::Pack(, %d, %s, %d)", pluginIndex, pluginName, delFilesAfterPacking);
     if (Files->Count + Dirs->Count == 0)
         return;
 
@@ -1302,7 +1302,7 @@ void CFilesWindow::Pack(CFilesWindow* target, int pluginIndex, const char* plugi
         subDir = (strcmp(Dirs->At(0).Name, "..") == 0);
     else
         subDir = FALSE;
-    data.IndexesCount = GetSelCount();
+    data.IndexesCount = GetSelectedCount();
     char expanded[MAX_PATH + 100];
     int files = 0;             // pocet oznacenych souboru
     if (data.IndexesCount > 1) // platne oznaceni
@@ -1317,7 +1317,7 @@ void CFilesWindow::Pack(CFilesWindow* target, int pluginIndex, const char* plugi
         }
         else
         {
-            GetSelItems(data.IndexesCount, data.Indexes);
+            GetSelectedItems(data.IndexesCount, data.Indexes);
             int i = data.IndexesCount;
             while (i--)
             {
@@ -1340,7 +1340,7 @@ void CFilesWindow::Pack(CFilesWindow* target, int pluginIndex, const char* plugi
         }
         else
         {
-            GetSelItems(1, &index);
+            GetSelectedItems(1, &index);
             nameByItem = FALSE; // pro kompatibilitu se Sal2.0
         }
 
@@ -1625,7 +1625,7 @@ _PACK_AGAIN:
                     // if (nextFocus[0] != 0) strcpy(NextFocusName, nextFocus);
                     FocusFirstNewItem = TRUE; // fokusne i plug-inem prejmenovany archiv (treba SFX -> archiv.exe)
 
-                    SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                    SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                     PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                 }
                 SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
@@ -1660,9 +1660,9 @@ _PACK_AGAIN:
     EndStopRefresh();
 }
 
-void CFilesWindow::Unpack(CFilesWindow* target, int pluginIndex, const char* pluginName, const char* unpackMask)
+void CPanelWindow::Unpack(CPanelWindow* target, int pluginIndex, const char* pluginName, const char* unpackMask)
 {
-    CALL_STACK_MESSAGE4("CFilesWindow::Unpack(, %d, %s, %s)", pluginIndex, pluginName, unpackMask);
+    CALL_STACK_MESSAGE4("CPanelWindow::Unpack(, %d, %s, %s)", pluginIndex, pluginName, unpackMask);
 
     // obnova DefaultDir
     MainWindow->UpdateDefaultDir(MainWindow->GetActivePanel() == this);
@@ -1706,7 +1706,7 @@ void CFilesWindow::Unpack(CFilesWindow* target, int pluginIndex, const char* plu
                     buff[l + (file->Ext - file->Name) - (*file->Ext == 0 ? 0 : 1)] = 0;
                 }
                 else
-                    TRACE_E("CFilesWindow::Unpack(): too long path to add archive name!");
+                    TRACE_E("CPanelWindow::Unpack(): too long path to add archive name!");
             }
         }
         if (unpackMask != NULL)
@@ -1895,9 +1895,9 @@ void CFilesWindow::Unpack(CFilesWindow* target, int pluginIndex, const char* plu
 }
 
 // countSizeMode - 0 normalni vypocet, 1 vypocet pro vybranou polozku, 2 vypocet pro vsechny podadresare
-void CFilesWindow::CalculateOccupiedZIPSpace(int countSizeMode)
+void CPanelWindow::CalculateOccupiedZIPSpace(int countSizeMode)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::CalculateOccupiedZIPSpace(%d)", countSizeMode);
+    CALL_STACK_MESSAGE2("CPanelWindow::CalculateOccupiedZIPSpace(%d)", countSizeMode);
     if (Is(ptZIPArchive) && (ValidFileData & VALID_DATA_SIZE)) // jen pokud je platne CFileData::Size (velikosti definovane pres plugin-data jsou u archivu dost nepravdepodobne, takze je v teto funkci zatim neresime...)
     {
         BeginStopRefresh(); // cmuchal bude cekat
@@ -1913,7 +1913,7 @@ void CFilesWindow::CalculateOccupiedZIPSpace(int countSizeMode)
             upDir = (strcmp(Dirs->At(0).Name, "..") == 0);
         else
             upDir = FALSE;
-        int count = GetSelCount();
+        int count = GetSelectedCount();
         if (countSizeMode == 0 && count != 0 || countSizeMode == 2) // platne oznaceni
         {
             if (countSizeMode == 2)
@@ -1935,7 +1935,7 @@ void CFilesWindow::CalculateOccupiedZIPSpace(int countSizeMode)
                         indexes[j] = i++;
                 }
                 else
-                    GetSelItems(count, indexes);
+                    GetSelectedItems(count, indexes);
                 int i = count;
                 while (i--)
                 {
@@ -1969,7 +1969,7 @@ void CFilesWindow::CalculateOccupiedZIPSpace(int countSizeMode)
             {
                 if (countSizeMode == 0)
                 {
-                    SetSel(TRUE, selIndex);
+                    SetSelected(TRUE, selIndex);
                     PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
                 }
                 CFileData* f = (selIndex < Dirs->Count) ? &Dirs->At(selIndex) : &Files->At(selIndex - Dirs->Count);
@@ -2004,7 +2004,7 @@ void CFilesWindow::CalculateOccupiedZIPSpace(int countSizeMode)
         }
         if (selIndex != -1 && countSizeMode == 0)
         {
-            SetSel(FALSE, selIndex);
+            SetSelected(FALSE, selIndex);
             PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
         }
         RepaintListBox(DRAWFLAG_DIRTY_ONLY | DRAWFLAG_SKIP_VISTEST);
@@ -2014,9 +2014,9 @@ void CFilesWindow::CalculateOccupiedZIPSpace(int countSizeMode)
     }
 }
 
-void CFilesWindow::AcceptChangeOnPathNotification(const char* path, BOOL includingSubdirs)
+void CPanelWindow::AcceptChangeOnPathNotification(const char* path, BOOL includingSubdirs)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::AcceptChangeOnPathNotification(%s, %d)",
+    CALL_STACK_MESSAGE3("CPanelWindow::AcceptChangeOnPathNotification(%s, %d)",
                         path, includingSubdirs);
 
     BOOL refresh = FALSE;
@@ -2071,10 +2071,10 @@ void CFilesWindow::AcceptChangeOnPathNotification(const char* path, BOOL includi
     }
 }
 
-void CFilesWindow::IconOverlaysChangedOnPath(const char* path)
+void CPanelWindow::IconOverlaysChangedOnPath(const char* path)
 {
     //  if ((int)(GetTickCount() - NextIconOvrRefreshTime) < 0)
-    //    TRACE_I("CFilesWindow::IconOverlaysChangedOnPath: skipping notification for: " << path);
+    //    TRACE_I("CPanelWindow::IconOverlaysChangedOnPath: skipping notification for: " << path);
     if ((int)(GetTickCount() - NextIconOvrRefreshTime) >= 0 &&             // refresh icon-overlays probehne az v case NextIconOvrRefreshTime, pred timto okamzikem nema smysl sledovat zmeny
         !IconOvrRefreshTimerSet && !NeedIconOvrRefreshAfterIconsReading && // refresh icon-overlays jeste neni naplanovany
         Configuration.EnableCustomIconOverlays && Is(ptDisk) &&
@@ -2084,7 +2084,7 @@ void CFilesWindow::IconOverlaysChangedOnPath(const char* path)
         DWORD elapsed = GetTickCount() - LastIconOvrRefreshTime;
         if (elapsed < ICONOVR_REFRESH_PERIOD) // vyckame pred dalsim refreshem icon overlayu, abysme to nedelali prilis casto
         {
-            // TRACE_I("CFilesWindow::IconOverlaysChangedOnPath: setting timer for refresh");
+            // TRACE_I("CPanelWindow::IconOverlaysChangedOnPath: setting timer for refresh");
             if (SetTimer(HWindow, IDT_ICONOVRREFRESH, max(200, ICONOVR_REFRESH_PERIOD - elapsed), NULL))
             {
                 IconOvrRefreshTimerSet = TRUE;
@@ -2095,18 +2095,18 @@ void CFilesWindow::IconOverlaysChangedOnPath(const char* path)
         // refresh zkusime provest okamzite (neprisel prilis brzy po predchozim)
         if (!IconCacheValid) // provedeme ho az se dokonci nacitani ikon (muzou, ale nemusi byt nacetne spravne)
         {
-            // TRACE_I("CFilesWindow::IconOverlaysChangedOnPath: delaying refresh till end of reading of icons");
+            // TRACE_I("CPanelWindow::IconOverlaysChangedOnPath: delaying refresh till end of reading of icons");
             NeedIconOvrRefreshAfterIconsReading = TRUE;
         }
         else // provedeme refresh ihned
         {
-            // TRACE_I("CFilesWindow::IconOverlaysChangedOnPath: doing refresh: sleeping icon reader");
+            // TRACE_I("CPanelWindow::IconOverlaysChangedOnPath: doing refresh: sleeping icon reader");
             SleepIconCacheThread();
             WaitOneTimeBeforeReadingIcons = 200; // po tuto dobu ceka icon-reader pred zahajenim nacitani icon-overlays, takze dalsi notifikace pro tento panel od Tortoise SVN, ktere prijdou v nasledujicich 200ms neni potreba resit...
             LastIconOvrRefreshTime = GetTickCount();
             NextIconOvrRefreshTime = LastIconOvrRefreshTime + WaitOneTimeBeforeReadingIcons;
             WakeupIconCacheThread();
-            // TRACE_I("CFilesWindow::IconOverlaysChangedOnPath: doing refresh: icon reader is awake again");
+            // TRACE_I("CPanelWindow::IconOverlaysChangedOnPath: doing refresh: icon reader is awake again");
         }
     }
 }

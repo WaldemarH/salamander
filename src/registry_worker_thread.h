@@ -3,19 +3,11 @@
 
 #pragma once
 
-// funkce pro pohodlnou praci s Registry + zadne hlasky o LOAD a SAVE konfigurace pri chybach
-BOOL OpenKeyAux(HWND parent, HKEY hKey, const char* name, HKEY& openedKey, BOOL quiet = TRUE);
-BOOL CreateKeyAux(HWND parent, HKEY hKey, const char* name, HKEY& createdKey, BOOL quiet = TRUE);
-BOOL GetValueAux(HWND parent, HKEY hKey, const char* name, DWORD type, void* buffer,
-                 DWORD bufferSize, BOOL quiet = TRUE);
-BOOL SetValueAux(HWND parent, HKEY hKey, const char* name, DWORD type,
-                 const void* data, DWORD dataSize, BOOL quiet = TRUE);
-BOOL DeleteValueAux(HKEY hKey, const char* name);
-BOOL ClearKeyAux(HKEY key);
-void CloseKeyAux(HKEY hKey);
-BOOL DeleteKeyAux(HKEY hKey, const char* name);
-// neprovede kontrolu typu, takze nacte REG_DWORD stejne jako 4-byte REG_BINARY
-BOOL GetValueDontCheckTypeAux(HKEY hKey, const char* name, void* buffer, DWORD bufferSize);
+//[W: TODO: everything will be moved to registry.h]
+
+//functions for convenient work with the Registry + no voice messages about LOAD and SAVE configuration in case of errors
+BOOL GetValueAux(HWND parent, HKEY hKey, const char* name, DWORD type, void* buffer,DWORD bufferSize, BOOL quiet = TRUE);
+BOOL SetValueAux(HWND parent, HKEY hKey, const char* name, DWORD type,const void* data, DWORD dataSize, BOOL quiet = TRUE);
 
 enum CRegistryWorkType
 {
@@ -39,22 +31,57 @@ protected:
     class CInUseHandler
     {
     protected:
-        CRegistryWorkerThread* T;
+        CRegistryWorkerThread*  T = NULL;
 
     public:
-        CInUseHandler() { T = NULL; }
-        ~CInUseHandler();
-        BOOL CanUseThread(CRegistryWorkerThread* t);
-        void ResetT() { T = NULL; }
+        ~CInUseHandler()
+        {
+            if (T != NULL)
+                T->InUse = FALSE;
+        };
+
+        BOOL CanUseThread(CRegistryWorkerThread* t)
+        {
+        //Are we running in a registry thread?
+            if (
+                ( t->Thread == NULL )
+                ||
+                ( t->OwnerTID != GetCurrentThreadId() )
+            )
+            {
+            //No, the thread can't be used/use direct calls.
+                return FALSE;
+            }
+
+        // Work in a worker only affects the thread that started it.
+            BOOL ret = !t->InUse;
+       
+            if ( ret ) // the job can be run in a registry worker thread
+            {
+            //Thread can be used.
+                T = t; // in the destructor, T->InUse = FALSE is set
+                t->InUse = TRUE;
+            }
+            //else
+            //{
+            //// recursive call (thanks to message-loop and message distribution team) = we reject work in thread
+            //}
+
+            return ret;
+        };
+        void ResetT()
+        {
+            T = NULL;
+        };
     };
 
     HANDLE Thread;           // thread registry-workera
-    DWORD OwnerTID;          // TID threadu, ktery spustil worker thread (nikdo jiny ho nemuze ukoncit)
-    BOOL InUse;              // TRUE = jiz nejakou praci provadi, dalsi prace se spusti bez threadu (resi rekurzi, pouziti z vice threadu se odmita, viz OwnerTID)
-    int StopWorkerSkipCount; // kolik volani StopThread() v threadu OwnerTID ignorovat (pocet rekurzivnich volani StartThread())
+    DWORD OwnerTID;          // TID of the thread that started the worker thread (no one else can terminate it)
+    BOOL InUse;              // TRUE = already doing some work, next work will be started without a thread (resolves recursion, use from multiple threads is rejected, see OwnerTID)
+    int StopWorkerSkipCount; // how many StopThread() calls in thread OwnerTID to ignore (number of recursive StartThread() calls)
 
-    HANDLE WorkReady; // signaled: thread ma pripravena data ke zpracovani (hlavni thread ceka na dokonceni + provadi message-loopu)
-    HANDLE WorkDone;  // signaled: thread dokoncil praci (hlavni thread muze pokracovat)
+    HANDLE WorkReady; // signaled: thread has data ready to process (main thread is waiting for completion + executing message-loop)
+    HANDLE WorkDone;  // signaled: thread has finished working (main thread can continue)
 
     CRegistryWorkType WorkType;
     BOOL LastWorkSuccess;

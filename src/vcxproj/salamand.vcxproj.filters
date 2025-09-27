@@ -28,6 +28,114 @@
     <Filter Include="crypt">
       <UniqueIdentifier>{94ba0087-5842-49c1-a531-232744e4fbd9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{a4bb32f0-cb65-4490-ad69-776d92b07e44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Menu">
+      <UniqueIdentifier>{c6846356-1844-409d-9495-5aef052fb1fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Menu\Menubar">
+      <UniqueIdentifier>{c5db2772-5d3c-4948-9aa9-f889b1d6f4e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Menu\WindowQueue">
+      <UniqueIdentifier>{c1e502c7-d879-49d6-a6a8-4c88d70deda0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find">
+      <UniqueIdentifier>{3430cb99-4039-4905-8c82-5ea09a918b59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Options">
+      <UniqueIdentifier>{224e2d84-6485-492a-9b31-a0829dffcb71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Options\Item">
+      <UniqueIdentifier>{52c4df59-bfe6-4abb-ada1-29ae9b8e2d72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Other">
+      <UniqueIdentifier>{32f38924-7be4-4430-bacc-33edfb39a6d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Log">
+      <UniqueIdentifier>{b4908701-c86b-49ba-9aa9-66a88f3c1087}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Log\Item">
+      <UniqueIdentifier>{0bf2690e-25f7-4698-9ad7-0b89428cda52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Log\Dialog">
+      <UniqueIdentifier>{13b76ed3-c981-4e53-bdd4-3b4ed334c6c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Old">
+      <UniqueIdentifier>{9ba3ce46-045f-4f08-b22e-6cd2b41ab2f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Dialog">
+      <UniqueIdentifier>{d25b6ebe-3a64-473b-9525-5f8ee63d7d3d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Helpers">
+      <UniqueIdentifier>{0892e9a6-3035-4b7c-a0ac-4f824d7d672e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Helpers\Search string">
+      <UniqueIdentifier>{13bbf244-1b4c-440e-8406-1e85bd3b8a22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Helpers\Files List">
+      <UniqueIdentifier>{9d162a29-eda6-439e-a308-31ef548333ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Helpers\Files List\Data">
+      <UniqueIdentifier>{cc56ceb2-e2dc-4d7c-898a-2072d02dbfc0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers">
+      <UniqueIdentifier>{f8b2ed9f-73b4-4b27-bcb3-26312ddd10ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers\Strings">
+      <UniqueIdentifier>{ef701189-ed27-446c-b177-3f2aea999576}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Helpers\Data">
+      <UniqueIdentifier>{bd08e6e7-138d-4bd0-9807-a811028872d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Helpers\Data\Grep">
+      <UniqueIdentifier>{6ce6dc9c-c23b-4c73-b509-19f0ffcd353d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Helpers\Data\Search">
+      <UniqueIdentifier>{75009eaf-cbf7-437a-a5f3-75c63b7ac40b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Dialog\Options">
+      <UniqueIdentifier>{1003f316-8fe5-4571-952f-304c7931f886}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Dialog\Options\Item">
+      <UniqueIdentifier>{972fcea4-8604-4e12-aff9-3c7127300f30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Helpers\Data\UMD">
+      <UniqueIdentifier>{ea807c86-d58e-4f51-bf27-bd67df36c5de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Helpers\Ignore">
+      <UniqueIdentifier>{eb0ad97b-21b9-44de-9b0d-85b83d9215ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Find\Helpers\Ignore\Item">
+      <UniqueIdentifier>{c7d35263-d3dd-44ed-806c-79b15889638c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers\Registry">
+      <UniqueIdentifier>{2328e069-12e6-4bcd-8516-35896e3c0a1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers\Settings">
+      <UniqueIdentifier>{52181f30-c40e-4c1a-bb74-7923682470f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers\System">
+      <UniqueIdentifier>{6c521ead-ac3d-47b9-a95e-45acb2c023f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers\Strings\Base">
+      <UniqueIdentifier>{aa9298a9-1073-4497-ace9-dbc0b89b4082}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers\Strings\TChar">
+      <UniqueIdentifier>{0f6e0ff7-9ff8-44da-b0bb-20b17854fb2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers\Strings\Local">
+      <UniqueIdentifier>{e1232300-fccd-4f3b-9159-47be88f8c110}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers\Strings\UTF16">
+      <UniqueIdentifier>{4eb0fa7c-8876-4cce-88c3-f62d62c76f52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers\Registry\Thread">
+      <UniqueIdentifier>{a6560d42-ad42-4882-963a-02becc2aa026}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Helpers\Registry\Old">
+      <UniqueIdentifier>{2a7a6cbe-6e29-416d-8679-4a2d967704f1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\bitmap.cpp">
@@ -135,15 +243,6 @@
     <ClCompile Include="..\filter.cpp">
       <Filter>cpp</Filter>
     </ClCompile>
-    <ClCompile Include="..\find.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\finddlg1.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\finddlg2.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
     <ClCompile Include="..\geticon.cpp">
       <Filter>cpp</Filter>
     </ClCompile>
@@ -189,21 +288,6 @@
     <ClCompile Include="..\md5.cpp">
       <Filter>cpp</Filter>
     </ClCompile>
-    <ClCompile Include="..\menu1.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\menu2.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\menu3.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\menu4.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\menubar.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
     <ClCompile Include="..\ms_init.cpp">
       <Filter>cpp</Filter>
     </ClCompile>
@@ -244,21 +328,6 @@
       <Filter>cpp</Filter>
     </ClCompile>
     <ClCompile Include="..\pwdmngr.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\reglib\src\regcopy.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\reglib\src\reginmem.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\reglib\src\registry.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\reglib\src\regparse.cpp">
-      <Filter>cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\regwork.cpp">
       <Filter>cpp</Filter>
     </ClCompile>
     <ClCompile Include="..\safefile.cpp">
@@ -408,9 +477,6 @@
     <ClCompile Include="..\common\trace.cpp">
       <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\winlib.cpp">
-      <Filter>common</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\dep\zlib\adler32.c">
       <Filter>zlib</Filter>
     </ClCompile>
@@ -495,6 +561,156 @@
     <ClCompile Include="..\common\multimon.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\winlib.cpp">
+      <Filter>cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\menubar.cpp">
+      <Filter>Source\Menu\Menubar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\menu1.cpp">
+      <Filter>Source\Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\menu2.cpp">
+      <Filter>Source\Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\menu3.cpp">
+      <Filter>Source\Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\menu4.cpp">
+      <Filter>Source\Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\menu_queue_.cpp">
+      <Filter>Source\Menu\WindowQueue</Filter>
+    </ClCompile>
+    <ClCompile Include="..\menu_queue_menu.cpp">
+      <Filter>Source\Menu\WindowQueue</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find.old.cpp">
+      <Filter>Source\Find\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="..\finddlg1.cpp">
+      <Filter>Source\Find\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="..\finddlg2.cpp">
+      <Filter>Source\Find\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_dialog_.cpp">
+      <Filter>Source\Find\Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_dialog_2.cpp">
+      <Filter>Source\Find\Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_string_search_.cpp">
+      <Filter>Source\Find\Helpers\Search string</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_string_search_string.cpp">
+      <Filter>Source\Find\Helpers\Search string</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_string_search_redraw.cpp">
+      <Filter>Source\Find\Helpers\Search string</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_dialog_clipboard.cpp">
+      <Filter>Source\Find\Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_filesList_other.cpp">
+      <Filter>Source\Find\Helpers\Files List</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_filesList_item_.cpp">
+      <Filter>Source\Find\Helpers\Files List\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_filesList_item_text.cpp">
+      <Filter>Source\Find\Helpers\Files List\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_filesList_.cpp">
+      <Filter>Source\Find\Helpers\Files List</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_filesList_window.cpp">
+      <Filter>Source\Find\Helpers\Files List</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_options_.cpp">
+      <Filter>Source\Find\Dialog\Options</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_options_registry.cpp">
+      <Filter>Source\Find\Dialog\Options</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_options_menu.cpp">
+      <Filter>Source\Find\Dialog\Options</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_options_item_.cpp">
+      <Filter>Source\Find\Dialog\Options\Item</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_options_item_registry.cpp">
+      <Filter>Source\Find\Dialog\Options\Item</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_log_.cpp">
+      <Filter>Source\Find\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_log_dialog_other.cpp">
+      <Filter>Source\Find\Log\Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_log_dialog_window.cpp">
+      <Filter>Source\Find\Log\Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_filesList_items.cpp">
+      <Filter>Source\Find\Helpers\Files List</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_log_items.cpp">
+      <Filter>Source\Find\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_log_dialog_.cpp">
+      <Filter>Source\Find\Log\Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_ignore_registry.cpp">
+      <Filter>Source\Find\Helpers\Ignore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_ignore_.cpp">
+      <Filter>Source\Find\Helpers\Ignore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\find_ignore_items.cpp">
+      <Filter>Source\Find\Helpers\Ignore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\registry_noisy_key.cpp">
+      <Filter>Source\Helpers\Registry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\settings_.cpp">
+      <Filter>Source\Helpers\Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\registry_silent_key.cpp">
+      <Filter>Source\Helpers\Registry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\registry_sal.cpp">
+      <Filter>Source\Helpers\Registry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\registry_silent_value.cpp">
+      <Filter>Source\Helpers\Registry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\system_error.cpp">
+      <Filter>Source\Helpers\System</Filter>
+    </ClCompile>
+    <ClCompile Include="..\registry_worker_thread.cpp">
+      <Filter>Source\Helpers\Registry\Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="..\registry_redirections.cpp">
+      <Filter>Source\Helpers\Registry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reglib\src\regparse.cpp">
+      <Filter>Source\Helpers\Registry\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reglib\src\regcopy.cpp">
+      <Filter>Source\Helpers\Registry\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reglib\src\reginmem.cpp">
+      <Filter>Source\Helpers\Registry\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="..\reglib\src\registry.cpp">
+      <Filter>Source\Helpers\Registry\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="..\registry_silent_size.cpp">
+      <Filter>Source\Helpers\Registry</Filter>
+    </ClCompile>
+    <ClCompile Include="..\registry_noisy_size.cpp">
+      <Filter>Source\Helpers\Registry</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\bitmap.h">
@@ -542,9 +758,6 @@
     <ClInclude Include="..\filter.h">
       <Filter>h</Filter>
     </ClInclude>
-    <ClInclude Include="..\find.h">
-      <Filter>h</Filter>
-    </ClInclude>
     <ClInclude Include="..\geticon.h">
       <Filter>h</Filter>
     </ClInclude>
@@ -575,9 +788,6 @@
     <ClInclude Include="..\md5.h">
       <Filter>h</Filter>
     </ClInclude>
-    <ClInclude Include="..\menu.h">
-      <Filter>h</Filter>
-    </ClInclude>
     <ClInclude Include="..\olespy.h">
       <Filter>h</Filter>
     </ClInclude>
@@ -587,16 +797,7 @@
     <ClInclude Include="..\plugins.h">
       <Filter>h</Filter>
     </ClInclude>
-    <ClInclude Include="..\precomp.h">
-      <Filter>h</Filter>
-    </ClInclude>
     <ClInclude Include="..\pwdmngr.h">
-      <Filter>h</Filter>
-    </ClInclude>
-    <ClInclude Include="..\reglib\src\regparse.h">
-      <Filter>h</Filter>
-    </ClInclude>
-    <ClInclude Include="..\regwork.h">
       <Filter>h</Filter>
     </ClInclude>
     <ClInclude Include="..\salamand.h">
@@ -760,6 +961,105 @@
     </ClInclude>
     <ClInclude Include="..\common\multimon.h">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\filesbox2.h">
+      <Filter>h</Filter>
+    </ClInclude>
+    <ClInclude Include="..\menu.h">
+      <Filter>Source\Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\menu_queue.h">
+      <Filter>Source\Menu\WindowQueue</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find.old.h">
+      <Filter>Source\Find\Old</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_dialog.h">
+      <Filter>Source\Find\Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_string_search.h">
+      <Filter>Source\Find\Helpers\Search string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_filesList.h">
+      <Filter>Source\Find\Helpers\Files List</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_filesList_item.h">
+      <Filter>Source\Find\Helpers\Files List\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\precomp.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_data_grep.h">
+      <Filter>Source\Find\Helpers\Data\Grep</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_data_search.h">
+      <Filter>Source\Find\Helpers\Data\Search</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_options_item.h">
+      <Filter>Source\Find\Dialog\Options\Item</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_options.h">
+      <Filter>Source\Find\Dialog\Options</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_log_item.h">
+      <Filter>Source\Find\Log\Item</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_log.h">
+      <Filter>Source\Find\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_log_dialog.h">
+      <Filter>Source\Find\Log\Dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_data_umd.h">
+      <Filter>Source\Find\Helpers\Data\UMD</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_ignore_item.h">
+      <Filter>Source\Find\Helpers\Ignore\Item</Filter>
+    </ClInclude>
+    <ClInclude Include="..\find_ignore.h">
+      <Filter>Source\Find\Helpers\Ignore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\registry.h">
+      <Filter>Source\Helpers\Registry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\settings.h">
+      <Filter>Source\Helpers\Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\system.h">
+      <Filter>Source\Helpers\System</Filter>
+    </ClInclude>
+    <ClInclude Include="..\string_base.h">
+      <Filter>Source\Helpers\Strings\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\string_base_view.h">
+      <Filter>Source\Helpers\Strings\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\string_iterators.h">
+      <Filter>Source\Helpers\Strings\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\string_tchar.h">
+      <Filter>Source\Helpers\Strings\TChar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\string_local.h">
+      <Filter>Source\Helpers\Strings\Local</Filter>
+    </ClInclude>
+    <ClInclude Include="..\string_utf16.h">
+      <Filter>Source\Helpers\Strings\UTF16</Filter>
+    </ClInclude>
+    <ClInclude Include="..\string_local_view.h">
+      <Filter>Source\Helpers\Strings\Local</Filter>
+    </ClInclude>
+    <ClInclude Include="..\string_utf16_view.h">
+      <Filter>Source\Helpers\Strings\UTF16</Filter>
+    </ClInclude>
+    <ClInclude Include="..\string_tchar_view.h">
+      <Filter>Source\Helpers\Strings\TChar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\registry_worker_thread.h">
+      <Filter>Source\Helpers\Registry\Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\reglib\src\regparse.h">
+      <Filter>Source\Helpers\Registry\Old</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

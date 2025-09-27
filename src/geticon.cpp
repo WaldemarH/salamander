@@ -61,7 +61,7 @@ BOOL ExtIsExe(LPCTSTR szExt)
 // ohledne rozmeru ikon pod Windows Vista: Creating a DPI-Aware Application ( http://msdn.microsoft.com/en-us/library/ms701681(VS.85).aspx )
 
 BOOL SalGetIconFromPIDL(IShellFolder* psf, const char* path, LPCITEMIDLIST pidl, HICON* hIcon,
-                        CIconSizeEnum iconSize, BOOL fallbackToDefIcon, BOOL defIconIsDir)
+                        IconSize::Value iconSize, BOOL fallbackToDefIcon, BOOL defIconIsDir)
 {
     BOOL ret = FALSE;
 
@@ -75,9 +75,9 @@ BOOL SalGetIconFromPIDL(IShellFolder* psf, const char* path, LPCITEMIDLIST pidl,
     int iconIndex;
     UINT wFlags = 0; // nulujeme kvuli shell extension DWGIcon.dll (viz forum), ktera bity pouze oruje
 
-    CIconSizeEnum largeIconSize = ICONSIZE_32;
-    if (iconSize == ICONSIZE_48)
-        largeIconSize = ICONSIZE_48;
+    IconSize::Value largeIconSize = IconSize::size_32x32;
+    if (iconSize == IconSize::size_48x48)
+        largeIconSize = IconSize::size_48x48;
 
     HRESULT hres = psf->GetUIObjectOf(NULL, 1, &pidl, IID_IExtractIconA, NULL, (void**)&pxi);
     if (SUCCEEDED(hres))
@@ -155,7 +155,7 @@ BOOL SalGetIconFromPIDL(IShellFolder* psf, const char* path, LPCITEMIDLIST pidl,
                 //else TRACE_I("  SalGetIconFromPIDL() path == NULL");
             }
             // ***** hIconLarge ******
-            if (iconSize == ICONSIZE_48)
+            if (iconSize == IconSize::size_48x48)
             {
                 IImageList* imageListExtraLarge = NULL;
                 if (SUCCEEDED(SHGetImageList(SHIL_EXTRALARGE, IID_IImageList, (void**)&imageListExtraLarge)) && (imageListExtraLarge != NULL))
@@ -166,7 +166,7 @@ BOOL SalGetIconFromPIDL(IShellFolder* psf, const char* path, LPCITEMIDLIST pidl,
                     imageListExtraLarge->Release();
                 }
             }
-            else // ICONSIZE_16 || ICONSIZE_32
+            else // IconSize::size_16x16 || IconSize::size_32x32
             {
                 IImageList* imageListLarge = NULL;
                 hres = SHGetImageList(SHIL_LARGE, IID_IImageList, (void**)&imageListLarge);
@@ -222,9 +222,9 @@ BOOL SalGetIconFromPIDL(IShellFolder* psf, const char* path, LPCITEMIDLIST pidl,
             // pozor, pokud je iconFile == '*', nekdy Exract vrati validni ikony, ale mame pripady, kdy je nevrati
             // (zalezi na implementaci shellextension) a uzivatelum se potom zobrazovaly default ikony, viz dole
             if (isIExtractIconW)
-                hres = ((IExtractIconW*)pxi)->Extract(iconFileW, iconIndex, &hIconLarge, &hIconSmall, MAKELONG(IconSizes[largeIconSize], IconSizes[ICONSIZE_16]));
+                hres = ((IExtractIconW*)pxi)->Extract(iconFileW, iconIndex, &hIconLarge, &hIconSmall, MAKELONG(IconSizes[largeIconSize], IconSizes[IconSize::size_16x16]));
             else
-                hres = pxi->Extract(iconFile, iconIndex, &hIconLarge, &hIconSmall, MAKELONG(IconSizes[largeIconSize], IconSizes[ICONSIZE_16]));
+                hres = pxi->Extract(iconFile, iconIndex, &hIconLarge, &hIconSmall, MAKELONG(IconSizes[largeIconSize], IconSizes[IconSize::size_16x16]));
             //TRACE_I("  SalGetIconFromPIDL() pxi->Extract() hIconLarge="<<hIconLarge<<" hIconSmall="<<hIconSmall<<" isIExtractIconW="<<isIExtractIconW);
             // POZOR pro *.ai prichazi iconFile==0 a iconIndex==0 a Extract() presto vrati ikonu (asi zalezitost Adobe Illustrator shell extension)
             // POZOR D:\Store\Salamand\ICO_SONY\SonyF707_Day_Flash.icc vraci hIconLarge==hIconSmall, obe 32x32
@@ -234,7 +234,7 @@ BOOL SalGetIconFromPIDL(IShellFolder* psf, const char* path, LPCITEMIDLIST pidl,
         if (hIconSmall == NULL && hIconLarge == NULL && !(wFlags & GIL_NOTFILENAME))
         {
             HICON hIcons[2] = {0, 0};
-            UINT u = ExtractIcons(iconFile, iconIndex, MAKELONG(IconSizes[largeIconSize], IconSizes[ICONSIZE_16]), MAKELONG(IconSizes[largeIconSize], IconSizes[ICONSIZE_16]), hIcons, NULL, 2, IconLRFlags);
+            UINT u = ExtractIcons(iconFile, iconIndex, MAKELONG(IconSizes[largeIconSize], IconSizes[IconSize::size_16x16]), MAKELONG(IconSizes[largeIconSize], IconSizes[IconSize::size_16x16]), hIcons, NULL, 2, IconLRFlags);
             if (u != -1)
             {
                 hIconLarge = hIcons[0];
@@ -271,7 +271,7 @@ BOOL SalGetIconFromPIDL(IShellFolder* psf, const char* path, LPCITEMIDLIST pidl,
             resID = defIconIsDir ? 4 : (fileIsExecutable ? 3 : 1); // symbolsDirectory : symbolsExecutable : symbolsNonAssociated
         HICON hIcons[2] = {0, 0};
         UINT u = ExtractIcons(WindowsVistaAndLater ? "imageres.dll" : "shell32.dll", -resID,
-                              MAKELONG(IconSizes[largeIconSize], IconSizes[ICONSIZE_16]), MAKELONG(IconSizes[largeIconSize], IconSizes[ICONSIZE_16]),
+                              MAKELONG(IconSizes[largeIconSize], IconSizes[IconSize::size_16x16]), MAKELONG(IconSizes[largeIconSize], IconSizes[IconSize::size_16x16]),
                               hIcons, NULL, 2, IconLRFlags);
         if (u != -1)
         {
@@ -285,12 +285,12 @@ BOOL SalGetIconFromPIDL(IShellFolder* psf, const char* path, LPCITEMIDLIST pidl,
     {
         ret = TRUE;
         // malou ikonu vezmeme z hIconSmall, protoze IExtractIcon::Extract() ignoruje rozmery v pixlech a vraci vzdy 16 a 32
-        if (iconSize == ICONSIZE_16)
+        if (iconSize == IconSize::size_16x16)
         {
             // pokud neexistuje mala verze ikony nebo nam podstrcili handle velke ikonky, vytvorime ji
             if (hIconSmall == NULL || hIconSmall == hIconLarge)
             {
-                hIconSmall = (HICON)CopyImage(hIconLarge, IMAGE_ICON, IconSizes[ICONSIZE_16], IconSizes[ICONSIZE_16], LR_COPYFROMRESOURCE);
+                hIconSmall = (HICON)CopyImage(hIconLarge, IMAGE_ICON, IconSizes[IconSize::size_16x16], IconSizes[IconSize::size_16x16], LR_COPYFROMRESOURCE);
                 //TRACE_I("  SalGetIconFromPIDL() CopyImage 1 hIconSmall="<<hIconSmall<<" hIconLarge="<<hIconLarge);
             }
             *hIcon = hIconSmall;
@@ -300,7 +300,7 @@ BOOL SalGetIconFromPIDL(IShellFolder* psf, const char* path, LPCITEMIDLIST pidl,
                 hIconLarge = NULL;
             }
         }
-        else // ICONSIZE_32 || ICONSIZE_48
+        else // IconSize::size_32x32 || IconSize::size_48x48
         {
             // pokud neexistuje velka verze ikony nebo nam podstrcili handle male ikonky, vytvorime ji
             if (hIconLarge == NULL || hIconSmall == hIconLarge)
@@ -340,7 +340,7 @@ LPITEMIDLIST SHILCreateFromPath(LPCSTR pszPath)
 }
 
 // komentar viz spl_gen.h/GetFileIcon
-BOOL GetFileIcon(const char* path, BOOL pathIsPIDL, HICON* hIcon, CIconSizeEnum iconSize,
+BOOL GetFileIcon(const char* path, BOOL pathIsPIDL, HICON* hIcon, IconSize::Value iconSize,
                  BOOL fallbackToDefIcon, BOOL defIconIsDir)
 {
     BOOL ret = FALSE;

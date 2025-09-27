@@ -18,7 +18,7 @@
 #include "snooper.h"
 #include "viewer.h"
 #include "editwnd.h"
-#include "find.h"
+#include "find.old.h"
 #include "zip.h"
 #include "pack.h"
 #include "cache.h"
@@ -205,7 +205,7 @@ UINT TaskbarBtnCreatedMsg = 0;
 C__MainWindowCS MainWindowCS;
 BOOL CanDestroyMainWindow = FALSE;
 CMainWindow* MainWindow = NULL;
-CFilesWindow* DropSourcePanel = NULL;
+CPanelWindow* DropSourcePanel = NULL;
 BOOL OurClipDataObject = FALSE;
 const char* SALCF_IDATAOBJECT = "SalIDataObject";
 const char* SALCF_FAKE_REALPATH = "SalFakeRealPath";
@@ -262,12 +262,12 @@ HBRUSH HMenuSelectedTextBrush = NULL;
 HBRUSH HMenuHilightBrush = NULL;
 HBRUSH HMenuGrayTextBrush = NULL;
 
-HPEN HActiveNormalPen = NULL; // pera pro ramecek kolem polozky
+HPEN HActiveNormalPen = NULL; // pens for the frame around the item
 HPEN HActiveSelectedPen = NULL;
 HPEN HInactiveNormalPen = NULL;
 HPEN HInactiveSelectedPen = NULL;
 
-HPEN HThumbnailNormalPen = NULL; // pera pro ramecek kolem thumbnail
+HPEN HThumbnailNormalPen = NULL; // pens for the frame around the thumbnail
 HPEN HThumbnailFucsedPen = NULL;
 HPEN HThumbnailSelectedPen = NULL;
 HPEN HThumbnailFocSelPen = NULL;
@@ -278,7 +278,7 @@ HPEN Btn3DLightPen = NULL;
 HPEN BtnFacePen = NULL;
 HPEN WndFramePen = NULL;
 HPEN WndPen = NULL;
-HBITMAP HFilter = NULL;
+//HBITMAP HFilter = NULL;
 HBITMAP HHeaderSort = NULL;
 
 HIMAGELIST HFindSymbolsImageList = NULL;
@@ -291,7 +291,6 @@ HIMAGELIST HHotBottomTBImageList = NULL;
 CBitmap ItemBitmap;
 
 HBITMAP HUpDownBitmap = NULL;
-HBITMAP HZoomBitmap = NULL;
 
 //HBITMAP HWorkerBitmap = NULL;
 
@@ -305,7 +304,7 @@ HICON HShortcutOverlays[] = {0};
 HICON HSlowFileOverlays[] = {0};
 CIconList* SimpleIconLists[] = {0};
 CIconList* ThrobberFrames = NULL;
-CIconList* LockFrames = NULL; // pro jednoduchost deklaruji a nacitam jako throbber
+CIconList* LockFrames = NULL; // for simplicity I declare and load it as throbber / pro jednoduchost deklaruji a nacitam jako throbber
 
 HICON HGroupIcon = NULL;
 HICON HFavoritIcon = NULL;
@@ -909,7 +908,7 @@ HICON GetFileOrPathIconAux(const char* path, BOOL large, BOOL isDir)
     __try
     {
         SHFILEINFO shi;
-        if (!GetFileIcon(path, FALSE, &shi.hIcon, large ? ICONSIZE_32 : ICONSIZE_16, TRUE, isDir))
+        if (!GetFileIcon(path, FALSE, &shi.hIcon, large ? IconSize::size_32x32 : IconSize::size_16x16, TRUE, isDir))
             shi.hIcon = NULL;
         //Presli jsme na vlastni implementaci (mensi pametova narocnost, fungujici XOR ikonky)
         //shi.hIcon = NULL;
@@ -964,7 +963,7 @@ HICON GetDriveIcon(const char* root, UINT type, BOOL accessible, BOOL large)
         break;
     }
     }
-    int iconSize = IconSizes[large ? ICONSIZE_32 : ICONSIZE_16];
+    int iconSize = IconSizes[large ? IconSize::size_32x32 : IconSize::size_16x16];
     return SalLoadIcon(ImageResDLL, id, iconSize);
 
     // JRYFIXME - prozkoumat jestli neni IconLRFlags na zruseni? (W7+)
@@ -1503,8 +1502,8 @@ int GetRootPath(char* root, const char* path)
 
 // ****************************************************************************
 
-// projede vsechny barvy z konfigurace a pokud maji nastavenu default hodnotu,
-// nastavi jim prislusne barevne hodnoty
+// goes through all the colors from the configuration and if they have a default value,
+// set their respective color values
 
 COLORREF GetHilightColor(COLORREF clr1, COLORREF clr2)
 {
@@ -1579,7 +1578,7 @@ void UpdateDefaultColors(SALCOLOR* colors, CHighlightMasks* highlightMasks, BOOL
     {
         int bitsPerPixel = GetCurrentBPP();
 
-        // barvy pera pro ramecek kolem polozky prebereme ze systemove barvy textu okna
+        // the pen colors for the frame around the item are taken from the system color of the window text
         if (GetFValue(colors[FOCUS_ACTIVE_NORMAL]) & SCF_DEFAULT)
             SetRGBPart(&colors[FOCUS_ACTIVE_NORMAL], GetSysColor(COLOR_WINDOWTEXT));
         if (GetFValue(colors[FOCUS_ACTIVE_SELECTED]) & SCF_DEFAULT)
@@ -1589,7 +1588,7 @@ void UpdateDefaultColors(SALCOLOR* colors, CHighlightMasks* highlightMasks, BOOL
         if (GetFValue(colors[FOCUS_BK_INACTIVE_SELECTED]) & SCF_DEFAULT)
             SetRGBPart(&colors[FOCUS_BK_INACTIVE_SELECTED], GetSysColor(COLOR_WINDOW));
 
-        // texty polozek v panelu prebereme ze systemove barvy textu okna
+        // the texts of the items in the panel are taken from the system color of the window text
         if (GetFValue(colors[ITEM_FG_NORMAL]) & SCF_DEFAULT)
             SetRGBPart(&colors[ITEM_FG_NORMAL], GetSysColor(COLOR_WINDOWTEXT));
         if (GetFValue(colors[ITEM_FG_FOCUSED]) & SCF_DEFAULT)
@@ -1597,15 +1596,15 @@ void UpdateDefaultColors(SALCOLOR* colors, CHighlightMasks* highlightMasks, BOOL
         if (GetFValue(colors[ITEM_FG_HIGHLIGHT]) & SCF_DEFAULT) // FULL ROW HIGHLIGHT vychazi z _NORMAL
             SetRGBPart(&colors[ITEM_FG_HIGHLIGHT], GetCOLORREF(colors[ITEM_FG_NORMAL]));
 
-        // pozadi polozek v panelu prebereme ze systemove barvy pozadi okna
+        // the background of the items in the panel is taken from the system color of the background of the window
         if (GetFValue(colors[ITEM_BK_NORMAL]) & SCF_DEFAULT)
             SetRGBPart(&colors[ITEM_BK_NORMAL], GetSysColor(COLOR_WINDOW));
         if (GetFValue(colors[ITEM_BK_SELECTED]) & SCF_DEFAULT)
             SetRGBPart(&colors[ITEM_BK_SELECTED], GetSysColor(COLOR_WINDOW));
-        if (GetFValue(colors[ITEM_BK_HIGHLIGHT]) & SCF_DEFAULT) // HIGHLIGHT kopirujeme z NORMAL (aby fungovaly i custom/norton mody)
+        if (GetFValue(colors[ITEM_BK_HIGHLIGHT]) & SCF_DEFAULT) // We copy HIGHLIGHT from NORMAL (so that custom/norton mods also work)
             SetRGBPart(&colors[ITEM_BK_HIGHLIGHT], GetFullRowHighlight(GetCOLORREF(colors[ITEM_BK_NORMAL])));
 
-        // barvy progress bary
+        // progress bar colors
         if (GetFValue(colors[PROGRESS_FG_NORMAL]) & SCF_DEFAULT)
             SetRGBPart(&colors[PROGRESS_FG_NORMAL], GetSysColor(COLOR_WINDOWTEXT));
         if (GetFValue(colors[PROGRESS_FG_SELECTED]) & SCF_DEFAULT)
@@ -1615,35 +1614,50 @@ void UpdateDefaultColors(SALCOLOR* colors, CHighlightMasks* highlightMasks, BOOL
         if (GetFValue(colors[PROGRESS_BK_SELECTED]) & SCF_DEFAULT)
             SetRGBPart(&colors[PROGRESS_BK_SELECTED], GetSysColor(COLOR_HIGHLIGHT));
 
-        // barva selected odstinu ikonky
+        // the color of the selected shade of the icon
         if (GetFValue(colors[ICON_BLEND_SELECTED]) & SCF_DEFAULT)
         {
-            // normalne kopirujeme do selected barvu z focused+selected
+            // normally we copy the color from focused+selected to selected
             SetRGBPart(&colors[ICON_BLEND_SELECTED], GetCOLORREF(colors[ICON_BLEND_FOCSEL]));
-            // pokud jde o cervenou (salamandrovskej profil a muzeme si to diky barevne hloubce
-            // dovolit) pouzijeme pro selected svetlejsi odstin
+            // as for the red (salamander profile and we can do it thanks to the color depth allow) we use a lighter shade for selected
             if (bitsPerPixel > 8 && GetCOLORREF(colors[ICON_BLEND_FOCSEL]) == RGB(255, 0, 0))
                 SetRGBPart(&colors[ICON_BLEND_SELECTED], RGB(255, 128, 128));
+        }
+        else if (GetFValue(colors[ICON_BLEND_SELECTED]) & SCF_NOCOLOR)
+        {
+            //use window background color to represent the 'no color'
+            SetRGBPart(&colors[ICON_BLEND_SELECTED], GetSysColor(COLOR_3DFACE));
+        }
+        if (GetFValue(colors[ICON_BLEND_FOCUSED]) & SCF_NOCOLOR)
+        {
+            //use window background color to represent the 'no color'
+            SetRGBPart(&colors[ICON_BLEND_FOCUSED], GetSysColor(COLOR_3DFACE));
+        }
+        if (GetFValue(colors[ICON_BLEND_FOCSEL]) & SCF_NOCOLOR)
+        {
+            //use window background color to represent the 'no color'
+            SetRGBPart(&colors[ICON_BLEND_FOCSEL], GetSysColor(COLOR_3DFACE));
         }
 
 #define COLOR_HOTLIGHT 26 // winuser.h
 
         // titulky panelu (aktivni/neaktivni)
 
-        // aktivni titulek panelu: POZADI
+        // active panel caption: BACKGROUND
         if (GetFValue(colors[ACTIVE_CAPTION_BK]) & SCF_DEFAULT)
             SetRGBPart(&colors[ACTIVE_CAPTION_BK], GetSysColor(COLOR_ACTIVECAPTION));
-        // aktivni titulek panelu: TEXT
+        // active panel caption: TEXT
         if (GetFValue(colors[ACTIVE_CAPTION_FG]) & SCF_DEFAULT)
             SetRGBPart(&colors[ACTIVE_CAPTION_FG], GetSysColor(COLOR_CAPTIONTEXT));
-        // neaktivni titulek panelu: POZADI
+
+        // inactive panel caption: BACKGROUND
         if (GetFValue(colors[INACTIVE_CAPTION_BK]) & SCF_DEFAULT)
             SetRGBPart(&colors[INACTIVE_CAPTION_BK], GetSysColor(COLOR_INACTIVECAPTION));
-        // neaktivni titulek panelu: TEXT
+        // inactive panel caption: TEXT
         if (GetFValue(colors[INACTIVE_CAPTION_FG]) & SCF_DEFAULT)
         {
-            // preferujeme stejnou barvu textu jako pro aktivni titulek, ale nekdy je tato barva priliz
-            // blizka barve pozadi, potom zkusime barvu pro textu pro neaktivni titulek
+            // we prefer the same text color as the active caption, but sometimes this color is too much
+            // close to the background color, then we'll try the text color for the inactive caption
             COLORREF clrBk = GetCOLORREF(colors[INACTIVE_CAPTION_BK]);
             COLORREF clrFgAc = GetSysColor(COLOR_CAPTIONTEXT);
             COLORREF clrFgIn = GetSysColor(COLOR_INACTIVECAPTIONTEXT);
@@ -1653,7 +1667,7 @@ void UpdateDefaultColors(SALCOLOR* colors, CHighlightMasks* highlightMasks, BOOL
             SetRGBPart(&colors[INACTIVE_CAPTION_FG], (abs(grayFgAc - grayBk) >= abs(grayFgIn - grayBk)) ? clrFgAc : clrFgIn);
         }
 
-        // barvy hot polozek
+        // hot item colors
         COLORREF hotColor = GetSysColor(COLOR_HOTLIGHT);
         if (GetFValue(colors[HOT_PANEL]) & SCF_DEFAULT)
             SetRGBPart(&colors[HOT_PANEL], hotColor);
@@ -1678,7 +1692,7 @@ void UpdateDefaultColors(SALCOLOR* colors, CHighlightMasks* highlightMasks, BOOL
 
     if (processMasks)
     {
-        // barvy zavisle na jmenu+atributech souboru
+        // colors depending on file name+attributes
         int i;
         for (i = 0; i < highlightMasks->Count; i++)
         {
@@ -1799,7 +1813,7 @@ BOOL InitializeConstGraphics()
   strcpy(LogFont.lfFaceName, "MS Shell Dlg 2");
   */
 
-    // tyto brushe jsou alokovane systemem a automaticky se meni pri zmene barev
+    // these brushes are allocated by the system and automatically change when changing colors
     HDialogBrush = GetSysColorBrush(COLOR_BTNFACE);
     HButtonTextBrush = GetSysColorBrush(COLOR_BTNTEXT);
     HMenuSelectedBkBrush = GetSysColorBrush(COLOR_HIGHLIGHT);
@@ -1880,7 +1894,7 @@ void ReleaseConstGraphics()
 BOOL AuxAllocateImageLists()
 {
     int i;
-    for (i = 0; i < ICONSIZE_COUNT; i++)
+    for (i = 0; i < IconSize::nItems; i++)
     {
         SimpleIconLists[i] = new CIconList();
         if (SimpleIconLists[i] == NULL)
@@ -1906,13 +1920,52 @@ BOOL AuxAllocateImageLists()
 
     return TRUE;
 }
+void LoadIcons1()
+{
+    HICON hIcon;
+        char systemDir[MAX_PATH];
+        GetSystemDirectory(systemDir, MAX_PATH);
+        // 16x16, 32x32, 48x48
+        for (int sizeIndex = IconSize::size_16x16; sizeIndex < IconSize::nItems; sizeIndex++)
+        {
+            // ikonka adresare
+            hIcon = NULL;
+            __try
+            {
+                if (!GetFileIcon(systemDir, FALSE, &hIcon, (IconSize::Value)sizeIndex, FALSE, FALSE))
+                    hIcon = NULL;
+            }
+            __except (CCallStack::HandleException(GetExceptionInformation(), 15))
+            {
+                FGIExceptionHasOccured++;
+                hIcon = NULL;
+            }
+            if (hIcon != NULL) // pokud ikonku neziskame, je tam porad jeste 4-rka z shell32.dll
+            {
+                SimpleIconLists[sizeIndex]->ReplaceIcon(symbolsDirectory, hIcon);
+                NOHANDLES(DestroyIcon(hIcon));
+            }
+
+            // ikonka ".."
+            hIcon = (HICON)HANDLES(LoadImage(HInstance, MAKEINTRESOURCE(IDI_UPPERDIR),
+                                             IMAGE_ICON, IconSizes[sizeIndex], IconSizes[sizeIndex],
+                                             IconLRFlags));
+            SimpleIconLists[sizeIndex]->ReplaceIcon(symbolsUpDir, hIcon);
+            HANDLES(DestroyIcon(hIcon));
+
+            // ikonka archiv
+            hIcon = LoadArchiveIcon(IconSizes[sizeIndex], IconSizes[sizeIndex], IconLRFlags);
+            SimpleIconLists[sizeIndex]->ReplaceIcon(symbolsArchive, hIcon);
+            HANDLES(DestroyIcon(hIcon));
+        }
+}
 
 // pomoci TweakUI si mohou uzivatele menit ikonku shortcuty (default, custom, zadna)
 // pokusime se ji ctit
 BOOL GetShortcutOverlay()
 {
     int i;
-    for (i = 0; i < ICONSIZE_COUNT; i++)
+    for (i = 0; i < IconSize::nItems; i++)
     {
         if (HShortcutOverlays[i] != NULL)
         {
@@ -1945,7 +1998,7 @@ BOOL GetShortcutOverlay()
       HICON icon;
       if (imageList->GetIcon(i, 0, &icon) != S_OK)
         icon = NULL;
-      HShortcutOverlays[ICONSIZE_16] = icon;
+      HShortcutOverlays[IconSize::size_16x16] = icon;
       imageList->Release();
     }
     if (MySHGetImageList(0 /* SHIL_LARGE * /, IID_IImageList, (void **)&imageList) == S_OK &&
@@ -1956,7 +2009,7 @@ BOOL GetShortcutOverlay()
       HICON icon;
       if (imageList->GetIcon(i, 0, &icon) != S_OK)
         icon = NULL;
-      HShortcutOverlays[ICONSIZE_32] = icon;
+      HShortcutOverlays[IconSize::size_32x32] = icon;
       imageList->Release();
     }
     if (MySHGetImageList(2 /* SHIL_EXTRALARGE * /, IID_IImageList, (void **)&imageList) == S_OK &&
@@ -1967,7 +2020,7 @@ BOOL GetShortcutOverlay()
       HICON icon;
       if (imageList->GetIcon(i, 0, &icon) != S_OK)
         icon = NULL;
-      HShortcutOverlays[ICONSIZE_48] = icon;
+      HShortcutOverlays[IconSize::size_48x48] = icon;
       imageList->Release();
     }
   }
@@ -1997,16 +2050,16 @@ BOOL GetShortcutOverlay()
                              MAKELONG(32, 16),
                              hIcons, NULL, 2, IconLRFlags);
 
-                HShortcutOverlays[ICONSIZE_32] = hIcons[0];
-                HShortcutOverlays[ICONSIZE_16] = hIcons[1];
+                HShortcutOverlays[IconSize::size_32x32] = hIcons[0];
+                HShortcutOverlays[IconSize::size_16x16] = hIcons[1];
 
                 ExtractIcons(buff, index,
                              48,
                              48,
                              hIcons, NULL, 1, IconLRFlags);
-                HShortcutOverlays[ICONSIZE_48] = hIcons[0];
+                HShortcutOverlays[IconSize::size_48x48] = hIcons[0];
 
-                for (i = 0; i < ICONSIZE_COUNT; i++)
+                for (i = 0; i < IconSize::nItems; i++)
                     if (HShortcutOverlays[i] != NULL)
                         HANDLES_ADD(__htIcon, __hoLoadImage, HShortcutOverlays[i]);
             }
@@ -2014,7 +2067,7 @@ BOOL GetShortcutOverlay()
         NOHANDLES(RegCloseKey(hKey));
     }
 
-    for (i = 0; i < ICONSIZE_COUNT; i++)
+    for (i = 0; i < IconSize::nItems; i++)
     {
         if (HShortcutOverlays[i] == NULL)
         {
@@ -2022,9 +2075,9 @@ BOOL GetShortcutOverlay()
                                                             IMAGE_ICON, IconSizes[i], IconSizes[i], IconLRFlags));
         }
     }
-    return (HShortcutOverlays[ICONSIZE_16] != NULL &&
-            HShortcutOverlays[ICONSIZE_32] != NULL &&
-            HShortcutOverlays[ICONSIZE_48] != NULL);
+    return (HShortcutOverlays[IconSize::size_16x16] != NULL &&
+            HShortcutOverlays[IconSize::size_32x32] != NULL &&
+            HShortcutOverlays[IconSize::size_48x48] != NULL);
 }
 
 int GetCurrentBPP(HDC hDC)
@@ -2078,7 +2131,7 @@ int GetScaleForSystemDPI()
     return scale;
 }
 
-int GetIconSizeForSystemDPI(CIconSizeEnum iconSize)
+int GetIconSizeForSystemDPI(IconSize::Value iconSize)
 {
     if (SystemDPI == 0)
     {
@@ -2086,7 +2139,7 @@ int GetIconSizeForSystemDPI(CIconSizeEnum iconSize)
         return 16;
     }
 
-    if (iconSize < ICONSIZE_16 || iconSize >= ICONSIZE_COUNT)
+    if (iconSize < IconSize::size_16x16 || iconSize >= IconSize::nItems)
     {
         TRACE_E("GetIconSizeForSystemDPI() unknown iconSize!");
         return 16;
@@ -2105,7 +2158,7 @@ int GetIconSizeForSystemDPI(CIconSizeEnum iconSize)
 
     int scale = GetScaleForSystemDPI();
 
-    int baseIconSize[ICONSIZE_COUNT] = {16, 32, 48}; // musi odpovidat CIconSizeEnum
+    int baseIconSize[IconSize::nItems] = {16, 32, 48}; // musi odpovidat IconSize::Value
 
     return (baseIconSize[iconSize] * scale) / 100;
 }
@@ -2143,12 +2196,12 @@ BOOL InitializeGraphics(BOOL colorsOnly)
     GetSystemDPI(hDesktopDC);
     ReleaseDC(NULL, hDesktopDC);
 
-    IconSizes[ICONSIZE_16] = GetIconSizeForSystemDPI(ICONSIZE_16);
-    IconSizes[ICONSIZE_32] = GetIconSizeForSystemDPI(ICONSIZE_32);
-    IconSizes[ICONSIZE_48] = GetIconSizeForSystemDPI(ICONSIZE_48);
+    IconSizes[IconSize::size_16x16] = GetIconSizeForSystemDPI(IconSize::size_16x16);
+    IconSizes[IconSize::size_32x32] = GetIconSizeForSystemDPI(IconSize::size_32x32);
+    IconSizes[IconSize::size_48x48] = GetIconSizeForSystemDPI(IconSize::size_48x48);
 
     HKEY hKey;
-    if (OpenKeyAux(NULL, HKEY_CURRENT_USER, "Control Panel\\Desktop\\WindowMetrics", hKey))
+    if (Registry::Silent_Key_Open( HKEY_CURRENT_USER, TEXT_VIEW( "Control Panel\\Desktop\\WindowMetrics" ), hKey))
     {
         // dalsi zajimave hodnoty: "Shell Icon Size", "Shell Small Icon Size"
         char buff[100];
@@ -2202,7 +2255,7 @@ BOOL InitializeGraphics(BOOL colorsOnly)
         HINSTANCE iconDLL = ImageResDLL;
         int iconIndex = 164;
         int i;
-        for (i = 0; i < ICONSIZE_COUNT; i++)
+        for (i = 0; i < IconSize::nItems; i++)
         {
             HSharedOverlays[i] = (HICON)HANDLES(LoadImage(iconDLL, MAKEINTRESOURCE(iconIndex),
                                                           IMAGE_ICON, IconSizes[i], IconSizes[i], IconLRFlags));
@@ -2210,37 +2263,37 @@ BOOL InitializeGraphics(BOOL colorsOnly)
         GetShortcutOverlay(); // HShortcutOverlayXX
 
         iconIndex = 97;
-        for (i = 0; i < ICONSIZE_COUNT; i++)
+        for (i = 0; i < IconSize::nItems; i++)
         {
             HSlowFileOverlays[i] = (HICON)HANDLES(LoadImage(iconDLL, MAKEINTRESOURCE(iconIndex),
                                                             IMAGE_ICON, IconSizes[i], IconSizes[i], IconLRFlags));
         }
 
-        HGroupIcon = SalLoadImage(4, 20, IconSizes[ICONSIZE_16], IconSizes[ICONSIZE_16], IconLRFlags);
-        HFavoritIcon = (HICON)HANDLES(LoadImage(Shell32DLL, MAKEINTRESOURCE(319), IMAGE_ICON, IconSizes[ICONSIZE_16], IconSizes[ICONSIZE_16], IconLRFlags));
-        if (HSharedOverlays[ICONSIZE_16] == NULL ||
-            HSharedOverlays[ICONSIZE_32] == NULL ||
-            HSharedOverlays[ICONSIZE_48] == NULL ||
-            HShortcutOverlays[ICONSIZE_16] == NULL ||
-            HShortcutOverlays[ICONSIZE_32] == NULL ||
-            HShortcutOverlays[ICONSIZE_48] == NULL ||
-            HSlowFileOverlays[ICONSIZE_16] == NULL ||
-            HSlowFileOverlays[ICONSIZE_32] == NULL ||
-            HSlowFileOverlays[ICONSIZE_48] == NULL ||
+        HGroupIcon = SalLoadImage(4, 20, IconSizes[IconSize::size_16x16], IconSizes[IconSize::size_16x16], IconLRFlags);
+        HFavoritIcon = (HICON)HANDLES(LoadImage(Shell32DLL, MAKEINTRESOURCE(319), IMAGE_ICON, IconSizes[IconSize::size_16x16], IconSizes[IconSize::size_16x16], IconLRFlags));
+        if (HSharedOverlays[IconSize::size_16x16] == NULL ||
+            HSharedOverlays[IconSize::size_32x32] == NULL ||
+            HSharedOverlays[IconSize::size_48x48] == NULL ||
+            HShortcutOverlays[IconSize::size_16x16] == NULL ||
+            HShortcutOverlays[IconSize::size_32x32] == NULL ||
+            HShortcutOverlays[IconSize::size_48x48] == NULL ||
+            HSlowFileOverlays[IconSize::size_16x16] == NULL ||
+            HSlowFileOverlays[IconSize::size_32x32] == NULL ||
+            HSlowFileOverlays[IconSize::size_48x48] == NULL ||
             HGroupIcon == NULL || HFavoritIcon == NULL)
         {
             TRACE_E("Unable to read icon overlays for shared directories, shortcuts or slow files, or icon for groups or favorites.");
             return FALSE;
         }
 
-        // prekladac hlasil chybu: error C2712: Cannot use __try in functions that require object unwinding
-        // obchazim to vlozenim alokace do funkce
+        // the translator reported an error: error C2712: Cannot use __try in functions that require object unwinding
+        // I work around this by putting the allocation in the function
         //    SymbolsIconList = new CIconList();
         //    LargeSymbolsIconList = new CIconList();
         if (!AuxAllocateImageLists())
             return FALSE;
 
-        for (i = 0; i < ICONSIZE_COUNT; i++)
+        for (i = 0; i < IconSize::nItems; i++)
         {
             if (!SimpleIconLists[i]->Create(IconSizes[i], IconSizes[i], symbolsCount))
             {
@@ -2250,19 +2303,13 @@ BOOL InitializeGraphics(BOOL colorsOnly)
             SimpleIconLists[i]->SetBkColor(GetCOLORREF(CurrentColors[ITEM_BK_NORMAL]));
         }
 
-        if (!ThrobberFrames->CreateFromPNG(HInstance, MAKEINTRESOURCE(IDB_THROBBER), THROBBER_WIDTH))
-        {
-            TRACE_E("Unable to create throbber.");
-            return FALSE;
-        }
-
         if (!LockFrames->CreateFromPNG(HInstance, MAKEINTRESOURCE(IDB_LOCK), LOCK_WIDTH))
         {
             TRACE_E("Unable to create lock.");
             return FALSE;
         }
 
-        HFindSymbolsImageList = ImageList_Create(IconSizes[ICONSIZE_16], IconSizes[ICONSIZE_16], ILC_MASK | GetImageListColorFlags(), 2, 0);
+        HFindSymbolsImageList = ImageList_Create(IconSizes[IconSize::size_16x16], IconSizes[IconSize::size_16x16], ILC_MASK | GetImageListColorFlags(), 2, 0);
         if (HFindSymbolsImageList == NULL)
         {
             TRACE_E("Unable to create image list.");
@@ -2271,7 +2318,7 @@ BOOL InitializeGraphics(BOOL colorsOnly)
         ImageList_SetImageCount(HFindSymbolsImageList, 2); // inicializace
                                                            //    ImageList_SetBkColor(HFindSymbolsImageList, GetSysColor(COLOR_WINDOW)); // aby pod XP chodily pruhledne ikonky
 
-        int iconSize = IconSizes[ICONSIZE_16];
+        int iconSize = IconSizes[IconSize::size_16x16];
         HBITMAP hTmpMaskBitmap;
         HBITMAP hTmpGrayBitmap;
         HBITMAP hTmpColorBitmap;
@@ -2326,13 +2373,13 @@ BOOL InitializeGraphics(BOOL colorsOnly)
         for (i = 0; indexes[i] != -1; i++)
         {
             int sizeIndex;
-            for (sizeIndex = 0; sizeIndex < ICONSIZE_COUNT; sizeIndex++)
+            for (sizeIndex = 0; sizeIndex < IconSize::nItems; sizeIndex++)
             {
                 hIcon = SalLoadImage(vistaResID[i], resID[i], IconSizes[sizeIndex], IconSizes[sizeIndex], IconLRFlags);
                 if (hIcon != NULL)
                 {
                     SimpleIconLists[sizeIndex]->ReplaceIcon(indexes[i], hIcon);
-                    if (sizeIndex == ICONSIZE_16)
+                    if (sizeIndex == IconSize::size_16x16)
                     {
                         if (indexes[i] == symbolsDirectory)
                             ImageList_ReplaceIcon(HFindSymbolsImageList, 0, hIcon);
@@ -2345,42 +2392,13 @@ BOOL InitializeGraphics(BOOL colorsOnly)
                     TRACE_E("Cannot retrieve icon from IMAGERES.DLL or SHELL32.DLL resID=" << resID[i]);
             }
         }
-        char systemDir[MAX_PATH];
-        GetSystemDirectory(systemDir, MAX_PATH);
-        // 16x16, 32x32, 48x48
-        int sizeIndex;
-        for (sizeIndex = ICONSIZE_16; sizeIndex < ICONSIZE_COUNT; sizeIndex++)
-        {
-            // ikonka adresare
-            hIcon = NULL;
-            __try
-            {
-                if (!GetFileIcon(systemDir, FALSE, &hIcon, (CIconSizeEnum)sizeIndex, FALSE, FALSE))
-                    hIcon = NULL;
-            }
-            __except (CCallStack::HandleException(GetExceptionInformation(), 15))
-            {
-                FGIExceptionHasOccured++;
-                hIcon = NULL;
-            }
-            if (hIcon != NULL) // pokud ikonku neziskame, je tam porad jeste 4-rka z shell32.dll
-            {
-                SimpleIconLists[sizeIndex]->ReplaceIcon(symbolsDirectory, hIcon);
-                NOHANDLES(DestroyIcon(hIcon));
-            }
 
-            // ikonka ".."
-            hIcon = (HICON)HANDLES(LoadImage(HInstance, MAKEINTRESOURCE(IDI_UPPERDIR),
-                                             IMAGE_ICON, IconSizes[sizeIndex], IconSizes[sizeIndex],
-                                             IconLRFlags));
-            SimpleIconLists[sizeIndex]->ReplaceIcon(symbolsUpDir, hIcon);
-            HANDLES(DestroyIcon(hIcon));
+        //[W: all this will have to be cleaned completelly]
+        // Compiler complains aboutn an error: error C2712: Cannot use __try in functions that require object unwinding
+        // I work around this by putting the allocation in the function
+        LoadIcons1();
 
-            // ikonka archiv
-            hIcon = LoadArchiveIcon(IconSizes[sizeIndex], IconSizes[sizeIndex], IconLRFlags);
-            SimpleIconLists[sizeIndex]->ReplaceIcon(symbolsArchive, hIcon);
-            HANDLES(DestroyIcon(hIcon));
-        }
+
 
         WORD bits[8] = {0x0055, 0x00aa, 0x0055, 0x00aa,
                         0x0055, 0x00aa, 0x0055, 0x00aa};
@@ -2391,22 +2409,57 @@ BOOL InitializeGraphics(BOOL colorsOnly)
             return FALSE;
 
         HUpDownBitmap = HANDLES(LoadBitmap(HInstance, MAKEINTRESOURCE(IDB_UPDOWN)));
-        HZoomBitmap = HANDLES(LoadBitmap(HInstance, MAKEINTRESOURCE(IDB_ZOOM)));
-        HFilter = HANDLES(LoadBitmap(HInstance, MAKEINTRESOURCE(IDB_FILTER)));
+        //HFilter = HANDLES(LoadBitmap(HInstance, MAKEINTRESOURCE(IDB_FILTER)));
 
-        if (HUpDownBitmap == NULL ||
-            HZoomBitmap == NULL || HFilter == NULL)
+        if (HUpDownBitmap == NULL)
         {
-            TRACE_E("HUpDownBitmap == NULL || HZoomBitmap == NULL || HFilter == NULL");
+            TRACE_E("HUpDownBitmap == NULL");
             return FALSE;
         }
 
-        SVGArrowRight.Load(IDV_ARROW_RIGHT, -1, -1, SVGSTATE_ENABLED | SVGSTATE_DISABLED);
-        SVGArrowRightSmall.Load(IDV_ARROW_RIGHT, -1, (int)((double)iconSize / 2.5), SVGSTATE_ENABLED | SVGSTATE_DISABLED);
-        SVGArrowMore.Load(IDV_ARROW_MORE, -1, -1, SVGSTATE_ENABLED | SVGSTATE_DISABLED);
-        SVGArrowLess.Load(IDV_ARROW_LESS, -1, -1, SVGSTATE_ENABLED | SVGSTATE_DISABLED);
-        SVGArrowDropDown.Load(IDV_ARROW_DOWN, -1, -1, SVGSTATE_ENABLED | SVGSTATE_DISABLED);
+    //Load SVG icons.
+        SVGArrowRight.Load(IDV_ARROW_RIGHT, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED);
+        SVGArrowRightSmall.Load(IDV_ARROW_RIGHT, -1, (int)((double)iconSize / 2.5), SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED);
+        SVGArrowMore.Load(IDV_ARROW_MORE, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED);
+        SVGArrowLess.Load(IDV_ARROW_LESS, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED);
+        SVGArrowDropDown_Buttons.Load(IDV_ARROW_DOWN, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED );
     }
+
+//Update caption panel icons.
+    const int   colorIds_panel_active[SVGSTATE_COUNT] = { -1, ACTIVE_CAPTION_FG, HOT_ACTIVE };
+    const int   colorIds_panel_inactive[SVGSTATE_COUNT] = { -1, INACTIVE_CAPTION_FG, HOT_INACTIVE };
+
+    SVGFilter_Active.Load(IDV_CAPTION_PANEL_FILTER, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_active);
+    SVGFilter_Inactive.Load(IDV_CAPTION_PANEL_FILTER, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_inactive);
+
+    SVGHistory_Active.Load(IDV_CAPTION_PANEL_HISTORY, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_active);
+    SVGHistory_Inactive.Load(IDV_CAPTION_PANEL_HISTORY, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_inactive);
+
+    SVGSecurity_Locked_Active.Load(IDV_CAPTION_PANEL_SECURITY_LOCKED, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_active);
+    SVGSecurity_Locked_Inactive.Load(IDV_CAPTION_PANEL_SECURITY_LOCKED, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_inactive);
+
+    SVGSecurity_Unlocked_Active.Load(IDV_CAPTION_PANEL_SECURITY_UNLOCKED, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_active);
+    SVGSecurity_Unlocked_Inactive.Load(IDV_CAPTION_PANEL_SECURITY_UNLOCKED, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_inactive);
+
+    SVGZoom_In_Active.Load(IDV_CAPTION_PANEL_ZOOM_IN, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_active);
+    SVGZoom_In_Inactive.Load(IDV_CAPTION_PANEL_ZOOM_IN, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_inactive);
+
+    SVGZoom_Out_Active.Load(IDV_CAPTION_PANEL_ZOOM_OUT, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_active);
+    SVGZoom_Out_Inactive.Load(IDV_CAPTION_PANEL_ZOOM_OUT, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_inactive);
+
+    //Set loading animation icons.
+    const int   nFrames = sizeof( SVGLoading_Active )/sizeof( SVGLoading_Active[0] );
+    const int   angle = 360/nFrames;
+    
+    for ( int i = 0, i_max = sizeof( SVGLoading_Active )/sizeof( SVGLoading_Active[0] ); i < i_max; ++i )
+    {
+        const auto angle_current = std::to_string( i * angle );
+    
+        SVGLoading_Active[i].Load(IDV_CAPTION_PANEL_LOADING, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_active, angle_current);
+        SVGLoading_Inactive[i].Load(IDV_CAPTION_PANEL_LOADING, -1, -1, SVGSTATE_ENABLED_OR_NORMAL | SVGSTATE_DISABLED_OR_FOCUSED, colorIds_panel_inactive, angle_current);
+    }
+
+//--------
 
     ImageList_SetBkColor(HHotToolBarImageList, GetSysColor(COLOR_BTNFACE));
     ImageList_SetBkColor(HGrayToolBarImageList, GetSysColor(COLOR_BTNFACE));
@@ -2516,7 +2569,7 @@ void ReleaseGraphics(BOOL colorsOnly)
     if (!colorsOnly)
     {
         int i;
-        for (i = 0; i < ICONSIZE_COUNT; i++)
+        for (i = 0; i < IconSize::nItems; i++)
         {
             if (HSharedOverlays[i] != NULL)
             {
@@ -2547,17 +2600,11 @@ void ReleaseGraphics(BOOL colorsOnly)
             HFavoritIcon = NULL;
         }
 
-        if (HZoomBitmap != NULL)
-        {
-            HANDLES(DeleteObject(HZoomBitmap));
-            HZoomBitmap = NULL;
-        }
-
-        if (HFilter != NULL)
-        {
-            HANDLES(DeleteObject(HFilter));
-            HFilter = NULL;
-        }
+        //if (HFilter != NULL)
+        //{
+        //    HANDLES(DeleteObject(HFilter));
+        //    HFilter = NULL;
+        //}
 
         if (HUpDownBitmap != NULL)
         {
@@ -2705,7 +2752,7 @@ void ReleaseGraphics(BOOL colorsOnly)
             HMenuMarkImageList = NULL;
         }
         int i;
-        for (i = 0; i < ICONSIZE_COUNT; i++)
+        for (i = 0; i < IconSize::nItems; i++)
         {
             if (SimpleIconLists[i] != NULL)
             {
@@ -3889,8 +3936,7 @@ FIND_NEW_SLG_FILE:
         HKEY actKey;
         if (OpenKey(hSalamander, SALAMANDER_CONFIG_REG, actKey))
         {
-            GetValue(actKey, CONFIG_SHOWSPLASHSCREEN_REG, REG_DWORD,
-                     &Configuration.ShowSplashScreen, sizeof(DWORD));
+            GetValue(actKey, CONFIG_SHOWSPLASHSCREEN_REG, REG_DWORD, &Configuration.ShowSplashScreen, sizeof(DWORD));
             CloseKey(actKey);
         }
         CloseKey(hSalamander);
@@ -4579,7 +4625,7 @@ MENU_TEMPLATE_ITEM MsgBoxButtons[] =
                                         LastSalamanderIdleTime = GetTickCount();
                                         if (data->OpenPackDlg)
                                         {
-                                            CFilesWindow* activePanel = MainWindow->GetActivePanel();
+                                            CPanelWindow* activePanel = MainWindow->GetActivePanel();
                                             if (activePanel != NULL && activePanel->Is(ptDisk))
                                             { // otevreni Pack dialogu
                                                 MainWindow->CancelPanelsUI();
@@ -4597,7 +4643,7 @@ MENU_TEMPLATE_ITEM MsgBoxButtons[] =
                                         {
                                             if (data->OpenUnpackDlg)
                                             {
-                                                CFilesWindow* activePanel = MainWindow->GetActivePanel();
+                                                CPanelWindow* activePanel = MainWindow->GetActivePanel();
                                                 if (activePanel != NULL && activePanel->Is(ptDisk))
                                                 { // otevreni Unpack dialogu
                                                     MainWindow->CancelPanelsUI();

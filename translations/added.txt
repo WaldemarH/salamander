@@ -1,0 +1,15 @@
+[2024-09-19]
+10560 "&Don't change the color"
+
+[2024-11-08]
+ IDS_TBTT_UNSELECTOTHERS       "Unselect Others"
+ 
+#define IDS_TBTT_UNSELECT_OTHERS     10521   // Unselect all currently not focused
+
+[2024-11-29]
+IDS_SETTOOTHERPANEL, "&Set to other panel"
+
+#define IDS_SETTOOTHERPANEL                         10719
+
+
+

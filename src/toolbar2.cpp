@@ -136,7 +136,7 @@ BOOL CToolBar::HitTest(int xPos, int yPos, int& index, BOOL& dropDown)
                     xPos >= xOffset && xPos < xOffset + item->Width)
                 {
                     if ((item->Style & TLBI_STYLE_SEPARATEDROPDOWN) &&
-                        xPos >= item->Offset + item->Width - SVGArrowDropDown.GetWidth() - 4)
+                        xPos >= item->Offset + item->Width - SVGArrowDropDown_Buttons.GetWidth() - 4)
                         dropDown = TRUE;
                     else
                         dropDown = FALSE;
@@ -153,7 +153,7 @@ BOOL CToolBar::HitTest(int xPos, int yPos, int& index, BOOL& dropDown)
                     yPos >= yOffset && yPos < yOffset + item->Height)
                 {
                     if ((item->Style & TLBI_STYLE_SEPARATEDROPDOWN) &&
-                        xPos >= item->Offset + item->Width - SVGArrowDropDown.GetWidth() - 4)
+                        xPos >= item->Offset + item->Width - SVGArrowDropDown_Buttons.GetWidth() - 4)
                         dropDown = TRUE;
                     else
                         dropDown = FALSE;
@@ -189,7 +189,7 @@ BOOL CToolBar::InsertMarkHitTest(int xPos, int yPos, int& index, BOOL& after)
                 yPos >= yOffset && yPos < yOffset + item->Height)
             {
                 int margin = 6;
-                int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+                int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
                 if (item->Width < iconSize)
                     margin = 3;
                 index = i;
@@ -316,7 +316,7 @@ BOOL CToolBar::Refresh()
                 width += Padding.IconLeft;
                 item->IconX = width;
 
-                int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+                int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
                 int imgW = item->HIcon != NULL ? iconSize : ImageWidth;
                 int imgH = item->HIcon != NULL ? iconSize : ImageHeight;
 
@@ -346,7 +346,7 @@ BOOL CToolBar::Refresh()
             if (innerDropPresent)
             {
                 item->InnerX = width;
-                width += SVGArrowDropDown.GetWidth() + Padding.TextRight;
+                width += SVGArrowDropDown_Buttons.GetWidth() + Padding.TextRight;
             }
             width++; // pravy okraj
 
@@ -355,10 +355,10 @@ BOOL CToolBar::Refresh()
                 if (!(item->Style & TLBI_STYLE_FIXEDWIDTH))
                 {
                     item->OutterX = width + 2;
-                    width += 2 + SVGArrowDropDown.GetWidth() + 2;
+                    width += 2 + SVGArrowDropDown_Buttons.GetWidth() + 2;
                 }
                 else
-                    item->OutterX = width - (2 + SVGArrowDropDown.GetWidth() + 2); // ukousneme s sirky polozky
+                    item->OutterX = width - (2 + SVGArrowDropDown_Buttons.GetWidth() + 2); // ukousneme s sirky polozky
             }
 
             if (!(item->Style & TLBI_STYLE_FIXEDWIDTH))
@@ -388,11 +388,13 @@ BOOL CToolBar::Refresh()
 void CToolBar::DrawDropDown(HDC hDC, int x, int y, BOOL grayed)
 {
     CALL_STACK_MESSAGE_NONE
-    SVGArrowDropDown.AlphaBlend(hDC,
-                                x,
-                                y,
-                                -1, -1,
-                                grayed ? SVGSTATE_DISABLED : SVGSTATE_ENABLED);
+    SVGArrowDropDown_Buttons.AlphaBlend(
+        hDC,
+        x,
+        y,
+        -1, -1,
+        grayed ? SVGSTATE_DISABLED_OR_FOCUSED : SVGSTATE_ENABLED_OR_NORMAL
+    );
 }
 
 void CToolBar::DrawItem(int index)
@@ -492,7 +494,7 @@ void CToolBar::DrawItem(HDC hDC, int index)
             iconPresent = TRUE;
             if (item->HIcon != NULL)
             {
-                int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+                int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
                 imgW = iconSize;
                 imgH = iconSize;
             }
@@ -529,7 +531,7 @@ void CToolBar::DrawItem(HDC hDC, int index)
         if (!grayed && ((HotIndex == index || item->State & TLBI_STATE_CHECKED) || (item->State & TLBI_STATE_PRESSED)))
         {
             if (outterDropPresent)
-                r.right -= 2 + SVGArrowDropDown.GetWidth() + 2;
+                r.right -= 2 + SVGArrowDropDown_Buttons.GetWidth() + 2;
 
             bodyDown = !Customizing && ((item->State & TLBI_STATE_PRESSED) || (item->State & TLBI_STATE_CHECKED));
             dropDown = !Customizing && (item->State & TLBI_STATE_DROPDOWNPRESSED);
@@ -574,7 +576,7 @@ void CToolBar::DrawItem(HDC hDC, int index)
                 int offset = bodyDown ? 1 : 0;
                 int x = item->IconX + offset;
                 int y = centerOffset + (item->Height - imgH) / 2 + offset;
-                int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+                int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
                 if (item->HIcon != NULL)
                     DrawIconEx(CacheBitmap->HMemDC, x, y, item->HIcon, iconSize, iconSize, 0, NULL, DI_NORMAL);
                 else
@@ -592,7 +594,7 @@ void CToolBar::DrawItem(HDC hDC, int index)
                 int offset = bodyDown ? 1 : 0;
                 int x = item->IconX + offset;
                 int y = centerOffset + (item->Height - imgH) / 2 + offset;
-                int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+                int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
                 if (item->HIcon != NULL)
                     DrawIconEx(CacheBitmap->HMemDC, x, y, item->HIcon, iconSize, iconSize, 0, NULL, DI_NORMAL);
                 else
@@ -644,7 +646,7 @@ void CToolBar::DrawItem(HDC hDC, int index)
 
         if (innerDropPresent || outterDropPresent)
         {
-            int y = 1 + centerOffset + (height - SVGArrowDropDown.GetHeight()) / 2;
+            int y = 1 + centerOffset + (height - SVGArrowDropDown_Buttons.GetHeight()) / 2;
             if (innerDropPresent)
             {
                 int offset = 0;

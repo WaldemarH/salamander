@@ -1080,26 +1080,36 @@ BOOL CopyTextToClipboardW(const wchar_t* text, int textLen, BOOL showEcho, HWND 
 
 BOOL CopyTextToClipboard(const char* text, int textLen, BOOL showEcho, HWND hEchoParent)
 {
-    if (text == NULL)
+//Validate.
+    if ( text == NULL )
     {
         TRACE_E("text == NULL");
         return FALSE;
     }
 
+//Get text length.
+    if ( textLen == -1 )
+    {
+        textLen = lstrlen( text );
+    }
+
+//
     DWORD err = ERROR_SUCCESS;
 
-    if (textLen == -1)
-        textLen = lstrlen(text);
 
     HGLOBAL hglbCopy = NOHANDLES(GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, textLen + 1));
+
     if (hglbCopy != NULL)
     {
         char* lptstrCopy = (char*)HANDLES(GlobalLock(hglbCopy));
+
         if (lptstrCopy != NULL)
         {
             memcpy(lptstrCopy, text, textLen);
             lptstrCopy[textLen] = 0;
+
             HANDLES(GlobalUnlock(hglbCopy));
+
             if (!CopyHTextToClipboard(hglbCopy, textLen, NULL, FALSE))
                 return FALSE;
         }
@@ -1112,11 +1122,9 @@ BOOL CopyTextToClipboard(const char* text, int textLen, BOOL showEcho, HWND hEch
     if (showEcho)
     {
         if (err != ERROR_SUCCESS)
-            SalMessageBox(hEchoParent, GetErrorText(err), LoadStr(IDS_COPYTOCLIPBOARD),
-                          MB_OK | MB_ICONEXCLAMATION);
+            SalMessageBox(hEchoParent, GetErrorText(err), LoadStr(IDS_COPYTOCLIPBOARD), MB_OK | MB_ICONEXCLAMATION);
         else
-            SalMessageBox(hEchoParent, LoadStr(IDS_TEXTCOPIED), LoadStr(IDS_INFOTITLE),
-                          MB_OK | MB_ICONINFORMATION);
+            SalMessageBox(hEchoParent, LoadStr(IDS_TEXTCOPIED), LoadStr(IDS_INFOTITLE), MB_OK | MB_ICONINFORMATION);
     }
     return err == ERROR_SUCCESS;
 }
@@ -1138,10 +1146,12 @@ BOOL CopyHTextToClipboard(HGLOBAL hGlobalText, int textLen, BOOL showEcho, HWND 
         if (EmptyClipboard())
         {
             char* text = (char*)HANDLES(GlobalLock(hGlobalText));
+
             if (text != NULL)
             {
                 if (textLen == -1)
                     textLen = lstrlen(text);
+
                 err = AddUnicodeToClipboard(text, textLen); // ulozime text nejprve v Unicode
                 HANDLES(GlobalUnlock(hGlobalText));
             }
@@ -1413,7 +1423,7 @@ int WINAPI InternalGetPluginIconIndex()
 // CSalamanderView
 //
 
-CSalamanderView::CSalamanderView(CFilesWindow* panel)
+CSalamanderView::CSalamanderView(CPanelWindow* panel)
 {
     Panel = panel;
     Panel->GetPluginIconIndex = InternalGetPluginIconIndex;
@@ -1675,7 +1685,7 @@ BOOL CFileHistoryItem::Equal(CFileHistoryItemTypeEnum type, DWORD handlerID, con
 BOOL CFileHistoryItem::Execute()
 {
     CALL_STACK_MESSAGE1("CFileHistoryItem::Execute()");
-    CFilesWindow* panel = MainWindow->GetActivePanel();
+    CPanelWindow* panel = MainWindow->GetActivePanel();
     switch (Type)
     {
     case fhitView:

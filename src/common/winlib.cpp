@@ -97,10 +97,14 @@ BOOL SetupWinLibHelp(CWinLibHelp* winLibHelp)
 BOOL WinLibIsWindowsVersionOrGreater(WORD wMajorVersion, WORD wMinorVersion, WORD wServicePackMajor)
 {
     OSVERSIONINFOEXW osvi;
-    DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
-                                                                                                   VER_MAJORVERSION, VER_GREATER_EQUAL),
-                                                                               VER_MINORVERSION, VER_GREATER_EQUAL),
-                                                           VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
+    DWORDLONG const dwlConditionMask = VerSetConditionMask(
+        VerSetConditionMask(
+            VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL),
+            VER_MINORVERSION, VER_GREATER_EQUAL
+        ),
+        VER_SERVICEPACKMAJOR,
+        VER_GREATER_EQUAL
+    );
 
     SecureZeroMemory(&osvi, sizeof(osvi)); // nahrada za memset (nevyzaduje RTLko)
     osvi.dwOSVersionInfoSize = sizeof(osvi);
@@ -130,18 +134,8 @@ HWND CWindow::CreateEx(DWORD dwExStyle,        // extended window style
                        HINSTANCE hinst,        // handle of application instance
                        LPVOID lpvParam)        // ukazatel na objekt vytvareneho okna
 {
-    HWND hWnd = CreateWindowEx(dwExStyle,
-                               lpszClassName,
-                               lpszWindowName,
-                               dwStyle,
-                               x,
-                               y,
-                               nWidth,
-                               nHeight,
-                               hwndParent,
-                               hmenu,
-                               hinst,
-                               lpvParam);
+    HWND hWnd = CreateWindowEx(dwExStyle, lpszClassName, lpszWindowName, dwStyle, x, y, nWidth, nHeight, hwndParent, hmenu, hinst, lpvParam);
+
     if (hWnd != 0)
     {
         if (WindowsManager.GetWindowPtr(hWnd) == NULL) // pokud se jeste neni ve WindowsManageru
@@ -162,18 +156,7 @@ HWND CWindow::Create(LPCTSTR lpszClassName,  // address of registered class name
                      HINSTANCE hinst,        // handle of application instance
                      LPVOID lpvParam)        // ukazatel na objekt vytvareneho okna
 {
-    return CreateEx(0,
-                    lpszClassName,
-                    lpszWindowName,
-                    dwStyle,
-                    x,
-                    y,
-                    nWidth,
-                    nHeight,
-                    hwndParent,
-                    hmenu,
-                    hinst,
-                    lpvParam);
+    return CreateEx(0, lpszClassName, lpszWindowName, dwStyle, x, y, nWidth, nHeight, hwndParent, hmenu, hinst, lpvParam);
 }
 
 #ifndef _UNICODE
@@ -191,18 +174,8 @@ HWND CWindow::CreateExW(DWORD dwExStyle,        // extended window style
                         HINSTANCE hinst,        // handle of application instance
                         LPVOID lpvParam)        // ukazatel na objekt vytvareneho okna
 {
-    HWND hWnd = CreateWindowExW(dwExStyle,
-                                lpszClassName,
-                                lpszWindowName,
-                                dwStyle,
-                                x,
-                                y,
-                                nWidth,
-                                nHeight,
-                                hwndParent,
-                                hmenu,
-                                hinst,
-                                lpvParam);
+    HWND hWnd = CreateWindowExW(dwExStyle, lpszClassName, lpszWindowName, dwStyle, x, y, nWidth, nHeight, hwndParent, hmenu, hinst, lpvParam);
+
     if (hWnd != 0)
     {
         if (WindowsManager.GetWindowPtr(hWnd) == NULL) // pokud se jeste neni ve WindowsManageru
@@ -223,18 +196,7 @@ HWND CWindow::CreateW(LPCWSTR lpszClassName,  // address of registered class nam
                       HINSTANCE hinst,        // handle of application instance
                       LPVOID lpvParam)        // ukazatel na objekt vytvareneho okna
 {
-    return CreateExW(0,
-                     lpszClassName,
-                     lpszWindowName,
-                     dwStyle,
-                     x,
-                     y,
-                     nWidth,
-                     nHeight,
-                     hwndParent,
-                     hmenu,
-                     hinst,
-                     lpvParam);
+    return CreateExW(0, lpszClassName, lpszWindowName, dwStyle, x, y, nWidth, nHeight, hwndParent, hmenu, hinst, lpvParam);
 }
 
 #endif // _UNICODE
@@ -340,14 +302,12 @@ CWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 #ifndef _UNICODE
-LRESULT CALLBACK
-CWindow::CWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CWindow::CWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     return CWindowProcInt(hwnd, uMsg, wParam, lParam, FALSE /*unicode*/);
 }
 
-LRESULT CALLBACK
-CWindow::CWindowProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CWindow::CWindowProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     return CWindowProcInt(hwnd, uMsg, wParam, lParam, TRUE /*unicode*/);
 }
@@ -489,6 +449,7 @@ BOOL CWindow::RegisterUniversalClass()
     CWindowClass.lpszClassName = CWINDOW_CLASSNAME;
 
     BOOL ret = RegisterClass(&CWindowClass) != 0;
+
     if (ret)
     {
         CWindowClass.style = CS_DBLCLKS;
@@ -524,10 +485,7 @@ BOOL CWindow::RegisterUniversalClass()
     return ret;
 }
 
-BOOL CWindow::RegisterUniversalClass(UINT style, int cbClsExtra, int cbWndExtra,
-                                     HICON hIcon, HCURSOR hCursor, HBRUSH hbrBackground,
-                                     LPCTSTR lpszMenuName, LPCTSTR lpszClassName,
-                                     HICON hIconSm)
+BOOL CWindow::RegisterUniversalClass(UINT style, int cbClsExtra, int cbWndExtra, HICON hIcon, HCURSOR hCursor, HBRUSH hbrBackground, LPCTSTR lpszMenuName, LPCTSTR lpszClassName, HICON hIconSm)
 {
     WNDCLASSEX windowClass;
     windowClass.cbSize = sizeof(WNDCLASSEX);
@@ -547,10 +505,7 @@ BOOL CWindow::RegisterUniversalClass(UINT style, int cbClsExtra, int cbWndExtra,
 }
 
 #ifndef _UNICODE
-BOOL CWindow::RegisterUniversalClassW(UINT style, int cbClsExtra, int cbWndExtra,
-                                      HICON hIcon, HCURSOR hCursor, HBRUSH hbrBackground,
-                                      LPCWSTR lpszMenuName, LPCWSTR lpszClassName,
-                                      HICON hIconSm)
+BOOL CWindow::RegisterUniversalClassW(UINT style, int cbClsExtra, int cbWndExtra, HICON hIcon, HCURSOR hCursor, HBRUSH hbrBackground, LPCWSTR lpszMenuName, LPCWSTR lpszClassName, HICON hIconSm)
 {
     WNDCLASSEXW windowClass;
     windowClass.cbSize = sizeof(WNDCLASSEXW);
@@ -602,8 +557,7 @@ BOOL CDialog::TransferData(CTransferType type)
         return TRUE;
 }
 
-INT_PTR
-CDialog::Execute()
+INT_PTR CDialog::Execute()
 {
     Modal = TRUE;
 #ifndef _UNICODE
@@ -623,16 +577,13 @@ HWND CDialog::Create()
 #ifndef _UNICODE
     if (UnicodeWnd)
     {
-        return CreateDialogParamW(Modul, MAKEINTRESOURCEW(ResID), Parent,
-                                  (DLGPROC)CDialog::CDialogProc, (LPARAM)this);
+        return CreateDialogParamW(Modul, MAKEINTRESOURCEW(ResID), Parent, (DLGPROC)CDialog::CDialogProc, (LPARAM)this);
     }
 #endif // _UNICODE
-    return CreateDialogParam(Modul, MAKEINTRESOURCE(ResID), Parent,
-                             (DLGPROC)CDialog::CDialogProc, (LPARAM)this);
+    return CreateDialogParam(Modul, MAKEINTRESOURCE(ResID), Parent, (DLGPROC)CDialog::CDialogProc, (LPARAM)this);
 }
 
-INT_PTR
-CDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -646,9 +597,13 @@ CDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         if (WinLibHelp != NULL && HelpID != -1)
         {
-            WinLibHelp->OnHelp(HWindow, HelpID, (HELPINFO*)lParam,
-                               (GetKeyState(VK_CONTROL) & 0x8000) != 0,
-                               (GetKeyState(VK_SHIFT) & 0x8000) != 0);
+            WinLibHelp->OnHelp(
+                HWindow,
+                HelpID,
+                (HELPINFO*)lParam,
+                ( GetKeyState(VK_CONTROL) & 0x8000 ) != 0,
+                ( GetKeyState(VK_SHIFT) & 0x8000 ) != 0
+            );
         }
         return TRUE; // F1 nenechame propadnout do parenta ani pokud nevolame WinLibHelp->OnHelp()
     }
@@ -700,10 +655,10 @@ CDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-INT_PTR CALLBACK
-CDialog::CDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK CDialog::CDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     CDialog* dlg;
+
     switch (uMsg)
     {
     case WM_INITDIALOG: // prvni zprava - pripojeni objektu k dialogu
@@ -780,6 +735,7 @@ CWindowsManager::CWindowsManager() : TDirectArray<CWindowData>(50, 50)
 {
     memset(LastHWnd, 0, WNDMGR_CACHE_SIZE * sizeof(HWND));
     memset(LastWnd, 0, WNDMGR_CACHE_SIZE * sizeof(CWindowsObject*));
+
 #ifdef __DEBUG_WINLIB
     search = 0;
     cache = 0;
@@ -857,8 +813,7 @@ void CWindowsManager::DetachWindow(HWND hWnd)
     CS.Leave();
 }
 
-CWindowsObject*
-CWindowsManager::GetWindowPtr(HWND hWnd)
+CWindowsObject* CWindowsManager::GetWindowPtr(HWND hWnd)
 {
     if (WinLibReleased)
         return NULL;
@@ -1194,8 +1149,7 @@ void CTransferInfo::EditLine(int ctrlID, int& value, BOOL select)
     }
 }
 
-void CTransferInfo::EditLine(int ctrlID, __int64& value, BOOL select, BOOL unsignedNum, BOOL hexMode,
-                             BOOL ignoreOverflow, BOOL quiet)
+void CTransferInfo::EditLine(int ctrlID, __int64& value, BOOL select, BOOL unsignedNum, BOOL hexMode, BOOL ignoreOverflow, BOOL quiet)
 {
     if (!unsignedNum && hexMode)
         TRACE_CT(_T("CTransferInfo::EditLine(): unexpected combination of parameters (signed number and hex mode)."));

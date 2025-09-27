@@ -95,13 +95,13 @@ struct CDriveData
 };
 
 class CMenuPopup;
-class CFilesWindow;
+class CPanelWindow;
 class CDriveBar;
 
 class CDrivesList
 {
 protected:
-    CFilesWindow* FilesWindow;
+    CPanelWindow* PanelWindow;
     CDriveTypeEnum* DriveType;
     DWORD_PTR* DriveTypeParam; // x64: the referenced value must be able to hold a pointer, so DWORD_PTR
     int* PostCmd;              // post-cmd for context menu of a FS plugin
@@ -119,7 +119,7 @@ public:
     // input:
     // driveType = dummy
     // driveTypeParam = letter of the drive to activate (or 0 (PluginFS) or '\\' (UNC))
-    CDrivesList(CFilesWindow* filesWindow, const char* currentPath, CDriveTypeEnum* driveType,
+    CDrivesList(CPanelWindow* filesWindow, const char* currentPath, CDriveTypeEnum* driveType,
                 DWORD_PTR* driveTypeParam, int* postCmd, void** postCmdParam, BOOL* fromContextMenu);
     ~CDrivesList()
     {
@@ -177,7 +177,7 @@ public:
 
     // for Drive bars only: searches data and if it finds an item with path from 'panel' panel, it sets
     // 'index' to its index and returns TRUE, otherwise it returns FALSE
-    BOOL FindPanelPathIndex(CFilesWindow* panel, DWORD* index);
+    BOOL FindPanelPathIndex(CPanelWindow* panel, DWORD* index);
 
     // returns bit array of drives, which we got during the last BuildData()
     // if BuildDate() has not been called yet, returns 0

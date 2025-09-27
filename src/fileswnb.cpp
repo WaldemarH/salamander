@@ -59,10 +59,9 @@ BOOL IsCustomEventGUID(LPARAM lParam, REFGUID guidEvent)
 // WindowProc
 //
 
-LRESULT
-CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CPanelWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    SLOW_CALL_STACK_MESSAGE4("CFilesWindow::WindowProc(0x%X, 0x%IX, 0x%IX)", uMsg, wParam, lParam);
+    SLOW_CALL_STACK_MESSAGE4("CPanelWindow::WindowProc(0x%X, 0x%IX, 0x%IX)", uMsg, wParam, lParam);
     BOOL setWait;
     BOOL probablyUselessRefresh;
     HCURSOR oldCur;
@@ -146,7 +145,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
             { // chodi na XPckach, kdyz se spusti "chkdsk /f e:" ("e:" je removable USB stick) a bohuzel taky pri otevirani .ifo a .vob souboru (DVD) a pri spousteni Ashampoo Burning Studio 6 -- zadost "lock volume"
                 if (UseSystemIcons || UseThumbnails)
                     SleepIconCacheThread();                 // pozastavime cteni ikonek/thumbnailu
-                DetachDirectory((CFilesWindow*)this, TRUE); // zavreme change-notifikace + DeviceNotification
+                DetachDirectory((CPanelWindow*)this, TRUE); // zavreme change-notifikace + DeviceNotification
 
                 HANDLES(EnterCriticalSection(&TimeCounterSection));
                 int t1 = MyTimeCounter++;
@@ -160,7 +159,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         case DBT_DEVICEQUERYREMOVE:
         {
             //          TRACE_I("WM_DEVICECHANGE: DBT_DEVICEQUERYREMOVE");
-            DetachDirectory((CFilesWindow*)this, TRUE, FALSE); // bez zavreni DeviceNotification
+            DetachDirectory((CPanelWindow*)this, TRUE, FALSE); // bez zavreni DeviceNotification
             return TRUE;                                       // povolime odstraneni tohoto device
         }
 
@@ -176,7 +175,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             //          if (wParam == DBT_DEVICEREMOVEPENDING) TRACE_I("WM_DEVICECHANGE: DBT_DEVICEREMOVEPENDING");
             //          else TRACE_I("WM_DEVICECHANGE: DBT_DEVICEREMOVECOMPLETE");
-            DetachDirectory((CFilesWindow*)this, TRUE); // zavreme DeviceNotification
+            DetachDirectory((CPanelWindow*)this, TRUE); // zavreme DeviceNotification
             if (MainWindow->LeftPanel == this)
             {
                 if (!ChangeLeftPanelToFixedWhenIdleInProgress)
@@ -221,7 +220,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
              operation == SALSHEXT_MOVE && GetPluginFS()->IsServiceSupported(FS_SERVICE_MOVEFROMFS)) &&
             Dirs->Count + Files->Count > 0)
         {
-            int count = GetSelCount();
+            int count = GetSelectedCount();
             if (count > 0 || GetCaretIndex() != 0 ||
                 Dirs->Count == 0 || strcmp(Dirs->At(0).Name, "..") != 0) // test jestli se nepracuje jen s ".."
             {
@@ -316,7 +315,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_USER_ENTERMENULOOP:
     case WM_USER_LEAVEMENULOOP:
     {
-        // pouze predame hlavnimu oknu
+        // pouze predame hlavnimu oknu / we only sell to the main window
         return SendMessage(MainWindow->HWindow, uMsg, wParam, lParam);
     }
 
@@ -525,7 +524,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
         }
     }
-        //--- v adresari byla zaznamenana zmena obsahu
+        //--- A content change was recorded in the directory.
     case WM_USER_REFRESH_DIR:
     case WM_USER_REFRESH_DIR_EX_DELAYED:
     case WM_USER_INACTREFRESH_DIR:
@@ -558,7 +557,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         else
         {
             if (SnooperSuspended || StopRefresh)
-            { // uz je zapnuty suspend mode (pracuje se nad vnitrnimi daty -> nelze je refreshnout)
+            { // suspend mode is already on (internal data is being worked on -> cannot be refreshed)
                 NeedRefreshAfterEndOfSM = TRUE;
                 RefreshAfterEndOfSMTime = max(RefreshAfterEndOfSMTime, (int)lParam);
                 if ((uMsg == WM_USER_S_REFRESH_DIR || uMsg == WM_USER_SM_END_NOTIFY_DELAYED) && setWait)
@@ -566,9 +565,9 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                     SetCursor(oldCur);
                 }
             }
-            else // nejde o refresh v suspend modu
+            else // it is not a refresh in suspend mode
             {
-                if (lParam >= LastRefreshTime) // nejde o zbytecny stary refresh
+                if (lParam >= LastRefreshTime) // nejde o zbytecny stary refresh / it is not a useless old refresh
                 {
                     BOOL isInactiveRefresh = FALSE;
                     BOOL skipRefresh = FALSE;
@@ -705,7 +704,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                     *s1++ = LowerCase[*s2++];
                 *((DWORD*)s1) = 0;
                 int index;
-                CIconSizeEnum iconSize = IconCache->GetIconSize();
+                IconSize::Value iconSize = IconCache->GetIconSize();
                 if (Associations.GetIndex(buf, index) &&             // pripona ma ikonku (asociaci)
                     (Associations[index].GetIndex(iconSize) == -1 || // jde o ikonku, ktera se nacita
                      Associations[index].GetIndex(iconSize) == -3))
@@ -749,7 +748,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                                 if (iconSize == GetIconSizeForCurrentViewMode())
                                     RepaintIconOnly(-1); // u nas vsechny
 
-                                CFilesWindow* otherPanel = MainWindow->GetOtherPanel(this);
+                                CPanelWindow* otherPanel = MainWindow->GetOtherPanel(this);
                                 if (iconSize == otherPanel->GetIconSizeForCurrentViewMode())
                                     otherPanel->RepaintIconOnly(-1); // a u sousedu vsechny
                             }
@@ -897,7 +896,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_USER_SELCHANGED:
     {
-        int count = GetSelCount();
+        int count = GetSelectedCount();
         if (count != 0)
         {
             CQuadWord selectedSize(0, 0);
@@ -969,7 +968,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 }
             }
             else
-                TRACE_E("Unexpected situation in CFilesWindow::WindowProc(WM_USER_SELCHANGED)");
+                TRACE_E("Unexpected situation in CPanelWindow::WindowProc(WM_USER_SELCHANGED)");
         }
 
         if (count == 0)
@@ -984,17 +983,17 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_CREATE:
     {
-        //---  pridani tohoto panelu do pole zdroju pro enumeraci souboru ve viewerech
+        //---  adding this panel to the source field for file enumeration in viewers
         EnumFileNamesAddSourceUID(HWindow, &EnumFileNamesSourceUID);
 
-        //---  vytvoreni listboxu se soubory a adresari
+        //---  creating a listbox with files and directories
         ListBox = new CFilesBox(this);
         if (ListBox == NULL)
         {
             TRACE_E(LOW_MEMORY);
             return -1;
         }
-        //---  vytvoreni statusliny s informacemi o akt. souboru
+        //---  creation of a status line with information about the act. file
         StatusLine = new CStatusWindow(this, blBottom, ooStatic);
         if (StatusLine == NULL)
         {
@@ -1002,7 +1001,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
             return -1;
         }
         ToggleStatusLine();
-        //---  vytvoreni statusliny s informacemi o akt. adresari
+        //---  creation of a status line with information about the act. address books
         DirectoryLine = new CStatusWindow(this, blTop, ooStatic);
         if (DirectoryLine == NULL)
         {
@@ -1011,8 +1010,8 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         DirectoryLine->SetLeftPanel(MainWindow->LeftPanel == this);
         ToggleDirectoryLine();
-        //---  nahozeni typu viewu + nacteni obsahu adresare
-        SetThumbnailSize(Configuration.ThumbnailSize); // musi existovat ListBox
+        //---  launching the view type + loading the contents of the address book
+        SetThumbnailSize(Configuration.ThumbnailSize); // there must be a ListBox
         if (!ListBox->CreateEx(WS_EX_WINDOWEDGE,
                                CFILESBOX_CLASSNAME,
                                "",
@@ -1031,9 +1030,9 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         int index;
         switch (GetViewMode())
         {
-            //        case vmThumbnails: index = 0; break;
-            //        case vmBrief: index = 1; break;
-        case vmDetailed:
+            //        case ViewMode::thumbnails: index = 0; break;
+            //        case ViewMode::brief: index = 1; break;
+        case ViewMode::detailed:
             index = 2;
             break;
         default:
@@ -1046,6 +1045,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         ShowWindow(ListBox->HWindow, SW_SHOW);
 
         // srovname nastaveni promenne AutomaticRefresh a directory-liny
+        //let's compare the settings of the Automatic Refresh and directory-linux variables
         SetAutomaticRefresh(AutomaticRefresh, TRUE);
 
         return 0;
@@ -1185,12 +1185,12 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 {
                 case fnertFindNext: // dalsi
                 {
-                    CDynString strViewerMasks;
-                    if (!onlyAssociatedExtensions || MainWindow->GetViewersAssoc(wantedViewerType, &strViewerMasks))
+                    String_TChar strViewerMasks;
+                    if (!onlyAssociatedExtensions || MainWindow->GetViewersAssoc(wantedViewerType, strViewerMasks))
                     {
                         CMaskGroup masks;
                         int errorPos;
-                        if (!onlyAssociatedExtensions || masks.PrepareMasks(errorPos, strViewerMasks.GetString()))
+                        if (!onlyAssociatedExtensions || masks.PrepareMasks(errorPos, strViewerMasks.Text_Get()))
                         {
                             while (index + 1 < count)
                             {
@@ -1214,12 +1214,12 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
                 case fnertFindPrevious: // predchozi
                 {
-                    CDynString strViewerMasks;
-                    if (!onlyAssociatedExtensions || MainWindow->GetViewersAssoc(wantedViewerType, &strViewerMasks))
+                    String_TChar strViewerMasks;
+                    if (!onlyAssociatedExtensions || MainWindow->GetViewersAssoc(wantedViewerType, strViewerMasks))
                     {
                         CMaskGroup masks;
                         int errorPos;
-                        if (!onlyAssociatedExtensions || masks.PrepareMasks(errorPos, strViewerMasks.GetString()))
+                        if (!onlyAssociatedExtensions || masks.PrepareMasks(errorPos, strViewerMasks.Text_Get()))
                         {
                             while (index - 1 >= 0)
                             {
@@ -1255,7 +1255,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 {
                     if (!indexNotFound && index >= 0 && index < Files->Count)
                     {
-                        SetSel(FileNamesEnumData.Select, Dirs->Count + index, TRUE);
+                        SetSelected(FileNamesEnumData.Select, Dirs->Count + index, TRUE);
                         PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
                         FileNamesEnumData.Found = TRUE;
                     }
@@ -1289,7 +1289,7 @@ CFilesWindow::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return CWindow::WindowProc(uMsg, wParam, lParam);
 }
 
-void CFilesWindow::ClearCutToClipFlag(BOOL repaint)
+void CPanelWindow::ClearCutToClipFlag(BOOL repaint)
 {
     CALL_STACK_MESSAGE_NONE
     int total = Dirs->Count;
@@ -1318,41 +1318,75 @@ void CFilesWindow::ClearCutToClipFlag(BOOL repaint)
         RepaintListBox(DRAWFLAG_DIRTY_ONLY | DRAWFLAG_SKIP_VISTEST);
 }
 
-void CFilesWindow::OpenDirHistory()
+void CPanelWindow::OpenDirHistory()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::OpenDirHistory()");
-    if (!MainWindow->DirHistory->HasPaths())
-        return;
+    CALL_STACK_MESSAGE1("CPanelWindow::OpenDirHistory()");
 
+//Are there any paths defined at all?
+    if ( !MainWindow->DirHistory->HasPaths() )
+    {
+        return;
+    }
+
+//[W: stop what... what is the refresh? .. need additional explanations]
     BeginStopRefresh(); // cmuchal si da pohov
 
-    CMenuPopup menu;
+//Create menu.
+    //Get panel's rect.
+    RECT    rect;
 
-    RECT r;
-    GetWindowRect(HWindow, &r);
-    BOOL exludeRect = FALSE;
-    int y = r.top;
-    if (DirectoryLine != NULL && DirectoryLine->HWindow != NULL)
+    GetWindowRect( HWindow, &rect );
+
+    //Define menu's position.
+    BOOL            exludeRect = FALSE;             //Defined rect must not be overlapped by the menu.
+    CMenuPopup      menu;
+    int             position_y = rect.top;          //By default place at top of the panel.
+
+    if (
+        ( DirectoryLine != NULL )
+        &&
+        ( DirectoryLine->HWindow != NULL )
+    )
     {
-        if (DirectoryLine->GetTextFrameRect(&r))
+    //Directory status window is shown -> position menu relative to it.
+        //if ( DirectoryLine->GetRect_TextFrame( &rect ) )
+        if ( DirectoryLine->GetRect( &rect ) )
         {
-            y = r.bottom;
+        //Move top position of the menu to the 'bottom of directory line'/'start of folder/files'.
+            position_y = rect.bottom;
+
+        //[W: is this really needed as directory line has the same width as the panel]
+        //Set menu width.
+            menu.SetMinWidth( rect.right - rect.left );
+
+        //Defined rect must not be overlapped by the menu.
             exludeRect = TRUE;
-            menu.SetMinWidth(r.right - r.left);
         }
     }
 
-    MainWindow->DirHistory->FillHistoryPopupMenu(&menu, 1, -1, FALSE);
-    DWORD cmd = menu.Track(MENU_TRACK_RETURNCMD | MENU_TRACK_VERTICAL, r.left, y, HWindow, exludeRect ? &r : NULL);
-    if (cmd != 0)
-        MainWindow->DirHistory->Execute(cmd, FALSE, this, TRUE, FALSE);
+    //Define menu items.
+    MainWindow->DirHistory->FillHistoryPopupMenu( &menu, 1, -1, FALSE );
 
+//Show menu.
+    historyMenuShown = true;
+
+    DWORD   cmd = menu.Track(MENU_TRACK_RETURNCMD | MENU_TRACK_VERTICAL, rect.left, position_y, HWindow, exludeRect ? &rect : NULL);
+
+    historyMenuShown = false;
+
+    if ( cmd != 0 )
+    {
+    //Set selected item.
+        MainWindow->DirHistory->Execute(cmd, FALSE, this, TRUE, FALSE);
+    }
+
+//[W: stop what... what is the refresh? .. need additional explanations]
     EndStopRefresh(); // ted uz zase cmuchal nastartuje
 }
 
-void CFilesWindow::OpenStopFilterMenu()
+void CPanelWindow::OpenStopFilterMenu()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::OpenStopFilterMenu()");
+    CALL_STACK_MESSAGE1("CPanelWindow::OpenStopFilterMenu()");
 
     BeginStopRefresh(); // cmuchal si da pohov
 
@@ -1364,7 +1398,7 @@ void CFilesWindow::OpenStopFilterMenu()
     int y = r.top;
     if (DirectoryLine != NULL && DirectoryLine->HWindow != NULL)
     {
-        if (DirectoryLine->GetFilterFrameRect(&r))
+        if (DirectoryLine->GetRect_FilterFrame(&r))
         {
             y = r.bottom;
             exludeRect = TRUE;
@@ -1427,9 +1461,9 @@ MENU_TEMPLATE_ITEM StopFilterMenu[] =
 }
 
 // na zaklade dostupnych sloupcu naplni popup
-BOOL CFilesWindow::FillSortByMenu(CMenuPopup* popup)
+BOOL CPanelWindow::FillSortByMenu(CMenuPopup* popup)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::FillSortByMenu()");
+    CALL_STACK_MESSAGE1("CPanelWindow::FillSortByMenu()");
 
     // sestrelime existujici polozky
     popup->RemoveAllItems();
@@ -1485,7 +1519,7 @@ MENU_TEMPLATE_ITEM SortByMenu[] =
     return TRUE;
 }
 
-void CFilesWindow::SetThumbnailSize(int size)
+void CPanelWindow::SetThumbnailSize(int size)
 {
     if (size < THUMBNAIL_SIZE_MIN || size > THUMBNAIL_SIZE_MAX)
     {
@@ -1511,7 +1545,7 @@ void CFilesWindow::SetThumbnailSize(int size)
     }
 }
 
-int CFilesWindow::GetThumbnailSize()
+int CPanelWindow::GetThumbnailSize()
 {
     if (ListBox == NULL)
     {
@@ -1526,7 +1560,7 @@ int CFilesWindow::GetThumbnailSize()
     }
 }
 
-void CFilesWindow::SetFont()
+void CPanelWindow::SetFont()
 {
     if (DirectoryLine != NULL)
         DirectoryLine->SetFont();
@@ -1538,7 +1572,7 @@ void CFilesWindow::SetFont()
 
 //****************************************************************************
 
-void CFilesWindow::LockUI(BOOL lock)
+void CPanelWindow::LockUI(BOOL lock)
 {
     if (DirectoryLine != NULL && DirectoryLine->HWindow != NULL)
         EnableWindow(DirectoryLine->HWindow, !lock);

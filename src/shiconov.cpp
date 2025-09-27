@@ -231,27 +231,27 @@ void InitShellIconOverlaysAuxAux(CLSID* clsid, const char* name)
                 // nacteme ikony vsech velikosti pro tento icon-overlay
                 HICON hIcons[2] = {0};
                 ExtractIcons(iconFileMB, iconIndex,
-                             MAKELONG(IconSizes[ICONSIZE_32], IconSizes[ICONSIZE_16]),
-                             MAKELONG(IconSizes[ICONSIZE_32], IconSizes[ICONSIZE_16]),
+                             MAKELONG(IconSizes[IconSize::size_32x32], IconSizes[IconSize::size_16x16]),
+                             MAKELONG(IconSizes[IconSize::size_32x32], IconSizes[IconSize::size_16x16]),
                              hIcons, NULL, 2, IconLRFlags);
 
-                HICON iconOverlay[ICONSIZE_COUNT] = {0};
-                iconOverlay[ICONSIZE_32] = hIcons[0];
-                iconOverlay[ICONSIZE_16] = hIcons[1];
+                HICON iconOverlay[IconSize::nItems] = {0};
+                iconOverlay[IconSize::size_32x32] = hIcons[0];
+                iconOverlay[IconSize::size_16x16] = hIcons[1];
 
                 ExtractIcons(iconFileMB, iconIndex,
-                             IconSizes[ICONSIZE_48],
-                             IconSizes[ICONSIZE_48],
+                             IconSizes[IconSize::size_48x48],
+                             IconSizes[IconSize::size_48x48],
                              hIcons, NULL, 1, IconLRFlags);
-                iconOverlay[ICONSIZE_48] = hIcons[0];
+                iconOverlay[IconSize::size_48x48] = hIcons[0];
 
                 int x;
-                for (x = 0; x < ICONSIZE_COUNT; x++)
+                for (x = 0; x < IconSize::nItems; x++)
                     if (iconOverlay[x] != NULL)
                         HANDLES_ADD(__htIcon, __hoLoadImage, iconOverlay[x]);
 
                 // vlozime handler do ShellIconOverlays
-                if (iconOverlay[ICONSIZE_16] != NULL && iconOverlay[ICONSIZE_32] != NULL && iconOverlay[ICONSIZE_48] != NULL)
+                if (iconOverlay[IconSize::size_16x16] != NULL && iconOverlay[IconSize::size_32x32] != NULL && iconOverlay[IconSize::size_48x48] != NULL)
                 {
                     BOOL isGoogleDrive = FALSE;
                     const char* nameSkipWS = name;
@@ -287,7 +287,7 @@ void InitShellIconOverlaysAuxAux(CLSID* clsid, const char* name)
                             lstrcpyn(item->IconOverlayName, name, MAX_PATH);
                             item->GoogleDriveOverlay = isGoogleDrive;
                             iconOverlayIdentifier = NULL;
-                            for (x = 0; x < ICONSIZE_COUNT; x++)
+                            for (x = 0; x < IconSize::nItems; x++)
                             {
                                 item->IconOverlay[x] = iconOverlay[x];
                                 iconOverlay[x] = NULL;
@@ -300,7 +300,7 @@ void InitShellIconOverlaysAuxAux(CLSID* clsid, const char* name)
                 else
                     TRACE_E("InitShellIconOverlays(): unable to get icons of all sizes for: " << name);
 
-                for (x = 0; x < ICONSIZE_COUNT; x++)
+                for (x = 0; x < IconSize::nItems; x++)
                     if (iconOverlay[x] != NULL)
                         HANDLES(DestroyIcon(iconOverlay[x]));
             }
@@ -596,7 +596,7 @@ CShellIconOverlayItem::CShellIconOverlayItem()
     memset(&IconOverlayIdCLSID, 0, sizeof(IconOverlayIdCLSID));
     Priority = 0;
     int i;
-    for (i = 0; i < ICONSIZE_COUNT; i++)
+    for (i = 0; i < IconSize::nItems; i++)
         IconOverlay[i] = NULL;
     GoogleDriveOverlay = FALSE;
 }
@@ -617,7 +617,7 @@ void CShellIconOverlayItem::Cleanup()
         }
     }
     int i;
-    for (i = 0; i < ICONSIZE_COUNT; i++)
+    for (i = 0; i < IconSize::nItems; i++)
         if (IconOverlay[i] != NULL)
             HANDLES(DestroyIcon(IconOverlay[i]));
 }
@@ -870,29 +870,29 @@ void ColorsChangedAuxAux(CShellIconOverlayItem* item)
             // nacteme ikony vsech velikosti pro tento icon-overlay
             HICON hIcons[2] = {0};
             ExtractIcons(iconFileMB, iconIndex,
-                         MAKELONG(IconSizes[ICONSIZE_32], IconSizes[ICONSIZE_16]),
-                         MAKELONG(IconSizes[ICONSIZE_32], IconSizes[ICONSIZE_16]),
+                         MAKELONG(IconSizes[IconSize::size_32x32], IconSizes[IconSize::size_16x16]),
+                         MAKELONG(IconSizes[IconSize::size_32x32], IconSizes[IconSize::size_16x16]),
                          hIcons, NULL, 2, IconLRFlags);
 
-            HICON iconOverlay[ICONSIZE_COUNT] = {0};
-            iconOverlay[ICONSIZE_32] = hIcons[0];
-            iconOverlay[ICONSIZE_16] = hIcons[1];
+            HICON iconOverlay[IconSize::nItems] = {0};
+            iconOverlay[IconSize::size_32x32] = hIcons[0];
+            iconOverlay[IconSize::size_16x16] = hIcons[1];
 
             ExtractIcons(iconFileMB, iconIndex,
-                         IconSizes[ICONSIZE_48],
-                         IconSizes[ICONSIZE_48],
+                         IconSizes[IconSize::size_48x48],
+                         IconSizes[IconSize::size_48x48],
                          hIcons, NULL, 1, IconLRFlags);
-            iconOverlay[ICONSIZE_48] = hIcons[0];
+            iconOverlay[IconSize::size_48x48] = hIcons[0];
 
             int x;
-            for (x = 0; x < ICONSIZE_COUNT; x++)
+            for (x = 0; x < IconSize::nItems; x++)
                 if (iconOverlay[x] != NULL)
                     HANDLES_ADD(__htIcon, __hoLoadImage, iconOverlay[x]);
 
             // vlozime nove ikony do 'item'
-            if (iconOverlay[ICONSIZE_16] != NULL && iconOverlay[ICONSIZE_32] != NULL && iconOverlay[ICONSIZE_48] != NULL)
+            if (iconOverlay[IconSize::size_16x16] != NULL && iconOverlay[IconSize::size_32x32] != NULL && iconOverlay[IconSize::size_48x48] != NULL)
             {
-                for (x = 0; x < ICONSIZE_COUNT; x++)
+                for (x = 0; x < IconSize::nItems; x++)
                 {
                     HANDLES(DestroyIcon(item->IconOverlay[x]));
                     item->IconOverlay[x] = iconOverlay[x];
@@ -901,7 +901,7 @@ void ColorsChangedAuxAux(CShellIconOverlayItem* item)
             else
             {
                 TRACE_E("CShellIconOverlays::ColorsChanged(): unable to get icons of all sizes!");
-                for (x = 0; x < ICONSIZE_COUNT; x++)
+                for (x = 0; x < IconSize::nItems; x++)
                     if (iconOverlay[x] != NULL)
                         HANDLES(DestroyIcon(iconOverlay[x]));
             }

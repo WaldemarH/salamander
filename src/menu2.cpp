@@ -4,6 +4,7 @@
 #include "precomp.h"
 
 #include "menu.h"
+#include "menu_queue.h"
 
 #define UPDOWN_TIMER_ID 1  // timer id
 #define UPDOWN_TIMER_TO 50 // time out [ms]
@@ -1400,8 +1401,7 @@ BOOL CMenuPopup::FindNextItemIndex(int fromIndex, BOOL topToDown, int* index)
     return FALSE;
 }
 
-CMenuPopup*
-CMenuPopup::FindPopup(HWND hWindow)
+CMenuPopup* CMenuPopup::FindPopup(HWND hWindow)
 {
     CALL_STACK_MESSAGE1("CMenuPopup::FindPopup()");
     if (hWindow == NULL)
@@ -1416,8 +1416,7 @@ CMenuPopup::FindPopup(HWND hWindow)
     return NULL;
 }
 
-CMenuPopup*
-CMenuPopup::FindActivePopup()
+CMenuPopup* CMenuPopup::FindActivePopup()
 {
     CALL_STACK_MESSAGE1("CMenuPopup::FindActivePopup()");
     CMenuPopup* iterator = this;
@@ -1933,7 +1932,7 @@ void CMenuPopup::OnMouseWheel(WPARAM wParam, LPARAM lParam)
     MouseWheelAccumulator -= linesToScroll * stepsPerLine;
     int delta = linesToScroll * itemHeight;
 
-    // vyhledam prvni a posledni viditelnou polozku
+    // I will search for the first and last visible item
     CMenuItem* firstVisibleItem = NULL;
     CMenuItem* lastVisibleItem = NULL;
     int i;
@@ -2300,8 +2299,7 @@ void CMenuPopup::DoDispatchMessage(MSG* msg, BOOL* leaveMenu, DWORD* retValue, B
             msg->message == WM_RBUTTONUP)
         {
             // user pustil tlacitko nad vybranou polozkou
-            if (SendMessage(SharedRes->HParent, WM_USER_CONTEXTMENU,
-                            (WPARAM)(CGUIMenuPopupAbstract*)popup, (LPARAM)TRUE))
+            if (SendMessage(SharedRes->HParent, WM_USER_CONTEXTMENU, (WPARAM)(CGUIMenuPopupAbstract*)popup, (LPARAM)TRUE))
             {
                 popup->OnKeyReturn(leaveMenu, retValue); //p.s. rozbaleni sub menu, nebo nageneruju command
             }
@@ -2420,7 +2418,6 @@ void CMenuPopup::DoDispatchMessage(MSG* msg, BOOL* leaveMenu, DWORD* retValue, B
         }
         return;
     }
-
     case WM_TIMER:
     {
         if (msg->wParam == UPDOWN_TIMER_ID)
@@ -2823,8 +2820,7 @@ void CMenuPopup::PaintAllItems(HRGN hUpdateRgn)
         SelectClipRgn(hPrivateDC, NULL); // vykopneme clip region, pokud jsme ho nastavili
 }
 
-LRESULT
-CMenuPopup::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CMenuPopup::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     CALL_STACK_MESSAGE4("CMenuPopup::WindowProc(0x%X, 0x%IX, 0x%IX)", uMsg, wParam, lParam);
     switch (uMsg)
@@ -2947,28 +2943,27 @@ CMenuPopup::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return CWindow::WindowProc(uMsg, wParam, lParam);
 }
 
-DWORD
-CMenuPopup::Track(DWORD trackFlags, int x, int y, HWND hwnd, const RECT* exclude)
+DWORD CMenuPopup::Track(DWORD trackFlags, int x, int y, HWND hwnd_owner, const RECT* exclude)
 {
     CALL_STACK_MESSAGE4("CMenuPopup::Track(0x%X, %d, %d, , )", trackFlags, x, y);
     MSG msg;
     BOOL dispatchMsg;
 
-    // zahakujeme tento thread
+    // Let's hack this thread.
     HHOOK hOldHookProc = OldMenuHookTlsAllocator.HookThread();
 
     if (!(trackFlags & MENU_TRACK_NONOTIFY))
-        SendMessage(hwnd, WM_USER_ENTERMENULOOP, 0, 0);
+        SendMessage(hwnd_owner, WM_USER_ENTERMENULOOP, 0, 0);
 
-    SelectedByMouse = FALSE; // v 2.5b9 nebyla promenna inicializovana a ChangeDeriveMenu Alt+F1/2
-                             // se chovalo nahodile -- pohnuti kurzorem mimo menu obcas zpusobilo
-                             // ztratu selectiony
-                             // pokud se toto chovani nebude hodit pro CMenuPopup::Track(), je
-                             // vec asi zrala na zavedeni ridiciho flagu v trackFlags
-    DWORD retValue = TrackInternal(trackFlags, x, y, hwnd, exclude, NULL, msg, dispatchMsg);
+    SelectedByMouse = FALSE;    // in 2.5b9 the variable was not initialized and ChangeDeriveMenu Alt+F1/2
+                                // behaved randomly -- moving the cursor outside the menu sometimes caused
+                                // loss of selection
+                                // if this behavior is not suitable for CMenuPopup::Track(), it is
+                                // probably time to introduce a control flag in trackFlags
+    DWORD retValue = TrackInternal(trackFlags, x, y, hwnd_owner, exclude, NULL, msg, dispatchMsg);
 
     if (!(trackFlags & MENU_TRACK_NONOTIFY))
-        SendMessage(hwnd, WM_USER_LEAVEMENULOOP, 0, 0);
+        SendMessage(hwnd_owner, WM_USER_LEAVEMENULOOP, 0, 0);
 
     // pokud jsme hookovali, budeme take uvolnovat
     if (hOldHookProc != NULL)
@@ -2998,20 +2993,17 @@ CMenuPopup::Track(DWORD trackFlags, int x, int y, HWND hwnd, const RECT* exclude
     else
     {
         if (retValue != 0)
-            PostMessage(hwnd, WM_COMMAND, retValue, 0);
+            PostMessage(hwnd_owner, WM_COMMAND, retValue, 0);
     }
 
     if (!(trackFlags & MENU_TRACK_NONOTIFY))
-        PostMessage(hwnd, WM_USER_LEAVEMENULOOP2, 0, 0);
+        PostMessage(hwnd_owner, WM_USER_LEAVEMENULOOP2, 0, 0);
     return ret;
 }
 
-DWORD
-CMenuPopup::TrackInternal(DWORD trackFlags, int x, int y, HWND hwnd, const RECT* exclude,
-                          CMenuBar* menuBar, MSG& delayedMsg, BOOL& dispatchDelayedMsg)
+DWORD CMenuPopup::TrackInternal(DWORD trackFlags, int x, int y, HWND hwnd_owner, const RECT* exclude, CMenuBar* menuBar, MSG& delayedMsg, BOOL& dispatchDelayedMsg)
 {
-    CALL_STACK_MESSAGE5("CMenuPopup::TrackInternal(0x%X, %d, %d, , , , , %d)",
-                        trackFlags, x, y, dispatchDelayedMsg);
+    CALL_STACK_MESSAGE5("CMenuPopup::TrackInternal(0x%X, %d, %d, , , , , %d)", trackFlags, x, y, dispatchDelayedMsg);
     //  TRACE_I("CMenuPopup::TrackInternal begin");
     dispatchDelayedMsg = FALSE;
     // vytvorim sdilene prostredky
@@ -3047,8 +3039,8 @@ CMenuPopup::TrackInternal(DWORD trackFlags, int x, int y, HWND hwnd, const RECT*
 
     TrackFlags = trackFlags;
 
-    // necham je inicializovat
-    if (!SharedRes->Create(hwnd, 1, 1))
+    // necham je inicializovat / I'll let them initialize.
+    if (!SharedRes->Create(hwnd_owner, 1, 1))
         return 0;
 
     DWORD retValue = 0;
@@ -3067,12 +3059,13 @@ CMenuPopup::TrackInternal(DWORD trackFlags, int x, int y, HWND hwnd, const RECT*
         }
 
         // pridame se do monitoringu zaviracich zprav
-        MenuWindowQueue.Add(HWindow);
+        MenuQueue.Menu_Add(HWindow);
 
         MSG msg;
         BOOL leaveMenu = FALSE;
-        BOOL skipFirstLBtnUp = TRUE;
-        BOOL skipFirstLBtnDblclk = TRUE;
+        BOOL skipFirst_doubleClick  = TRUE;
+        BOOL skipFirst_lefButtonUp = TRUE;
+
         do
         {
             if (Closing)
@@ -3084,27 +3077,41 @@ CMenuPopup::TrackInternal(DWORD trackFlags, int x, int y, HWND hwnd, const RECT*
             else
             {
                 //        TRACE_I("MENU: entering message queue");
-                if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) != 0)
+                if ( PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) != 0 )
                 {
                     if (!leaveMenu)
                     {
                         BOOL dispatchLater = FALSE;
-                        if (skipFirstLBtnDblclk)
+                        if (skipFirst_doubleClick)
                         {
                             if (msg.message == WM_LBUTTONDOWN)
-                                skipFirstLBtnDblclk = FALSE;
+                                skipFirst_doubleClick = FALSE;
                             if (msg.message == WM_LBUTTONDBLCLK)
-                                continue; // skipneme message, protoze je to preklep po lbuttondown
+                                continue; // we skip the message, because it's a typo after lbuttondown
                         }
-                        if (skipFirstLBtnUp)
+                        if (skipFirst_lefButtonUp)
                         {
-                            if (msg.message == WM_LBUTTONDOWN)
-                                skipFirstLBtnUp = FALSE;
-                            if (msg.message == WM_LBUTTONUP)
+                            switch ( msg.message )
                             {
-                                skipFirstLBtnUp = FALSE;
+                            case WM_LBUTTONDOWN:
+                            {
+                                skipFirst_lefButtonUp = FALSE;
+                                break;
+                            }
+                            case WM_LBUTTONUP:
+                            {
+                                skipFirst_lefButtonUp = FALSE;
+
+                            //Skip the message if popup is opened.
+                            //
+                            //Why?
+                            //It will be closed immediately if we don't.
                                 if (FindPopup(PopupWindowFromPoint(msg.pt)) == NULL)
-                                    continue; // skipneme message, aby nedoslo k okamzitemu zavreni okna
+                                {
+                                    continue;
+                                }
+                                break;
+                            }
                             }
                         }
                         DoDispatchMessage(&msg, &leaveMenu, &retValue, &dispatchLater);
@@ -3149,7 +3156,7 @@ CMenuPopup::TrackInternal(DWORD trackFlags, int x, int y, HWND hwnd, const RECT*
         CloseOpenedSubmenu();
 
         // vyhodime se z monitoringu zaviracich zprav
-        MenuWindowQueue.Remove(HWindow);
+        MenuQueue.Menu_Remove(HWindow);
 
         DestroyWindow(HWindow);
     }

@@ -8,16 +8,16 @@ struct NSVGimage;
 void RenderSVGImage(NSVGrasterizer* rast, HDC hDC, int x, int y, const char* svgName, int iconSize, COLORREF bkColor, BOOL enabled);
 
 // vraci SysColor ve formatu pro SVG knihovnu (BGR misto Win32 RGB)
-DWORD GetSVGSysColor(int index);
+DWORD GetSVGSysColor_Sys(int index);
 
 //*****************************************************************************
 //
 // CSVGSprite
 //
 
-#define SVGSTATE_ORIGINAL 0x0001 // nezmenena puvodni podoba SVG
-#define SVGSTATE_ENABLED 0x0002  // SVG nakolorovane do barvy enabled textu
-#define SVGSTATE_DISABLED 0x0004 // SVG nakolorovane do barvy disabled textu
+#define SVGSTATE_ORIGINAL 0x0001 // the original SVG form is unchanged
+#define SVGSTATE_ENABLED_OR_NORMAL 0x0002  // SVG colored in the 'enabled text' or 'normal' color
+#define SVGSTATE_DISABLED_OR_FOCUSED 0x0004 // SVG colored in 'disabled text' or 'focused' color
 #define SVGSTATE_COUNT 3
 
 // Objekt slouzi k vykresleni SVG prostrednictvi cachovaci bitmapy.
@@ -34,7 +34,7 @@ public:
     void Clean();
 
     // 'states' je kombinace bitu z rodiny SVGSTATE_*
-    BOOL Load(int resID, int width, int height, DWORD states);
+    BOOL Load(int resID, int width, int height, DWORD states, const int pColorIds[SVGSTATE_COUNT] = NULL, std::string replaceParameter = "" );
 
     void GetSize(SIZE* s);
     int GetWidth();
@@ -48,7 +48,7 @@ public:
 protected:
     // nacte resource do pameti, naalokuje buffer o bajt delsi a terminuje resource nulou
     // pri uspechu vraci ukazatel na alokovanou pamet (je treba uvolnit), pri chybe vraci NULL
-    char* LoadSVGResource(int resID);
+    std::string LoadSVGResource(int resID);
 
     // Vstupni 'sz' urcuje velikost v bodech, do ktere se ma SVG po prevodu na bitmapu vepsat.
     // Pokud je jeden rozmer -1, neni urcen a dopocita se na zaklade zachovani pomeru stran.
@@ -60,7 +60,7 @@ protected:
     void CreateDIB(int width, int height, HBITMAP* hMemBmp, void** lpMemBits);
 
     // natonuje SVG 'image' do barvy urcene stavem 'state'
-    void ColorizeSVG(NSVGimage* image, DWORD state);
+    void ColorizeSVG(NSVGimage* image, DWORD state, int colorId = -1);
 
 protected:
     int Width; // rozmer jednoho obrazku v bodech
@@ -82,4 +82,18 @@ extern CSVGSprite SVGArrowRight;
 extern CSVGSprite SVGArrowRightSmall;
 extern CSVGSprite SVGArrowMore;
 extern CSVGSprite SVGArrowLess;
-extern CSVGSprite SVGArrowDropDown;
+extern CSVGSprite SVGArrowDropDown_Buttons;
+extern CSVGSprite SVGFilter_Active;
+extern CSVGSprite SVGFilter_Inactive;
+extern CSVGSprite SVGHistory_Active;
+extern CSVGSprite SVGHistory_Inactive;
+extern CSVGSprite SVGLoading_Active[40];
+extern CSVGSprite SVGLoading_Inactive[40];
+extern CSVGSprite SVGSecurity_Locked_Active;
+extern CSVGSprite SVGSecurity_Locked_Inactive;
+extern CSVGSprite SVGSecurity_Unlocked_Active;
+extern CSVGSprite SVGSecurity_Unlocked_Inactive;
+extern CSVGSprite SVGZoom_In_Active;
+extern CSVGSprite SVGZoom_In_Inactive;
+extern CSVGSprite SVGZoom_Out_Active;
+extern CSVGSprite SVGZoom_Out_Inactive;

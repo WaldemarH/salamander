@@ -203,6 +203,7 @@ BOOL IsSalHotKey(WORD hotKey)
         switch (mods)
         {
         case NONE:  // delete
+        case ALT:   // Unselect others
         case SHIFT: // delete
             found = TRUE;
         }

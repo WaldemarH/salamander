@@ -26,21 +26,21 @@ extern "C"
 
 //
 // ****************************************************************************
-// CFilesWindow
+// CPanelWindow
 //
 
-void CFilesWindow::HandsOff(BOOL off)
+void CPanelWindow::HandsOff(BOOL off)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::HandsOff(%d)", off);
+    CALL_STACK_MESSAGE2("CPanelWindow::HandsOff(%d)", off);
     if (GetMonitorChanges())
     {
         if (off)
         {
-            DetachDirectory((CFilesWindow*)this);
+            DetachDirectory((CPanelWindow*)this);
         }
         else
         {
-            ChangeDirectory((CFilesWindow*)this, GetPath(), MyGetDriveType(GetPath()) == DRIVE_REMOVABLE);
+            ChangeDirectory((CPanelWindow*)this, GetPath(), MyGetDriveType(GetPath()) == DRIVE_REMOVABLE);
             HANDLES(EnterCriticalSection(&TimeCounterSection));
             int t1 = MyTimeCounter++;
             HANDLES(LeaveCriticalSection(&TimeCounterSection));
@@ -50,9 +50,9 @@ void CFilesWindow::HandsOff(BOOL off)
     }
 }
 
-void CFilesWindow::Execute(int index)
+void CPanelWindow::Execute(int index)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::Execute(%d)", index);
+    CALL_STACK_MESSAGE2("CPanelWindow::Execute(%d)", index);
     MainWindow->CancelPanelsUI(); // cancel QuickSearch and QuickEdit
     if (index < 0 || index >= Dirs->Count + Files->Count)
         return;
@@ -512,9 +512,9 @@ void CFilesWindow::Execute(int index)
     EndStopRefresh();
 }
 
-void CFilesWindow::ChangeSortType(CSortType newType, BOOL reverse, BOOL force)
+void CPanelWindow::ChangeSortType(CSortType newType, BOOL reverse, BOOL force)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::ChangeSortType(%d, %d)", newType, reverse);
+    CALL_STACK_MESSAGE3("CPanelWindow::ChangeSortType(%d, %d)", newType, reverse);
     if (!force && SortType == newType && !reverse)
         return;
     if (SortType != newType)
@@ -638,10 +638,10 @@ void CFilesWindow::ChangeSortType(CSortType newType, BOOL reverse, BOOL force)
     PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
 }
 
-BOOL CFilesWindow::ChangeToRescuePathOrFixedDrive(HWND parent, BOOL* noChange, BOOL refreshListBox,
+BOOL CPanelWindow::ChangeToRescuePathOrFixedDrive(HWND parent, BOOL* noChange, BOOL refreshListBox,
                                                   BOOL canForce, int tryCloseReason, int* failReason)
 {
-    CALL_STACK_MESSAGE4("CFilesWindow::ChangeToRescuePathOrFixedDrive(, , %d, %d, %d,)",
+    CALL_STACK_MESSAGE4("CPanelWindow::ChangeToRescuePathOrFixedDrive(, , %d, %d, %d,)",
                         refreshListBox, canForce, tryCloseReason);
     BOOL noChangeUsed = FALSE;
     char ifPathIsInaccessibleGoTo[MAX_PATH];
@@ -681,10 +681,10 @@ BOOL CFilesWindow::ChangeToRescuePathOrFixedDrive(HWND parent, BOOL* noChange, B
                               refreshListBox, canForce, failReason, tryCloseReason);
 }
 
-BOOL CFilesWindow::ChangeToFixedDrive(HWND parent, BOOL* noChange, BOOL refreshListBox, BOOL canForce,
+BOOL CPanelWindow::ChangeToFixedDrive(HWND parent, BOOL* noChange, BOOL refreshListBox, BOOL canForce,
                                       int* failReason, int tryCloseReason)
 {
-    CALL_STACK_MESSAGE4("CFilesWindow::ChangeToFixedDrive(, , %d, %d, , %d)",
+    CALL_STACK_MESSAGE4("CPanelWindow::ChangeToFixedDrive(, , %d, %d, , %d)",
                         refreshListBox, canForce, tryCloseReason);
     if (noChange != NULL)
         *noChange = TRUE;
@@ -723,10 +723,10 @@ BOOL CFilesWindow::ChangeToFixedDrive(HWND parent, BOOL* noChange, BOOL refreshL
     return FALSE;
 }
 
-void CFilesWindow::ConnectNet(BOOL readOnlyUNC, const char* netRootPath, BOOL changeToNewDrive,
+void CPanelWindow::ConnectNet(BOOL readOnlyUNC, const char* netRootPath, BOOL changeToNewDrive,
                               char* newlyMappedDrive)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::ConnectNet(%s, %d,)", netRootPath, changeToNewDrive);
+    CALL_STACK_MESSAGE3("CPanelWindow::ConnectNet(%s, %d,)", netRootPath, changeToNewDrive);
 
     if (newlyMappedDrive != NULL)
         *newlyMappedDrive = 0;
@@ -796,9 +796,9 @@ void CFilesWindow::ConnectNet(BOOL readOnlyUNC, const char* netRootPath, BOOL ch
     EndStopRefresh(); // ted uz zase cmuchal nastartuje
 }
 
-void CFilesWindow::DisconnectNet()
+void CPanelWindow::DisconnectNet()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::DisconnectNet()");
+    CALL_STACK_MESSAGE1("CPanelWindow::DisconnectNet()");
 
     if (SystemPolicies.GetNoNetConnectDisconnect())
     {
@@ -854,9 +854,9 @@ void CFilesWindow::DisconnectNet()
     EndSuspendMode(); // ted uz zase cmuchal nastartuje
 }
 
-void CFilesWindow::DriveInfo()
+void CPanelWindow::DriveInfo()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::DriveInfo()");
+    CALL_STACK_MESSAGE1("CPanelWindow::DriveInfo()");
     if (Is(ptDisk) || Is(ptZIPArchive))
     {
         if (CheckPath(TRUE) != ERROR_SUCCESS)
@@ -882,9 +882,9 @@ void CFilesWindow::DriveInfo()
     }
 }
 
-void CFilesWindow::ToggleDirectoryLine()
+void CPanelWindow::ToggleDirectoryLine()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::ToggleDirectoryLine()");
+    CALL_STACK_MESSAGE1("CPanelWindow::ToggleDirectoryLine()");
     if (HWindow == NULL)
     {
         TRACE_E("HWindow == NULL");
@@ -924,9 +924,9 @@ void CFilesWindow::ToggleDirectoryLine()
         MainWindow->LayoutWindows();
 }
 
-void CFilesWindow::ToggleStatusLine()
+void CPanelWindow::ToggleStatusLine()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::ToggleStatusLine()");
+    CALL_STACK_MESSAGE1("CPanelWindow::ToggleStatusLine()");
     if (HWindow == NULL)
     {
         TRACE_E("HWindow == NULL");
@@ -954,21 +954,21 @@ void CFilesWindow::ToggleStatusLine()
         ShowWindow(StatusLine->HWindow, SW_SHOW);
 }
 
-void CFilesWindow::ToggleHeaderLine()
+void CPanelWindow::ToggleHeaderLine()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::ToggleHeaderLine()");
+    CALL_STACK_MESSAGE1("CPanelWindow::ToggleHeaderLine()");
     BOOL headerLine = !HeaderLineVisible;
-    if (GetViewMode() == vmBrief)
+    if (GetViewMode() == ViewMode::brief)
         headerLine = FALSE;
-    ListBox->SetMode(GetViewMode() == vmBrief ? vmBrief : vmDetailed, headerLine);
+    ListBox->SetMode(GetViewMode() == ViewMode::brief ? ViewMode::brief : ViewMode::detailed, headerLine);
 }
 
-int CFilesWindow::GetViewTemplateIndex()
+int CPanelWindow::GetViewTemplateIndex()
 {
     return (int)(ViewTemplate - MainWindow->ViewTemplates.Items);
 }
 
-int CFilesWindow::GetNextTemplateIndex(BOOL forward, BOOL wrap)
+int CPanelWindow::GetNextTemplateIndex(BOOL forward, BOOL wrap)
 {
     int oldIndex = GetViewTemplateIndex();
     int newIndex = oldIndex;
@@ -1006,9 +1006,9 @@ int CFilesWindow::GetNextTemplateIndex(BOOL forward, BOOL wrap)
     return newIndex;
 }
 
-BOOL CFilesWindow::IsViewTemplateValid(int templateIndex)
+BOOL CPanelWindow::IsViewTemplateValid(int templateIndex)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::IsViewTemplateValid(%d)", templateIndex);
+    CALL_STACK_MESSAGE2("CPanelWindow::IsViewTemplateValid(%d)", templateIndex);
     if (templateIndex < 1) // tree zatim neumime
         return FALSE;
     CViewTemplate* newTemplate = &Parent->ViewTemplates.Items[templateIndex];
@@ -1017,11 +1017,16 @@ BOOL CFilesWindow::IsViewTemplateValid(int templateIndex)
     return TRUE;
 }
 
-BOOL CFilesWindow::SelectViewTemplate(int templateIndex, BOOL canRefreshPath,
-                                      BOOL calledFromPluginBeforeListing, DWORD columnValidMask,
-                                      BOOL preserveTopIndex, BOOL salamanderIsStarting)
+BOOL CPanelWindow::SelectViewTemplate(
+    int templateIndex,
+    BOOL canRefreshPath,
+    BOOL calledFromPluginBeforeListing,
+    DWORD columnValidMask,
+    BOOL preserveTopIndex,
+    BOOL salamanderIsStarting
+)
 {
-    CALL_STACK_MESSAGE5("CFilesWindow::SelectViewTemplate(%d, %d, %d, 0x%X)", templateIndex,
+    CALL_STACK_MESSAGE5("CPanelWindow::SelectViewTemplate(%d, %d, %d, 0x%X)", templateIndex,
                         canRefreshPath, calledFromPluginBeforeListing, columnValidMask);
 
     if (templateIndex == 0)
@@ -1034,33 +1039,33 @@ BOOL CFilesWindow::SelectViewTemplate(int templateIndex, BOOL canRefreshPath,
         newTemplate = &Parent->ViewTemplates.Items[templateIndex];
     }
 
-    CViewModeEnum oldViewMode = GetViewMode();
+    ViewMode::Value oldViewMode = GetViewMode();
     if (!calledFromPluginBeforeListing || ViewTemplate != newTemplate)
     {
-        CViewModeEnum newViewMode;
+        ViewMode::Value newViewMode;
         switch (templateIndex)
         {
             //      case 0: newViewMode = vmTree; break;
         case 1:
-            newViewMode = vmBrief;
+            newViewMode = ViewMode::brief;
             break;
         case 3:
-            newViewMode = vmIcons;
+            newViewMode = ViewMode::icons;
             break;
         case 4:
-            newViewMode = vmThumbnails;
+            newViewMode = ViewMode::thumbnails;
             break;
         case 5:
-            newViewMode = vmTiles;
+            newViewMode = ViewMode::tiles;
             break;
         default:
-            newViewMode = vmDetailed;
+            newViewMode = ViewMode::detailed;
             break;
         }
         ViewTemplate = newTemplate;
 
         BOOL headerLine = HeaderLineVisible;
-        if (newViewMode != vmDetailed)
+        if (newViewMode != ViewMode::detailed)
             headerLine = FALSE;
         ListBox->SetMode(newViewMode, headerLine);
     }
@@ -1083,14 +1088,14 @@ BOOL CFilesWindow::SelectViewTemplate(int templateIndex, BOOL canRefreshPath,
         // jakmile se lisi view-mode, je potreba refreshnout (je potreba nacist jinou velikost
         // ikon nebo thumbnaily) - jedina vyjimka je brief a detailed, ty maji oba stejne ikony
         BOOL needRefresh = oldViewMode != GetViewMode() &&
-                           (oldViewMode != vmBrief || GetViewMode() != vmDetailed) &&
-                           (oldViewMode != vmDetailed || GetViewMode() != vmBrief);
+                           (oldViewMode != ViewMode::brief || GetViewMode() != ViewMode::detailed) &&
+                           (oldViewMode != ViewMode::detailed || GetViewMode() != ViewMode::brief);
         if (canRefreshPath && needRefresh)
         {
             // az do ReadDirectory pojedeme nad simple icons, protoze se meni geometrie ikonek
             TemporarilySimpleIcons = TRUE;
 
-            // nechame napocitat rozmery polozek a zajistime viditelnost focused polozky
+            // let's calculate the dimensions of the items and ensure the visibility of the focused item
             RefreshListBox(0, -1, FocusedIndex, FALSE, FALSE);
 
             // provedeme tvrdy refresh
@@ -1104,7 +1109,7 @@ BOOL CFilesWindow::SelectViewTemplate(int templateIndex, BOOL canRefreshPath,
             if (needRefresh)
             {
                 if (!salamanderIsStarting)
-                    TRACE_E("CFilesWindow::SelectViewTemplate(): unexpected situation: refresh is needed, but it's not allowed!");
+                    TRACE_E("CPanelWindow::SelectViewTemplate(): unexpected situation: refresh is needed, but it's not allowed!");
                 // prozatim aspon: az do dalsiho refreshe (a tim ReadDirectory) pojedeme nad simple icons, protoze se meni geometrie ikonek
                 TemporarilySimpleIcons = TRUE;
             }
@@ -1121,24 +1126,24 @@ BOOL CFilesWindow::SelectViewTemplate(int templateIndex, BOOL canRefreshPath,
     return TRUE;
 }
 
-BOOL CFilesWindow::IsExtensionInSeparateColumn()
+BOOL CPanelWindow::IsExtensionInSeparateColumn()
 {
     return Columns.Count >= 2 && Columns.At(1).ID == COLUMN_ID_EXTENSION;
 }
 
-void CFilesWindow::RedrawIndex(int index)
+void CPanelWindow::RedrawIndex(int index)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::RedrawIndex(%d)", index);
+    CALL_STACK_MESSAGE2("CPanelWindow::RedrawIndex(%d)", index);
     if (index >= 0 && index < Dirs->Count + Files->Count)
         ListBox->PaintItem(index, DRAWFLAG_SELFOC_CHANGE);
     else if (Dirs->Count + Files->Count == 0)
         ListBox->PaintAllItems(NULL, 0); // zajistime vykresleni textu o prazdnem panelu
 }
 
-void CFilesWindow::ItemFocused(int index)
+void CPanelWindow::ItemFocused(int index)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::ItemFocused(%d)", index);
-    if (GetSelCount() == 0 && index != LastFocus && index >= 0 &&
+    CALL_STACK_MESSAGE2("CPanelWindow::ItemFocused(%d)", index);
+    if (GetSelectedCount() == 0 && index != LastFocus && index >= 0 &&
         index < Dirs->Count + Files->Count)
     {
         LastFocus = index;
@@ -1175,7 +1180,7 @@ void CFilesWindow::ItemFocused(int index)
     IdleRefreshStates = TRUE; // pri pristim Idle vynutime kontrolu stavovych promennych
 }
 
-void CFilesWindow::SetValidFileData(DWORD validFileData)
+void CPanelWindow::SetValidFileData(DWORD validFileData)
 {
     DWORD mask = 0xFFFFFFFF;
     if (!PluginData.NotEmpty())
@@ -1192,10 +1197,10 @@ void CFilesWindow::SetValidFileData(DWORD validFileData)
     ValidFileData = validFileData & mask;
 }
 
-BOOL CFilesWindow::PrepareCloseCurrentPath(HWND parent, BOOL canForce, BOOL canDetach, BOOL& detachFS,
+BOOL CPanelWindow::PrepareCloseCurrentPath(HWND parent, BOOL canForce, BOOL canDetach, BOOL& detachFS,
                                            int tryCloseReason)
 {
-    CALL_STACK_MESSAGE4("CFilesWindow::PrepareCloseCurrentPath(, %d, %d, , %d)",
+    CALL_STACK_MESSAGE4("CPanelWindow::PrepareCloseCurrentPath(, %d, %d, , %d)",
                         canForce, canDetach, tryCloseReason);
     char buf[2 * MAX_PATH + 100];
 
@@ -1251,7 +1256,7 @@ BOOL CFilesWindow::PrepareCloseCurrentPath(HWND parent, BOOL canForce, BOOL canD
             // pokud muzou byt v diskcache editovane soubory nebo tento archiv neni otevren
             // i v druhem panelu, vyhodime jeho cachovane soubory, pri dalsim otevreni se bude
             // znovu vypakovavat (archiv muze byt mezitim editovan)
-            CFilesWindow* another = (MainWindow->LeftPanel == this) ? MainWindow->RightPanel : MainWindow->LeftPanel;
+            CPanelWindow* another = (MainWindow->LeftPanel == this) ? MainWindow->RightPanel : MainWindow->LeftPanel;
             if (someFilesChanged || !another->Is(ptZIPArchive) || StrICmp(another->GetZIPArchive(), GetZIPArchive()) != 0)
             {
                 StrICpy(buf, GetZIPArchive()); // v disk-cache je jmeno archivu malymi pismeny (umozni case-insensitive porovnani jmena z Windows file systemu)
@@ -1365,17 +1370,17 @@ BOOL CFilesWindow::PrepareCloseCurrentPath(HWND parent, BOOL canForce, BOOL canD
             }
             else
             {
-                TRACE_E("Unexpected situation in CFilesWindow::PrepareCloseCurrentPath()");
+                TRACE_E("Unexpected situation in CPanelWindow::PrepareCloseCurrentPath()");
                 return FALSE;
             }
         }
     }
 }
 
-void CFilesWindow::CloseCurrentPath(HWND parent, BOOL cancel, BOOL detachFS, BOOL newPathIsTheSame,
+void CPanelWindow::CloseCurrentPath(HWND parent, BOOL cancel, BOOL detachFS, BOOL newPathIsTheSame,
                                     BOOL isRefresh, BOOL canChangeSourceUID)
 {
-    CALL_STACK_MESSAGE6("CFilesWindow::CloseCurrentPath(, %d, %d, %d, %d, %d)",
+    CALL_STACK_MESSAGE6("CPanelWindow::CloseCurrentPath(, %d, %d, %d, %d, %d)",
                         cancel, detachFS, newPathIsTheSame, isRefresh, canChangeSourceUID);
 
     if (Is(ptDisk))
@@ -1386,7 +1391,7 @@ void CFilesWindow::CloseCurrentPath(HWND parent, BOOL cancel, BOOL detachFS, BOO
             {
                 const char* path = GetPath();
                 // HICON hIcon = GetFileOrPathIconAux(path, FALSE, TRUE); // vytahneme ikonu
-                MainWindow->DirHistoryAddPathUnique(0, path, NULL, NULL /*hIcon*/, NULL, NULL);
+                MainWindow->DirHistoryAddPathUnique( CPathHistoryItem::Type::disk, path, NULL, NULL /*hIcon*/, NULL, NULL);
                 if (!newPathIsTheSame)
                     UserWorkedOnThisPath = FALSE;
             }
@@ -1413,7 +1418,7 @@ void CFilesWindow::CloseCurrentPath(HWND parent, BOOL cancel, BOOL detachFS, BOO
             {
                 if (UserWorkedOnThisPath)
                 {
-                    MainWindow->DirHistoryAddPathUnique(1, GetZIPArchive(), GetZIPPath(), NULL, NULL, NULL);
+                    MainWindow->DirHistoryAddPathUnique(CPathHistoryItem::Type::archiv, GetZIPArchive(), GetZIPPath(), NULL, NULL, NULL);
                     if (!newPathIsTheSame)
                         UserWorkedOnThisPath = FALSE;
                 }
@@ -1429,8 +1434,7 @@ void CFilesWindow::CloseCurrentPath(HWND parent, BOOL cancel, BOOL detachFS, BOO
                     EnumFileNamesChangeSourceUID(HWindow, &EnumFileNamesSourceUID);
 
                 // pokud se data archivu hodi SalShExtPastedData, predame mu je
-                if (SalShExtPastedData.WantData(GetZIPArchive(), GetArchiveDir(), PluginData,
-                                                GetZIPArchiveDate(), GetZIPArchiveSize()))
+                if (SalShExtPastedData.WantData(GetZIPArchive(), GetArchiveDir(), PluginData, GetZIPArchiveDate(), GetZIPArchiveSize()))
                 {
                     SetArchiveDir(NULL);
                     PluginData.Init(NULL, NULL, NULL, NULL, 0);
@@ -1463,8 +1467,7 @@ void CFilesWindow::CloseCurrentPath(HWND parent, BOOL cancel, BOOL detachFS, BOO
                     {
                         if (UserWorkedOnThisPath)
                         {
-                            MainWindow->DirHistoryAddPathUnique(2, GetPluginFS()->GetPluginFSName(), buf, NULL,
-                                                                GetPluginFS()->GetInterface(), GetPluginFS());
+                            MainWindow->DirHistoryAddPathUnique(CPathHistoryItem::Type::fs, GetPluginFS()->GetPluginFSName(), buf, NULL,GetPluginFS()->GetInterface(), GetPluginFS());
                             if (!newPathIsTheSame)
                                 UserWorkedOnThisPath = FALSE;
                         }
@@ -1525,7 +1528,7 @@ void CFilesWindow::CloseCurrentPath(HWND parent, BOOL cancel, BOOL detachFS, BOO
                         if (plugin.NotEmpty())
                             plugin.CloseFS(GetPluginFS()->GetInterface());
                         else
-                            TRACE_E("Unexpected situation (2) in CFilesWindow::CloseCurrentPath()");
+                            TRACE_E("Unexpected situation (2) in CPanelWindow::CloseCurrentPath()");
                     }
                     SetPluginFS(NULL, NULL, NULL, NULL, NULL, NULL, -1, 0, 0, 0);
                     SetPluginIface(NULL);
@@ -1540,14 +1543,14 @@ void CFilesWindow::CloseCurrentPath(HWND parent, BOOL cancel, BOOL detachFS, BOO
                     GetPluginFS()->Event(FSE_CLOSEORDETACHCANCELED, GetPanelCode());
             }
             else
-                TRACE_E("Unexpected situation (1) in CFilesWindow::CloseCurrentPath()");
+                TRACE_E("Unexpected situation (1) in CPanelWindow::CloseCurrentPath()");
         }
     }
 }
 
-void CFilesWindow::RefreshPathHistoryData()
+void CPanelWindow::RefreshPathHistoryData()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::RefreshPathHistoryData()");
+    CALL_STACK_MESSAGE1("CPanelWindow::RefreshPathHistoryData()");
 
     int index = GetCaretIndex();
     if (index >= 0 && index < Files->Count + Dirs->Count) // pokud nejsou rozjeta data
@@ -1558,13 +1561,13 @@ void CFilesWindow::RefreshPathHistoryData()
         // zkusime zapsat novy top-index a focus-name
         if (Is(ptZIPArchive))
         {
-            PathHistory->ChangeActualPathData(1, GetZIPArchive(), GetZIPPath(), NULL, NULL, topIndex, file->Name);
+            PathHistory->ChangeActualPathData(CPathHistoryItem::Type::archiv, GetZIPArchive(), GetZIPPath(), NULL, NULL, topIndex, file->Name);
         }
         else
         {
             if (Is(ptDisk))
             {
-                PathHistory->ChangeActualPathData(0, GetPath(), NULL, NULL, NULL, topIndex, file->Name);
+                PathHistory->ChangeActualPathData( CPathHistoryItem::Type::disk, GetPath(), NULL, NULL, NULL, topIndex, file->Name);
             }
             else
             {
@@ -1573,9 +1576,7 @@ void CFilesWindow::RefreshPathHistoryData()
                     char curPath[MAX_PATH];
                     if (GetPluginFS()->NotEmpty() && GetPluginFS()->GetCurrentPath(curPath))
                     {
-                        PathHistory->ChangeActualPathData(2, GetPluginFS()->GetPluginFSName(), curPath,
-                                                          GetPluginFS()->GetInterface(), GetPluginFS(),
-                                                          topIndex, file->Name);
+                        PathHistory->ChangeActualPathData(CPathHistoryItem::Type::fs, GetPluginFS()->GetPluginFSName(), curPath,GetPluginFS()->GetInterface(), GetPluginFS(), topIndex, file->Name);
                     }
                 }
             }
@@ -1583,19 +1584,19 @@ void CFilesWindow::RefreshPathHistoryData()
     }
 }
 
-void CFilesWindow::RemoveCurrentPathFromHistory()
+void CPanelWindow::RemoveCurrentPathFromHistory()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::RemoveCurrentPathFromHistory()");
+    CALL_STACK_MESSAGE1("CPanelWindow::RemoveCurrentPathFromHistory()");
 
     if (Is(ptZIPArchive))
     {
-        PathHistory->RemoveActualPath(1, GetZIPArchive(), GetZIPPath(), NULL, NULL);
+        PathHistory->RemoveActualPath( CPathHistoryItem::Type::archiv, GetZIPArchive(), GetZIPPath(), NULL, NULL);
     }
     else
     {
         if (Is(ptDisk))
         {
-            PathHistory->RemoveActualPath(0, GetPath(), NULL, NULL, NULL);
+            PathHistory->RemoveActualPath(CPathHistoryItem::Type::disk, GetPath(), NULL, NULL, NULL);
         }
         else
         {
@@ -1604,15 +1605,14 @@ void CFilesWindow::RemoveCurrentPathFromHistory()
                 char curPath[MAX_PATH];
                 if (GetPluginFS()->NotEmpty() && GetPluginFS()->GetCurrentPath(curPath))
                 {
-                    PathHistory->RemoveActualPath(2, GetPluginFS()->GetPluginFSName(), curPath,
-                                                  GetPluginFS()->GetInterface(), GetPluginFS());
+                    PathHistory->RemoveActualPath(CPathHistoryItem::Type::fs, GetPluginFS()->GetPluginFSName(), curPath, GetPluginFS()->GetInterface(), GetPluginFS());
                 }
             }
         }
     }
 }
 
-void CFilesWindow::InvalidateChangesInPanelWeHaveNewListing()
+void CPanelWindow::InvalidateChangesInPanelWeHaveNewListing()
 {
     NeedRefreshAfterEndOfSM = FALSE;
     NeedRefreshAfterIconsReading = FALSE;
@@ -1635,12 +1635,12 @@ void CFilesWindow::InvalidateChangesInPanelWeHaveNewListing()
     }
 }
 
-BOOL CFilesWindow::ChangePathToDisk(HWND parent, const char* path, int suggestedTopIndex,
+BOOL CPanelWindow::ChangePathToDisk(HWND parent, const char* path, int suggestedTopIndex,
                                     const char* suggestedFocusName, BOOL* noChange,
                                     BOOL refreshListBox, BOOL canForce, BOOL isRefresh, int* failReason,
                                     BOOL shorterPathWarning, int tryCloseReason)
 {
-    CALL_STACK_MESSAGE9("CFilesWindow::ChangePathToDisk(, %s, %d, %s, , %d, %d, %d, , %d, %d)", path,
+    CALL_STACK_MESSAGE9("CPanelWindow::ChangePathToDisk(, %s, %d, %s, , %d, %d, %d, , %d, %d)", path,
                         suggestedTopIndex, suggestedFocusName, refreshListBox, canForce, isRefresh,
                         shorterPathWarning, tryCloseReason);
 
@@ -1992,13 +1992,13 @@ BOOL CFilesWindow::ChangePathToDisk(HWND parent, const char* path, int suggested
     return ret;
 }
 
-BOOL CFilesWindow::ChangePathToArchive(const char* archive, const char* archivePath,
+BOOL CPanelWindow::ChangePathToArchive(const char* archive, const char* archivePath,
                                        int suggestedTopIndex, const char* suggestedFocusName,
                                        BOOL forceUpdate, BOOL* noChange, BOOL refreshListBox,
                                        int* failReason, BOOL isRefresh, BOOL canFocusFileName,
                                        BOOL isHistory)
 {
-    CALL_STACK_MESSAGE10("CFilesWindow::ChangePathToArchive(%s, %s, %d, %s, %d, , %d, , %d, %d, %d)",
+    CALL_STACK_MESSAGE10("CPanelWindow::ChangePathToArchive(%s, %s, %d, %s, %d, , %d, , %d, %d, %d)",
                          archive, archivePath, suggestedTopIndex, suggestedFocusName,
                          forceUpdate, refreshListBox, isRefresh, canFocusFileName, isHistory);
 
@@ -2071,7 +2071,7 @@ BOOL CFilesWindow::ChangePathToArchive(const char* archive, const char* archiveP
             strcpy(path, archive);
             if (!CutDirectory(path, NULL))
             {
-                TRACE_E("Unexpected situation in CFilesWindow::ChangePathToArchive.");
+                TRACE_E("Unexpected situation in CPanelWindow::ChangePathToArchive.");
                 if (failReason != NULL)
                     *failReason = CHPPFR_INVALIDPATH;
                 tryPathWithArchiveOnError = FALSE; // nesmyslna chyba, neresime
@@ -2399,7 +2399,7 @@ BOOL CFilesWindow::ChangePathToArchive(const char* archive, const char* archiveP
     {
         if (UserWorkedOnThisPath)
         {
-            MainWindow->DirHistoryAddPathUnique(1, GetZIPArchive(), currentPath, NULL, NULL, NULL);
+            MainWindow->DirHistoryAddPathUnique( CPathHistoryItem::Type::archiv, GetZIPArchive(), currentPath, NULL, NULL, NULL);
             UserWorkedOnThisPath = FALSE;
         }
 
@@ -2411,14 +2411,14 @@ BOOL CFilesWindow::ChangePathToArchive(const char* archive, const char* archiveP
     return ok;
 }
 
-BOOL CFilesWindow::ChangeAndListPathOnFS(const char* fsName, int fsNameIndex, const char* fsUserPart,
+BOOL CPanelWindow::ChangeAndListPathOnFS(const char* fsName, int fsNameIndex, const char* fsUserPart,
                                          CPluginFSInterfaceEncapsulation& pluginFS, CSalamanderDirectory* dir,
                                          CPluginDataInterfaceAbstract*& pluginData, BOOL& shorterPath,
                                          int& pluginIconsType, int mode, BOOL firstCall,
                                          BOOL* cancel, const char* currentPath, int currentPathFSNameIndex,
                                          BOOL forceUpdate, char* cutFileName, BOOL* keepOldListing)
 {
-    CALL_STACK_MESSAGE10("CFilesWindow::ChangeAndListPathOnFS(%s, %d, %s, , , , , , %d, %d, , %s, %d, %d, , %d)",
+    CALL_STACK_MESSAGE10("CPanelWindow::ChangeAndListPathOnFS(%s, %d, %s, , , , , , %d, %d, , %s, %d, %d, , %d)",
                          fsName, fsNameIndex, fsUserPart, mode, firstCall, currentPath, currentPathFSNameIndex,
                          forceUpdate, (keepOldListing != NULL && *keepOldListing));
     if (cutFileName != NULL)
@@ -2516,15 +2516,15 @@ BOOL CFilesWindow::ChangeAndListPathOnFS(const char* fsName, int fsNameIndex, co
                         if (plugin->GetPluginInterface()->GetInterface() == pluginFS.GetPluginInterface())
                             ok2 = TRUE;
                         else
-                            TRACE_E("CFilesWindow::ChangeAndListPathOnFS(): pluginFS.ChangePath() returned fs-name "
+                            TRACE_E("CPanelWindow::ChangeAndListPathOnFS(): pluginFS.ChangePath() returned fs-name "
                                     "("
                                     << newFSName << ") from other plugin: " << plugin->DLLName);
                     }
                     else
-                        TRACE_E("Second unexpected situation in CFilesWindow::ChangeAndListPathOnFS()");
+                        TRACE_E("Second unexpected situation in CPanelWindow::ChangeAndListPathOnFS()");
                 }
                 else
-                    TRACE_E("CFilesWindow::ChangeAndListPathOnFS(): pluginFS.ChangePath() returned unknown fs-name: " << newFSName);
+                    TRACE_E("CPanelWindow::ChangeAndListPathOnFS(): pluginFS.ChangePath() returned unknown fs-name: " << newFSName);
                 if (!ok2)
                     changePathRet = FALSE; // zmena fs-name se nepovedla, simulujeme fatal error na FS
                 else                       // zacneme pouzivat nove jmeno FS (pro dalsi pruchod cyklem)
@@ -2622,7 +2622,7 @@ BOOL CFilesWindow::ChangeAndListPathOnFS(const char* fsName, int fsNameIndex, co
             // cesta neni o.k., pokusime se ji zkratit v pristim pruchodu cyklu
             if (!pluginFS.GetCurrentPath(user))
             {
-                TRACE_E("Unexpected situation in CFilesWindow::ChangeAndListPathOnFS()");
+                TRACE_E("Unexpected situation in CPanelWindow::ChangeAndListPathOnFS()");
                 break;
             }
         }
@@ -2687,12 +2687,12 @@ BOOL CFilesWindow::ChangeAndListPathOnFS(const char* fsName, int fsNameIndex, co
     return ok;
 }
 
-BOOL CFilesWindow::ChangePathToPluginFS(const char* fsName, const char* fsUserPart, int suggestedTopIndex,
+BOOL CPanelWindow::ChangePathToPluginFS(const char* fsName, const char* fsUserPart, int suggestedTopIndex,
                                         const char* suggestedFocusName, BOOL forceUpdate, int mode,
                                         BOOL* noChange, BOOL refreshListBox, int* failReason, BOOL isRefresh,
                                         BOOL canFocusFileName, BOOL convertPathToInternal)
 {
-    CALL_STACK_MESSAGE11("CFilesWindow::ChangePathToPluginFS(%s, %s, %d, %s, %d, %d, , %d, , %d, %d, %d)",
+    CALL_STACK_MESSAGE11("CPanelWindow::ChangePathToPluginFS(%s, %s, %d, %s, %d, %d, , %d, , %d, %d, %d)",
                          fsName, fsUserPart, suggestedTopIndex, suggestedFocusName, forceUpdate,
                          mode, refreshListBox, isRefresh, canFocusFileName, convertPathToInternal);
     //TRACE_I("change-to-fs: begin");
@@ -2706,7 +2706,7 @@ BOOL CFilesWindow::ChangePathToPluginFS(const char* fsName, const char* fsUserPa
         *noChange = TRUE;
     if (mode != 3 && canFocusFileName)
     {
-        TRACE_E("CFilesWindow::ChangePathToPluginFS() - incorrect use of 'mode' or 'canFocusFileName'.");
+        TRACE_E("CPanelWindow::ChangePathToPluginFS() - incorrect use of 'mode' or 'canFocusFileName'.");
         canFocusFileName = FALSE;
     }
 
@@ -2854,7 +2854,7 @@ BOOL CFilesWindow::ChangePathToPluginFS(const char* fsName, const char* fsUserPa
                         TRACE_I("Plugin has refused to open FS (maybe it even does not start).");
                 }
                 else
-                    TRACE_E("Unexpected situation in CFilesWindow::ChangePathToPluginFS()");
+                    TRACE_E("Unexpected situation in CPanelWindow::ChangePathToPluginFS()");
             }
             else
                 TRACE_I("Plugin containing file-system name " << fsName << " is no longer available.");
@@ -2960,8 +2960,7 @@ BOOL CFilesWindow::ChangePathToPluginFS(const char* fsName, const char* fsUserPa
                 {
                     if (UserWorkedOnThisPath)
                     {
-                        MainWindow->DirHistoryAddPathUnique(2, currentPathFSName, currentPath, NULL,
-                                                            GetPluginFS()->GetInterface(), GetPluginFS());
+                        MainWindow->DirHistoryAddPathUnique( CPathHistoryItem::Type::fs, currentPathFSName, currentPath, NULL, GetPluginFS()->GetInterface(), GetPluginFS());
                         UserWorkedOnThisPath = FALSE;
                     }
                     // opoustime cestu
@@ -3095,8 +3094,7 @@ BOOL CFilesWindow::ChangePathToPluginFS(const char* fsName, const char* fsUserPa
                 {
                     if (UserWorkedOnThisPath)
                     {
-                        MainWindow->DirHistoryAddPathUnique(2, currentPathFSName, currentPath, NULL,
-                                                            GetPluginFS()->GetInterface(), GetPluginFS());
+                        MainWindow->DirHistoryAddPathUnique(CPathHistoryItem::Type::fs, currentPathFSName, currentPath, NULL, GetPluginFS()->GetInterface(), GetPluginFS());
                         UserWorkedOnThisPath = FALSE;
                     }
                     // opoustime cestu
@@ -3196,12 +3194,12 @@ BOOL CFilesWindow::ChangePathToPluginFS(const char* fsName, const char* fsUserPa
     }
 }
 
-BOOL CFilesWindow::ChangePathToDetachedFS(int fsIndex, int suggestedTopIndex,
+BOOL CPanelWindow::ChangePathToDetachedFS(int fsIndex, int suggestedTopIndex,
                                           const char* suggestedFocusName, BOOL refreshListBox,
                                           int* failReason, const char* newFSName,
                                           const char* newUserPart, int mode, BOOL canFocusFileName)
 {
-    CALL_STACK_MESSAGE9("CFilesWindow::ChangePathToDetachedFS(%d, %d, %s, %d, , %s, %s, %d, %d)", fsIndex,
+    CALL_STACK_MESSAGE9("CPanelWindow::ChangePathToDetachedFS(%d, %d, %s, %d, , %s, %s, %d, %d)", fsIndex,
                         suggestedTopIndex, suggestedFocusName, refreshListBox, newFSName, newUserPart,
                         mode, canFocusFileName);
 
@@ -3260,7 +3258,7 @@ BOOL CFilesWindow::ChangePathToDetachedFS(int fsIndex, int suggestedTopIndex,
         int i;
         if (!Plugins.IsPluginFS(fsName, i, fsNameIndex)) // "always false" (plugin se neunloadnul, fs-name nemohlo zmizet)
         {
-            TRACE_E("CFilesWindow::ChangePathToDetachedFS(): unexpected situation: requested FS was not found! fs-name=" << newFSName);
+            TRACE_E("CPanelWindow::ChangePathToDetachedFS(): unexpected situation: requested FS was not found! fs-name=" << newFSName);
             newUserPart = NULL;
             newFSName = NULL;
         }
@@ -3275,14 +3273,14 @@ BOOL CFilesWindow::ChangePathToDetachedFS(int fsIndex, int suggestedTopIndex,
 
     if (mode != 3 && canFocusFileName)
     {
-        TRACE_E("CFilesWindow::ChangePathToDetachedFS() - incorrect use of 'mode' or 'canFocusFileName'.");
+        TRACE_E("CPanelWindow::ChangePathToDetachedFS() - incorrect use of 'mode' or 'canFocusFileName'.");
         canFocusFileName = FALSE;
     }
 
     CPluginData* plugin = Plugins.GetPluginData(pluginFS->GetPluginInterfaceForFS()->GetInterface());
     if (plugin == NULL)
     {
-        TRACE_E("Unexpected situation in CFilesWindow::ChangePathToDetachedFS.");
+        TRACE_E("Unexpected situation in CPanelWindow::ChangePathToDetachedFS.");
         if (failReason != NULL)
             *failReason = CHPPFR_INVALIDPATH;
         return FALSE;
@@ -3425,9 +3423,9 @@ BOOL CFilesWindow::ChangePathToDetachedFS(int fsIndex, int suggestedTopIndex,
     }
 }
 
-void CFilesWindow::RefreshDiskFreeSpace(BOOL check, BOOL doNotRefreshOtherPanel)
+void CPanelWindow::RefreshDiskFreeSpace(BOOL check, BOOL doNotRefreshOtherPanel)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::RefreshDiskFreeSpace(%d, %d)", check, doNotRefreshOtherPanel);
+    CALL_STACK_MESSAGE3("CPanelWindow::RefreshDiskFreeSpace(%d, %d)", check, doNotRefreshOtherPanel);
     if (Is(ptDisk))
     {
         if (!check || CheckPath(FALSE) == ERROR_SUCCESS)
@@ -3441,7 +3439,7 @@ void CFilesWindow::RefreshDiskFreeSpace(BOOL check, BOOL doNotRefreshOtherPanel)
                 // disk-free-space i ve vedlejsim panelu (neni dokonale - idealni by bylo
                 // testovat, jestli jsou cesty na stejnem svazku, ale to by bylo moc pomale,
                 // toto zjednoduseni bude pro obycejne pouziti bohate stacit)
-                CFilesWindow* otherPanel = (MainWindow->LeftPanel == this) ? MainWindow->RightPanel : MainWindow->LeftPanel;
+                CPanelWindow* otherPanel = (MainWindow->LeftPanel == this) ? MainWindow->RightPanel : MainWindow->LeftPanel;
                 if (otherPanel->Is(ptDisk) && HasTheSameRootPath(GetPath(), otherPanel->GetPath()))
                     otherPanel->RefreshDiskFreeSpace(TRUE, TRUE /* jinak nekonecna rekurze */);
             }
@@ -3465,7 +3463,7 @@ void CFilesWindow::RefreshDiskFreeSpace(BOOL check, BOOL doNotRefreshOtherPanel)
     }
 }
 
-void CFilesWindow::GetContextMenuPos(POINT* p)
+void CPanelWindow::GetContextMenuPos(POINT* p)
 {
     CALL_STACK_MESSAGE_NONE
     RECT r;
@@ -3502,12 +3500,9 @@ void GetCommonFileTypeStr(char* buf, int* resLen, const char* ext)
     }
 }
 
-void CFilesWindow::RefreshListBox(int suggestedXOffset,
-                                  int suggestedTopIndex, int suggestedFocusIndex,
-                                  BOOL ensureFocusIndexVisible, BOOL wholeItemVisible)
+void CPanelWindow::RefreshListBox(int suggestedXOffset, int suggestedTopIndex, int suggestedFocusIndex, BOOL ensureFocusIndexVisible, BOOL wholeItemVisible)
 {
-    CALL_STACK_MESSAGE6("CFilesWindow::RefreshListBox(%d, %d, %d, %d, %d)", suggestedXOffset,
-                        suggestedTopIndex, suggestedFocusIndex, ensureFocusIndexVisible, wholeItemVisible);
+    CALL_STACK_MESSAGE6("CPanelWindow::RefreshListBox(%d, %d, %d, %d, %d)", suggestedXOffset, suggestedTopIndex, suggestedFocusIndex, ensureFocusIndexVisible, wholeItemVisible);
 
     //TRACE_I("refreshlist: begin");
 
@@ -3524,7 +3519,7 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
     char formatedFileName[MAX_PATH];
     switch (GetViewMode())
     {
-    case vmBrief:
+    case ViewMode::brief:
     {
         SIZE max;
         max.cx = 0;
@@ -3551,29 +3546,29 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
         max.cy = act.cy;
         CaretHeight = (short)act.cy;
 
-        max.cx += 2 * IconSizes[ICONSIZE_16];
+        max.cx += 2 * IconSizes[IconSize::size_16x16];
         // minimalni sirka (napriklad pro prazdny panel) aby user dokazal trefit UpDir
-        if (max.cx < 4 * IconSizes[ICONSIZE_16])
-            max.cx = 4 * IconSizes[ICONSIZE_16];
+        if (max.cx < 4 * IconSizes[IconSize::size_16x16])
+            max.cx = 4 * IconSizes[IconSize::size_16x16];
         Columns[0].Width = max.cx; // sirka sloupce 'Name'
         max.cy += 4;
-        if (max.cy < IconSizes[ICONSIZE_16] + 1)
-            max.cy = IconSizes[ICONSIZE_16] + 1;
+        if (max.cy < IconSizes[IconSize::size_16x16] + 1)
+            max.cy = IconSizes[IconSize::size_16x16] + 1;
         ListBox->SetItemWidthHeight(max.cx, max.cy);
         break;
     }
 
-    case vmIcons:
+    case ViewMode::icons:
     {
-        int w = IconSizes[ICONSIZE_32];
-        int h = IconSizes[ICONSIZE_32];
+        int w = IconSizes[IconSize::size_32x32];
+        int h = IconSizes[IconSize::size_32x32];
         w += Configuration.IconSpacingHorz;
         h += Configuration.IconSpacingVert;
         ListBox->SetItemWidthHeight(w, h);
         break;
     }
 
-    case vmThumbnails:
+    case ViewMode::thumbnails:
     {
         int w = ListBox->ThumbnailWidth + 2;
         int h = ListBox->ThumbnailHeight + 2;
@@ -3583,10 +3578,10 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
         break;
     }
 
-    case vmTiles:
+    case ViewMode::tiles:
     {
-        int w = IconSizes[ICONSIZE_48];
-        int h = IconSizes[ICONSIZE_48];
+        int w = IconSizes[IconSize::size_48x48];
+        int h = IconSizes[IconSize::size_48x48];
         if (w < 48)
             w = 48; // pro 32x32 sirka nedostacovala
         w += (int)(2.5 * (double)w);
@@ -3596,7 +3591,7 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
         break;
     }
 
-    case vmDetailed:
+    case ViewMode::detailed:
     {
         // Detailed view
         int columnWidthName = 0;
@@ -3725,7 +3720,7 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
                     nameLen = extIsInExtColumn ? (int)(f->Ext - f->Name - 1) : f->NameLen;
 
                     GetTextExtentPoint32(dc, formatedFileName, nameLen, &act);
-                    act.cx += 1 + IconSizes[ICONSIZE_16] + 1 + 2 + SPACE_WIDTH;
+                    act.cx += 1 + IconSizes[IconSize::size_16x16] + 1 + 2 + SPACE_WIDTH;
                     if (columnWidthName < act.cx)
                         columnWidthName = act.cx;
                     if (nameColWidths != NULL)
@@ -4053,8 +4048,8 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
         CaretHeight = (short)FontCharHeight;
 
         int cy = FontCharHeight + 4;
-        if (cy < IconSizes[ICONSIZE_16] + 1)
-            cy = IconSizes[ICONSIZE_16] + 1;
+        if (cy < IconSizes[IconSize::size_16x16] + 1)
+            cy = IconSizes[IconSize::size_16x16] + 1;
         ListBox->SetItemWidthHeight(totalWidth, cy);
         break;
     }
@@ -4070,7 +4065,7 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
         FocusedIndex = suggestedFocusIndex;
         // pokud neni doporucen TopIndex nebo je vyzadovana
         // viditelnost focusIndex, napocitam novy TopIndex
-        // -- prehlednejsi verze s podporou pro vmIcons a vmThumbnails
+        // -- prehlednejsi verze s podporou pro ViewMode::icons a ViewMode::thumbnails
         // -- zmena pro castecne viditelne polozky: drive se prepocital TopIndex
         //    a doslo ke zbytecnemu cuknuti; ted TopIndex nechavame nezmeneny
 
@@ -4084,7 +4079,7 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
                 // musime zajistit viditelnost focusu
                 switch (ListBox->ViewMode)
                 {
-                case vmBrief:
+                case ViewMode::brief:
                 {
                     if (suggestedFocusIndex < suggestedTopIndex)
                         break; // focus lezi pred panelem, musime najit lepsi TopIndex
@@ -4113,7 +4108,7 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
                     break;
                 }
 
-                case vmDetailed:
+                case ViewMode::detailed:
                 {
                     if (suggestedFocusIndex < suggestedTopIndex)
                         break; // focus lezi nad panelem, musime najit lepsi TopIndex
@@ -4140,9 +4135,9 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
                     break;
                 }
 
-                case vmIcons:
-                case vmThumbnails:
-                case vmTiles:
+                case ViewMode::icons:
+                case ViewMode::thumbnails:
+                case ViewMode::tiles:
                 {
                     int suggestedTop = ListBox->FilesRect.top + (suggestedFocusIndex /
                                                                  ListBox->ColumnsCount) *
@@ -4187,9 +4182,9 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
     // viditelnost focusIndex, napocitam novy TopIndex
     if (suggestedTopIndex == -1 || (ensureFocusIndexVisible &&
                                     (suggestedFocusIndex < suggestedTopIndex ||
-                                     ListBox->Mode == vmDetailed &&
+                                     ListBox->Mode == ViewMode::detailed &&
                                      suggestedTopIndex + ListBox->EntireItemsInColumn <= suggestedFocusIndex ||
-                                     ListBox->Mode != vmDetailed &&
+                                     ListBox->Mode != ViewMode::detailed &&
                                      suggestedTopIndex + ((ListBox->FilesRect.right -
                                       ListBox->FilesRect.left) / ListBox->ItemWidth) *
                                       ListBox->EntireItemsInColumn <= suggestedFocusIndex)
@@ -4214,7 +4209,7 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
     if (suggestedXOffset == -1)
     {
         suggestedXOffset = 0;
-        if (ListBox->ViewMode == vmDetailed)
+        if (ListBox->ViewMode == ViewMode::detailed)
             suggestedXOffset = ListBox->GetXOffset();
     }
     if (suggestedTopIndex == -1)
@@ -4235,10 +4230,10 @@ void CFilesWindow::RefreshListBox(int suggestedXOffset,
                                                     //TRACE_I("refreshlist: end");
 }
 
-int CFilesWindow::GetResidualColumnWidth(int nameColWidth)
+int CPanelWindow::GetResidualColumnWidth(int nameColWidth)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::GetResidualColumnWidth()");
-    if (GetViewMode() == vmBrief)
+    CALL_STACK_MESSAGE1("CPanelWindow::GetResidualColumnWidth()");
+    if (GetViewMode() == ViewMode::brief)
         return 0;
 
     int colsWidth = 0;

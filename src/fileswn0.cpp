@@ -20,7 +20,7 @@
 //
 //
 
-void CFilesWindow::EndQuickSearch()
+void CPanelWindow::EndQuickSearch()
 {
     CALL_STACK_MESSAGE_NONE
     QuickSearchMode = FALSE;
@@ -32,9 +32,9 @@ void CFilesWindow::EndQuickSearch()
 }
 
 // Hleda dalsi/prechozi polozku. Pri skip = TRUE preskoci polozku aktualni
-BOOL CFilesWindow::QSFindNext(int currentIndex, BOOL next, BOOL skip, BOOL wholeString, char newChar, int& index)
+BOOL CPanelWindow::QSFindNext(int currentIndex, BOOL next, BOOL skip, BOOL wholeString, char newChar, int& index)
 {
-    CALL_STACK_MESSAGE6("CFilesWindow::QSFindNext(%d, %d, %d, %d, %u)", currentIndex, next, skip, wholeString, newChar);
+    CALL_STACK_MESSAGE6("CPanelWindow::QSFindNext(%d, %d, %d, %d, %u)", currentIndex, next, skip, wholeString, newChar);
     int len = (int)strlen(QuickSearchMask);
     if (newChar != 0)
     {
@@ -119,9 +119,9 @@ BOOL CFilesWindow::QSFindNext(int currentIndex, BOOL next, BOOL skip, BOOL whole
 }
 
 // Hleda dalsi/prechozi vybranou polozku. Pri skip = TRUE preskoci polozku aktualni
-BOOL CFilesWindow::SelectFindNext(int currentIndex, BOOL next, BOOL skip, int& index)
+BOOL CPanelWindow::SelectFindNext(int currentIndex, BOOL next, BOOL skip, int& index)
 {
-    CALL_STACK_MESSAGE4("CFilesWindow::SelectFindNext(%d, %d, %d)", currentIndex, next, skip);
+    CALL_STACK_MESSAGE4("CPanelWindow::SelectFindNext(%d, %d, %d)", currentIndex, next, skip);
 
     int delta = skip ? 1 : 0;
 
@@ -133,7 +133,7 @@ BOOL CFilesWindow::SelectFindNext(int currentIndex, BOOL next, BOOL skip, int& i
         for (i = currentIndex + delta; i < count; i++)
         {
             char* name = (i < dirCount) ? Dirs->At(i).Name : Files->At(i - dirCount).Name;
-            BOOL sel = GetSel(i);
+            BOOL sel = GetSelected(i);
             if (sel)
             {
                 index = i;
@@ -147,7 +147,7 @@ BOOL CFilesWindow::SelectFindNext(int currentIndex, BOOL next, BOOL skip, int& i
         for (i = currentIndex - delta; i >= 0; i--)
         {
             char* name = (i < dirCount) ? Dirs->At(i).Name : Files->At(i - dirCount).Name;
-            BOOL sel = GetSel(i);
+            BOOL sel = GetSelected(i);
             if (sel)
             {
                 index = i;
@@ -158,7 +158,7 @@ BOOL CFilesWindow::SelectFindNext(int currentIndex, BOOL next, BOOL skip, int& i
     return FALSE;
 }
 
-BOOL CFilesWindow::IsNethoodFS()
+BOOL CPanelWindow::IsNethoodFS()
 {
     CPluginData* nethoodPlugin;
     return Is(ptPluginFS) && GetPluginFS()->NotEmpty() &&
@@ -166,9 +166,9 @@ BOOL CFilesWindow::IsNethoodFS()
            GetPluginFS()->GetDLLName() == nethoodPlugin->DLLName;
 }
 
-void CFilesWindow::CtrlPageDnOrEnter(WPARAM key)
+void CPanelWindow::CtrlPageDnOrEnter(WPARAM key)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::CtrlPageDnOrEnter(0x%IX)", key);
+    CALL_STACK_MESSAGE2("CPanelWindow::CtrlPageDnOrEnter(0x%IX)", key);
     if (key == VK_RETURN && (GetKeyState(VK_MENU) & 0x8000)) // properties
     {
         PostMessage(MainWindow->HWindow, WM_COMMAND, CM_PROPERTIES, 0);
@@ -190,9 +190,9 @@ void CFilesWindow::CtrlPageDnOrEnter(WPARAM key)
     }
 }
 
-void CFilesWindow::CtrlPageUpOrBackspace()
+void CPanelWindow::CtrlPageUpOrBackspace()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::CtrlPageUpOrBackspace()");
+    CALL_STACK_MESSAGE1("CPanelWindow::CtrlPageUpOrBackspace()");
     if (Dirs->Count + Files->Count == 0)
         RefreshDirectory();
     else if (Dirs->Count > 0 && strcmp(Dirs->At(0).Name, "..") == 0)
@@ -201,9 +201,9 @@ void CFilesWindow::CtrlPageUpOrBackspace()
     }
 }
 
-void CFilesWindow::FocusShortcutTarget(CFilesWindow* panel)
+void CPanelWindow::FocusShortcutTarget(CPanelWindow* panel)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::FocusShortcutTarget()");
+    CALL_STACK_MESSAGE1("CPanelWindow::FocusShortcutTarget()");
     int index = GetCaretIndex();
     if (index >= Dirs->Count + Files->Count)
         return;
@@ -340,13 +340,13 @@ void CFilesWindow::FocusShortcutTarget(CFilesWindow* panel)
     }
 }
 
-void CFilesWindow::SetCaretIndex(int index, int scroll, BOOL forcePaint)
+void CPanelWindow::SetCaretIndex(int index, int scroll, BOOL forcePaint)
 {
-    CALL_STACK_MESSAGE4("CFilesWindow::SetCaretIndex(%d, %d, %d)", index, scroll, forcePaint);
+    CALL_STACK_MESSAGE4("CPanelWindow::SetCaretIndex(%d, %d, %d)", index, scroll, forcePaint);
     if (FocusedIndex != index)
     {
         BOOL normalProcessing = TRUE;
-        if (!scroll && GetViewMode() == vmDetailed)
+        if (!scroll && GetViewMode() == ViewMode::detailed)
         {
             int newTopIndex = ListBox->PredictTopIndex(index);
             // optimalizace prijde ke slovu pouze v pripade, ze se meni TopIndex
@@ -383,25 +383,37 @@ void CFilesWindow::SetCaretIndex(int index, int scroll, BOOL forcePaint)
     }
 }
 
-int CFilesWindow::GetCaretIndex()
+int CPanelWindow::GetCaretIndex()
 {
     CALL_STACK_MESSAGE_NONE
+
+//Get focused file/folder.
     int index = FocusedIndex;
+
+//Validate it.
     int count = Files->Count + Dirs->Count;
+
     if (index >= count)
+    {
+    //Out of bounds -> select last file/folder.
         index = count - 1;
+    }
     if (index < 0)
+    {
+    //Invalid index -> reset it.
         index = 0;
+    }
+
     return index;
 }
 
-void CFilesWindow::SelectFocusedIndex()
+void CPanelWindow::SelectFocusedIndex()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::SelectFocusedIndex()");
+    CALL_STACK_MESSAGE1("CPanelWindow::SelectFocusedIndex()");
     if (Dirs->Count + Files->Count > 0)
     {
         int index = GetCaretIndex();
-        SetSel(!GetSel(index), index);
+        SetSelected(!GetSelected(index), index);
         if (index + 1 >= 0 && index + 1 < Dirs->Count + Files->Count) // posun
             SetCaretIndex(index + 1, FALSE);
         else
@@ -410,7 +422,7 @@ void CFilesWindow::SelectFocusedIndex()
     }
 }
 
-void CFilesWindow::SetDropTarget(int index)
+void CPanelWindow::SetDropTarget(int index)
 {
     CALL_STACK_MESSAGE_NONE
     if (DropTargetIndex != index)
@@ -424,7 +436,7 @@ void CFilesWindow::SetDropTarget(int index)
     }
 }
 
-void CFilesWindow::SetSingleClickIndex(int index)
+void CPanelWindow::SetSingleClickIndex(int index)
 {
     CALL_STACK_MESSAGE_NONE
     DWORD pos = GetMessagePos();
@@ -454,16 +466,16 @@ void CFilesWindow::SetSingleClickIndex(int index)
         SetCursor(LoadCursor(NULL, IDC_ARROW));
 }
 
-void CFilesWindow::DrawDragBox(POINT p)
+void CPanelWindow::DrawDragBox(POINT p)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::DrawDragBox()");
+    CALL_STACK_MESSAGE1("CPanelWindow::DrawDragBox()");
     FilesMap.DrawDragBox(p);
     DragBoxVisible = 1 - DragBoxVisible;
 }
 
-void CFilesWindow::EndDragBox()
+void CPanelWindow::EndDragBox()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::EndDragBox()");
+    CALL_STACK_MESSAGE1("CPanelWindow::EndDragBox()");
     if (DragBox)
     {
         ReleaseCapture();
@@ -474,7 +486,7 @@ void CFilesWindow::EndDragBox()
     }
 }
 
-void CFilesWindow::SafeHandleMenuNewMsg2(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT* plResult)
+void CPanelWindow::SafeHandleMenuNewMsg2(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT* plResult)
 {
     CALL_STACK_MESSAGE_NONE
     __try
@@ -500,9 +512,9 @@ void CFilesWindow::SafeHandleMenuNewMsg2(UINT uMsg, WPARAM wParam, LPARAM lParam
     }
 }
 
-void CFilesWindow::RegisterDragDrop()
+void CPanelWindow::RegisterDragDrop()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::RegisterDragDrop()");
+    CALL_STACK_MESSAGE1("CPanelWindow::RegisterDragDrop()");
     CImpDropTarget* dropTarget = new CImpDropTarget(MainWindow->HWindow, DoCopyMove, this,
                                                     GetCurrentDir, this,
                                                     DropEnd, this,
@@ -519,31 +531,31 @@ void CFilesWindow::RegisterDragDrop()
     }
 }
 
-void CFilesWindow::RevokeDragDrop()
+void CPanelWindow::RevokeDragDrop()
 {
     CALL_STACK_MESSAGE_NONE
     HANDLES(RevokeDragDrop(ListBox->HWindow));
 }
 
-HWND CFilesWindow::GetListBoxHWND()
+HWND CPanelWindow::GetListBoxHWND()
 {
     CALL_STACK_MESSAGE_NONE
     return ListBox->HWindow;
 }
 
-HWND CFilesWindow::GetHeaderLineHWND()
+HWND CPanelWindow::GetHeaderLineHWND()
 {
     CALL_STACK_MESSAGE_NONE
     return ListBox->HeaderLine.HWindow;
 }
 
-int CFilesWindow::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
+int CPanelWindow::GetIndex(int x, int y, BOOL nearest, RECT* labelRect)
 {
     CALL_STACK_MESSAGE_NONE
     return ListBox->GetIndex(x, y, nearest, labelRect);
 }
 
-void CFilesWindow::SetSel(BOOL select, int index, BOOL repaintDirtyItems)
+void CPanelWindow::SetSelected(BOOL select, int index, BOOL repaintDirtyItems)
 {
     CALL_STACK_MESSAGE_NONE
     int totalCount = Dirs->Count + Files->Count;
@@ -610,7 +622,7 @@ void CFilesWindow::SetSel(BOOL select, int index, BOOL repaintDirtyItems)
     }
 }
 
-void CFilesWindow::SetSel(BOOL select, CFileData* data)
+void CPanelWindow::SetSelected(BOOL select, CFileData* data)
 {
     CALL_STACK_MESSAGE_NONE
     BYTE sel = select ? 1 : 0;
@@ -622,7 +634,7 @@ void CFilesWindow::SetSel(BOOL select, CFileData* data)
     }
 }
 
-BOOL CFilesWindow::GetSel(int index)
+BOOL CPanelWindow::GetSelected(int index)
 {
     CALL_STACK_MESSAGE_NONE
     if (index < 0 || index >= Dirs->Count + Files->Count)
@@ -634,7 +646,7 @@ BOOL CFilesWindow::GetSel(int index)
     return (item->Selected == 1);
 }
 
-int CFilesWindow::GetSelItems(int itemsCountMax, int* items, BOOL /*focusedItemFirst*/)
+int CPanelWindow::GetSelectedItems(int itemsCountMax, int* items, BOOL /*focusedItemFirst*/)
 {
     CALL_STACK_MESSAGE_NONE
     int index = 0;
@@ -678,10 +690,10 @@ int CFilesWindow::GetSelItems(int itemsCountMax, int* items, BOOL /*focusedItemF
     return index;
 }
 
-BOOL CFilesWindow::SelectionContainsDirectory()
+BOOL CPanelWindow::SelectionContainsDirectory()
 {
     CALL_STACK_MESSAGE_NONE
-    if (GetSelCount() == 0)
+    if (GetSelectedCount() == 0)
     {
         int index = GetCaretIndex();
         if (index < Dirs->Count &&
@@ -706,10 +718,10 @@ BOOL CFilesWindow::SelectionContainsDirectory()
     return FALSE;
 }
 
-BOOL CFilesWindow::SelectionContainsFile()
+BOOL CPanelWindow::SelectionContainsFile()
 {
     CALL_STACK_MESSAGE_NONE
-    if (GetSelCount() == 0)
+    if (GetSelectedCount() == 0)
     {
         int index = GetCaretIndex();
         if (index >= Dirs->Count)
@@ -730,10 +742,10 @@ BOOL CFilesWindow::SelectionContainsFile()
     return FALSE;
 }
 
-void CFilesWindow::SelectFocusedItemAndGetName(char* name, int nameSize)
+void CPanelWindow::SelectFocusedItemAndGetName(char* name, int nameSize)
 {
     name[0] = 0;
-    if (GetSelCount() == 0)
+    if (GetSelectedCount() == 0)
     {
         int deselectIndex = GetCaretIndex();
         if (deselectIndex >= 0 && deselectIndex < Dirs->Count + Files->Count)
@@ -751,14 +763,14 @@ void CFilesWindow::SelectFocusedItemAndGetName(char* name, int nameSize)
             memcpy(name, f->Name, len);
             name[len] = 0;
 
-            SetSel(TRUE, deselectIndex);
+            SetSelected(TRUE, deselectIndex);
             PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
             RepaintListBox(DRAWFLAG_DIRTY_ONLY | DRAWFLAG_SKIP_VISTEST);
         }
     }
 }
 
-void CFilesWindow::UnselectItemWithName(const char* name)
+void CPanelWindow::UnselectItemWithName(const char* name)
 {
     if (name[0] != 0)
     {
@@ -774,7 +786,7 @@ void CFilesWindow::UnselectItemWithName(const char* name)
             {
                 if (RegSetStrCmpEx(f->Name, f->NameLen, name, l, NULL) == 0)
                 {
-                    SetSel(FALSE, i);
+                    SetSelected(FALSE, i);
                     break;
                 }
                 else
@@ -785,14 +797,14 @@ void CFilesWindow::UnselectItemWithName(const char* name)
             }
         }
         if (i == count && foundIndex != -1)
-            SetSel(FALSE, foundIndex);
+            SetSelected(FALSE, foundIndex);
 
         PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
         RepaintListBox(DRAWFLAG_DIRTY_ONLY | DRAWFLAG_SKIP_VISTEST);
     }
 }
 
-BOOL CFilesWindow::SetSelRange(BOOL select, int firstIndex, int lastIndex)
+BOOL CPanelWindow::SetSelectedRange(BOOL select, int firstIndex, int lastIndex)
 {
     CALL_STACK_MESSAGE_NONE
     BOOL selChanged = FALSE;
@@ -832,7 +844,7 @@ BOOL CFilesWindow::SetSelRange(BOOL select, int firstIndex, int lastIndex)
     return selChanged;
 }
 
-int CFilesWindow::GetSelCount()
+int CPanelWindow::GetSelectedCount()
 {
     CALL_STACK_MESSAGE_NONE
 #ifdef _DEBUG
@@ -852,7 +864,7 @@ int CFilesWindow::GetSelCount()
     return SelectedCount;
 }
 
-BOOL CFilesWindow::OnSysChar(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnSysChar(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     if (MainWindow->DragMode || DragBox)
@@ -875,7 +887,7 @@ BOOL CFilesWindow::OnSysChar(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
     return FALSE;
 }
 
-BOOL CFilesWindow::OnChar(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnChar(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     if (SkipCharacter || MainWindow->DragMode || DragBox || !IsWindowEnabled(MainWindow->HWindow))
@@ -932,7 +944,7 @@ BOOL CFilesWindow::OnChar(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 
         if (!QuickSearchMode) // inicializace hledani
         {
-            if (GetViewMode() == vmDetailed)
+            if (GetViewMode() == ViewMode::detailed)
                 ListBox->OnHScroll(SB_THUMBPOSITION, 0);
             QuickSearchMode = TRUE;
             CreateCaret(ListBox->HWindow, NULL, CARET_WIDTH, CaretHeight);
@@ -963,7 +975,7 @@ BOOL CFilesWindow::OnChar(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
     return FALSE;
 }
 
-void CFilesWindow::GotoSelectedItem(BOOL next)
+void CPanelWindow::GotoSelectedItem(BOOL next)
 {
     int newFocusedIndex = FocusedIndex;
 
@@ -989,7 +1001,7 @@ void CFilesWindow::GotoSelectedItem(BOOL next)
     }
 }
 
-BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     KillQuickRenameTimer(); // zamezime pripadnemu otevreni QuickRenameWindow
@@ -1008,7 +1020,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
     if (wParam == VK_SHIFT && firstPress && Dirs->Count + Files->Count > 0)
     {
         //    ShiftSelect = TRUE;
-        SelectItems = !GetSel(FocusedIndex);
+        SelectItems = !GetSelected(FocusedIndex);
         //    TRACE_I("VK_SHIFT down");
     }
 
@@ -1060,8 +1072,8 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
         {
             SkipCharacter = TRUE;
             int index = GetCaretIndex();
-            BOOL sel = GetSel(index);
-            SetSel(!sel, index);
+            BOOL sel = GetSelected(index);
+            SetSelected(!sel, index);
             if (!sel && Configuration.SpaceSelCalcSpace && GetCaretIndex() < Dirs->Count)
             {
                 if (Is(ptDisk))
@@ -1444,7 +1456,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
             int lastIndex = GetCaretIndex();
             if (!controlPressed && shiftPressed && !altPressed)
             {
-                SetSel(SelectItems, lastIndex, TRUE);
+                SetSelected(SelectItems, lastIndex, TRUE);
                 PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
             }
             BOOL found;
@@ -1454,7 +1466,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                 if (found)
                 {
                     lastIndex = index;
-                    if (GetSel(lastIndex))
+                    if (GetSelected(lastIndex))
                         break;
                 }
             } while (altPressed && found);
@@ -1471,7 +1483,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
             int lastIndex = GetCaretIndex();
             if (!controlPressed && shiftPressed && !altPressed)
             {
-                SetSel(SelectItems, lastIndex, TRUE);
+                SetSelected(SelectItems, lastIndex, TRUE);
                 PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
             }
             BOOL found;
@@ -1481,7 +1493,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                 if (found)
                 {
                     lastIndex = index;
-                    if (GetSel(lastIndex))
+                    if (GetSelected(lastIndex))
                         break;
                 }
             } while (altPressed && found);
@@ -1500,7 +1512,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
             {
                 if (!controlPressed && shiftPressed && !altPressed)
                 {
-                    SetSel(SelectItems, newIndex, TRUE);
+                    SetSelected(SelectItems, newIndex, TRUE);
                     PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
                 }
                 found = QSFindNext(newIndex, FALSE, TRUE, FALSE, (char)0, index);
@@ -1522,7 +1534,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
             {
                 if (!controlPressed && shiftPressed && !altPressed)
                 {
-                    SetSel(SelectItems, newIndex, TRUE);
+                    SetSelected(SelectItems, newIndex, TRUE);
                     PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
                 }
                 found = QSFindNext(newIndex, TRUE, TRUE, FALSE, (char)0, index);
@@ -1543,7 +1555,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                 BOOL found;
                 do
                 {
-                    SetSel(SelectItems, newIndex, TRUE);
+                    SetSelected(SelectItems, newIndex, TRUE);
                     found = QSFindNext(newIndex, FALSE, TRUE, FALSE, (char)0, index);
                     if (found)
                         newIndex = index;
@@ -1560,7 +1572,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                 {
                     found = QSFindNext(index, TRUE, skip, FALSE, (char)0, index);
                     skip = TRUE;
-                    if (found && GetSel(index))
+                    if (found && GetSelected(index))
                         break;
                 } while (altPressed && found);
                 if (found)
@@ -1580,7 +1592,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                 BOOL found;
                 do
                 {
-                    SetSel(SelectItems, newIndex, TRUE);
+                    SetSelected(SelectItems, newIndex, TRUE);
                     found = QSFindNext(newIndex, TRUE, TRUE, FALSE, (char)0, index);
                     if (found)
                         newIndex = index;
@@ -1597,7 +1609,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                 {
                     found = QSFindNext(index, FALSE, skip, FALSE, (char)0, index);
                     skip = TRUE;
-                    if (found && GetSel(index))
+                    if (found && GetSelected(index))
                         break;
                 } while (altPressed && found);
                 if (found)
@@ -1684,9 +1696,9 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                 // pripadne rychle posouvame vlevo a vpravo v Detailed modu
                 if (wParam == VK_LEFT)
                 {
-                    if (GetViewMode() == vmBrief)
+                    if (GetViewMode() == ViewMode::brief)
                         SendMessage(ListBox->HWindow, WM_HSCROLL, SB_LINEUP, 0);
-                    else if (GetViewMode() == vmDetailed)
+                    else if (GetViewMode() == ViewMode::detailed)
                     {
                         int i;
                         for (i = 0; i < 5; i++) // dame si trochu makro programovani
@@ -1697,9 +1709,9 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
 
                 if (wParam == VK_RIGHT)
                 {
-                    if (GetViewMode() == vmBrief)
+                    if (GetViewMode() == ViewMode::brief)
                         SendMessage(ListBox->HWindow, WM_HSCROLL, SB_LINEDOWN, 0);
-                    else if (GetViewMode() == vmDetailed)
+                    else if (GetViewMode() == ViewMode::detailed)
                     {
                         int i;
                         for (i = 0; i < 5; i++) // dame si trochu makro programovani
@@ -1710,20 +1722,20 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
 
                 if (wParam == VK_UP)
                 {
-                    if (GetViewMode() == vmDetailed ||
-                        GetViewMode() == vmIcons ||
-                        GetViewMode() == vmThumbnails ||
-                        GetViewMode() == vmTiles)
+                    if (GetViewMode() == ViewMode::detailed ||
+                        GetViewMode() == ViewMode::icons ||
+                        GetViewMode() == ViewMode::thumbnails ||
+                        GetViewMode() == ViewMode::tiles)
                         SendMessage(ListBox->HWindow, WM_VSCROLL, SB_LINEUP, 0);
                     break;
                 }
 
                 if (wParam == VK_DOWN)
                 {
-                    if (GetViewMode() == vmDetailed ||
-                        GetViewMode() == vmIcons ||
-                        GetViewMode() == vmThumbnails ||
-                        GetViewMode() == vmTiles)
+                    if (GetViewMode() == ViewMode::detailed ||
+                        GetViewMode() == ViewMode::icons ||
+                        GetViewMode() == ViewMode::thumbnails ||
+                        GetViewMode() == ViewMode::tiles)
                         SendMessage(ListBox->HWindow, WM_VSCROLL, SB_LINEDOWN, 0);
                     break;
                 }
@@ -1749,16 +1761,16 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                         // posuneme kurzor o jeden radek nahoru
                         switch (GetViewMode())
                         {
-                        case vmDetailed:
-                        case vmBrief:
+                        case ViewMode::detailed:
+                        case ViewMode::brief:
                         {
                             newFocusedIndex--;
                             break;
                         }
 
-                        case vmIcons:
-                        case vmThumbnails:
-                        case vmTiles:
+                        case ViewMode::icons:
+                        case ViewMode::thumbnails:
+                        case ViewMode::tiles:
                         {
                             newFocusedIndex -= ListBox->ColumnsCount;
                             if (newFocusedIndex < 0)
@@ -1791,16 +1803,16 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                         switch (GetViewMode())
                         {
                         // posuneme kurzor o jeden radek dolu
-                        case vmDetailed:
-                        case vmBrief:
+                        case ViewMode::detailed:
+                        case ViewMode::brief:
                         {
                             newFocusedIndex++;
                             break;
                         }
 
-                        case vmIcons:
-                        case vmThumbnails:
-                        case vmTiles:
+                        case ViewMode::icons:
+                        case ViewMode::thumbnails:
+                        case ViewMode::tiles:
                         {
                             newFocusedIndex += ListBox->ColumnsCount;
                             if (newFocusedIndex >= Dirs->Count + Files->Count)
@@ -1823,21 +1835,21 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                 int c;
                 switch (GetViewMode())
                 {
-                case vmDetailed:
+                case ViewMode::detailed:
                 {
                     c = ListBox->GetEntireItemsInColumn() - 1;
                     break;
                 }
 
-                case vmBrief:
+                case ViewMode::brief:
                 {
                     c = ListBox->EntireColumnsCount * ListBox->EntireItemsInColumn;
                     break;
                 }
 
-                case vmIcons:
-                case vmThumbnails:
-                case vmTiles:
+                case ViewMode::icons:
+                case ViewMode::thumbnails:
+                case ViewMode::tiles:
                 {
                     c = ListBox->EntireItemsInColumn * ListBox->ColumnsCount;
                     break;
@@ -1872,14 +1884,14 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
             {
                 switch (GetViewMode())
                 {
-                case vmDetailed:
+                case ViewMode::detailed:
                 {
                     SendMessage(ListBox->HWindow, WM_HSCROLL, SB_LINEUP, 0);
                     break;
                 }
 
                 // posuneme kurzor o jeden sloupec vlevo
-                case vmBrief:
+                case ViewMode::brief:
                 {
                     // zajistime skok na nultou polozku, pokud jsme v nultem sloupci
                     newFocusedIndex -= ListBox->GetEntireItemsInColumn();
@@ -1892,9 +1904,9 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                     break;
                 }
 
-                case vmIcons:
-                case vmThumbnails:
-                case vmTiles:
+                case ViewMode::icons:
+                case ViewMode::thumbnails:
+                case ViewMode::tiles:
                 {
                     if (newFocusedIndex > 0)
                         newFocusedIndex--;
@@ -1909,14 +1921,14 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
             {
                 switch (GetViewMode())
                 {
-                case vmDetailed:
+                case ViewMode::detailed:
                 {
                     SendMessage(ListBox->HWindow, WM_HSCROLL, SB_LINEDOWN, 0);
                     break;
                 }
 
                 // posuneme kurzor o jeden sloupec vlevo
-                case vmBrief:
+                case ViewMode::brief:
                 {
                     // zajistime skok na posledni polozku, pokud jsme v poslednim sloupci
                     newFocusedIndex += ListBox->GetEntireItemsInColumn();
@@ -1929,9 +1941,9 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                     break;
                 }
 
-                case vmIcons:
-                case vmThumbnails:
-                case vmTiles:
+                case ViewMode::icons:
+                case ViewMode::thumbnails:
+                case ViewMode::tiles:
                 {
                     if (newFocusedIndex < Dirs->Count + Files->Count - 1)
                         newFocusedIndex++;
@@ -1987,7 +1999,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
                             targetIndex++;
                     }
                     // pokud se nejaka polozka zmenila, posteneme refresh
-                    if (SetSelRange(select, targetIndex, FocusedIndex))
+                    if (SetSelectedRange(select, targetIndex, FocusedIndex))
                         PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0);
                 }
                 int oldIndex = FocusedIndex;
@@ -2012,7 +2024,7 @@ BOOL CFilesWindow::OnSysKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT
     return FALSE;
 }
 
-BOOL CFilesWindow::OnSysKeyUp(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
+BOOL CPanelWindow::OnSysKeyUp(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 {
     CALL_STACK_MESSAGE_NONE
     /*
@@ -2029,7 +2041,7 @@ BOOL CFilesWindow::OnSysKeyUp(WPARAM wParam, LPARAM lParam, LRESULT* lResult)
 // pristi WM_SETFOCUS v panelu bude pouze invalidatnut - neprovede se hned
 BOOL CacheNextSetFocus = FALSE;
 
-void CFilesWindow::OnSetFocus(BOOL focusVisible)
+void CPanelWindow::OnSetFocus(BOOL focusVisible)
 {
     CALL_STACK_MESSAGE_NONE
     BOOL hideCommandLine = FALSE;
@@ -2067,7 +2079,7 @@ void CFilesWindow::OnSetFocus(BOOL focusVisible)
     }
 }
 
-void CFilesWindow::OnKillFocus(HWND hwndGetFocus)
+void CPanelWindow::OnKillFocus(HWND hwndGetFocus)
 {
     CALL_STACK_MESSAGE_NONE
     if (Parent->EditWindowKnowHWND(hwndGetFocus))
@@ -2087,7 +2099,7 @@ void CFilesWindow::OnKillFocus(HWND hwndGetFocus)
     }
 }
 
-void CFilesWindow::RepaintIconOnly(int index)
+void CPanelWindow::RepaintIconOnly(int index)
 {
     CALL_STACK_MESSAGE_NONE
     if (index == -1)
@@ -2156,7 +2168,7 @@ void ReleaseListingBody(CPanelType oldPanelType, CSalamanderDirectory*& oldArchi
     }
 }
 
-BOOL CFilesWindow::IsCaseSensitive()
+BOOL CPanelWindow::IsCaseSensitive()
 {
     if (Is(ptZIPArchive))
         return (GetArchiveDir()->GetFlags() & SALDIRFLAG_CASESENSITIVE) != 0;
@@ -2248,9 +2260,9 @@ BOOL AreTheSameFiles(DWORD validFileData, CPluginDataInterfaceEncapsulation* plu
     return FALSE;
 }
 
-void CFilesWindow::RefreshDirectory(BOOL probablyUselessRefresh, BOOL forceReloadThumbnails, BOOL isInactiveRefresh)
+void CPanelWindow::RefreshDirectory(BOOL probablyUselessRefresh, BOOL forceReloadThumbnails, BOOL isInactiveRefresh)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::RefreshDirectory()");
+    CALL_STACK_MESSAGE1("CPanelWindow::RefreshDirectory()");
     //  if (QuickSearchMode) EndQuickSearch();   // budeme se snazit, aby quick search rezim prezil refresh
 
 #ifdef _DEBUG
@@ -2573,7 +2585,7 @@ void CFilesWindow::RefreshDirectory(BOOL probablyUselessRefresh, BOOL forceReloa
 
     default:
     {
-        TRACE_E("Unexpected situation (unknown type of plugin) in CFilesWindow::RefreshDirectory().");
+        TRACE_E("Unexpected situation (unknown type of plugin) in CPanelWindow::RefreshDirectory().");
         result = FALSE;
         noChange = TRUE;
         break;
@@ -2794,7 +2806,7 @@ void CFilesWindow::RefreshDirectory(BOOL probablyUselessRefresh, BOOL forceReloa
                         {
                             // preneseme hodnoty ze stare do nove polozky
                             if (oldData->Selected)
-                                SetSel(TRUE, newData);
+                                SetSelected(TRUE, newData);
                             newData->SizeValid = oldData->SizeValid;
                             if (newData->SizeValid)
                                 newData->Size = oldData->Size;
@@ -2878,7 +2890,7 @@ void CFilesWindow::RefreshDirectory(BOOL probablyUselessRefresh, BOOL forceReloa
                         {
                             // preneseme hodnoty ze stare do nove polozky
                             if (oldData->Selected)
-                                SetSel(TRUE, newData);
+                                SetSelected(TRUE, newData);
                             newData->CutToClip = oldData->CutToClip;
                             newData->IconOverlayIndex = oldData->IconOverlayIndex;
                         }
@@ -3109,27 +3121,27 @@ void CFilesWindow::RefreshDirectory(BOOL probablyUselessRefresh, BOOL forceReloa
         SetCursor(oldCur);
 }
 
-void CFilesWindow::LayoutListBoxChilds()
+void CPanelWindow::LayoutListBoxChilds()
 {
     CALL_STACK_MESSAGE_NONE
     ListBox->LayoutChilds(FALSE);
 }
 
-void CFilesWindow::RepaintListBox(DWORD drawFlags)
+void CPanelWindow::RepaintListBox(DWORD drawFlags)
 {
     CALL_STACK_MESSAGE_NONE
     ListBox->PaintAllItems(NULL, drawFlags);
 }
 
-void CFilesWindow::EnsureItemVisible(int index)
+void CPanelWindow::EnsureItemVisible(int index)
 {
     CALL_STACK_MESSAGE_NONE
     ListBox->EnsureItemVisible(index, FALSE);
 }
 
-void CFilesWindow::SetQuickSearchCaretPos()
+void CPanelWindow::SetQuickSearchCaretPos()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::SetQuickSearchCaretPos()");
+    CALL_STACK_MESSAGE1("CPanelWindow::SetQuickSearchCaretPos()");
     if (!QuickSearchMode || FocusedIndex < 0 || FocusedIndex >= Dirs->Count + Files->Count)
         return;
 
@@ -3153,13 +3165,13 @@ void CFilesWindow::SetQuickSearchCaretPos()
     char* ss;
     BOOL ext = FALSE;
     int offset = 0;
-    if ((!isDir || Configuration.SortDirsByExt) && GetViewMode() == vmDetailed &&
+    if ((!isDir || Configuration.SortDirsByExt) && GetViewMode() == ViewMode::detailed &&
         IsExtensionInSeparateColumn() && file->Ext[0] != 0 && file->Ext > file->Name + 1 && // vyjimka pro jmena jako ".htaccess", ukazuji se ve sloupci Name i kdyz jde o pripony
         qsLen >= preLen)
     {
         ss = formatedFileName + preLen;
         qsLen -= preLen;
-        offset = Columns[0].Width + 4 - (3 + IconSizes[ICONSIZE_16]);
+        offset = Columns[0].Width + 4 - (3 + IconSizes[IconSize::size_16x16]);
         ext = TRUE;
     }
     else
@@ -3183,25 +3195,25 @@ void CFilesWindow::SetQuickSearchCaretPos()
         int x = 0, y = 0;
         switch (GetViewMode())
         {
-        case vmBrief:
-        case vmDetailed:
+        case ViewMode::brief:
+        case ViewMode::detailed:
         {
-            x = r.left + 3 + IconSizes[ICONSIZE_16] + s.cx + offset;
+            x = r.left + 3 + IconSizes[IconSize::size_16x16] + s.cx + offset;
             y = r.top + 2;
             // pokud je rucne omezena sirka sloupce Name, zajistime zastaveni
             // caretu na maximalni sirce; jinak poleze do dalsich sloupcu
-            if (GetViewMode() == vmDetailed && !ext && x >= (int)Columns[0].Width)
+            if (GetViewMode() == ViewMode::detailed && !ext && x >= (int)Columns[0].Width)
                 x = Columns[0].Width - 3;
             x -= ListBox->XOffset;
             break;
         }
 
-        case vmThumbnails:
-        case vmIcons:
+        case ViewMode::thumbnails:
+        case ViewMode::icons:
         {
             // zatim kaslu na situaci, kdy by kurzor mel stat na druhem radku
             int iconH = 2 + 32;
-            if (GetViewMode() == vmThumbnails)
+            if (GetViewMode() == ViewMode::thumbnails)
             {
                 iconH = 3 + ListBox->ThumbnailHeight + 2;
             }
@@ -3228,11 +3240,11 @@ void CFilesWindow::SetQuickSearchCaretPos()
             break;
         }
 
-        case vmTiles:
+        case ViewMode::tiles:
         {
             // POZOR: udrzovat v konzistenci s CFilesBox::GetIndex, viz volani GetTileTexts
             //        int itemWidth = rect.right - rect.left; // sirka polozky
-            int maxTextWidth = ListBox->ItemWidth - TILE_LEFT_MARGIN - IconSizes[ICONSIZE_48] - TILE_LEFT_MARGIN - 4;
+            int maxTextWidth = ListBox->ItemWidth - TILE_LEFT_MARGIN - IconSizes[IconSize::size_48x48] - TILE_LEFT_MARGIN - 4;
             int widthNeeded = 0;
 
             char buff[3 * 512]; // cilovy buffer pro retezce
@@ -3257,8 +3269,8 @@ void CFilesWindow::SetQuickSearchCaretPos()
                 visibleLines++;
             int textH = visibleLines * FontCharHeight + 4;
 
-            int iconW = IconSizes[ICONSIZE_48];
-            int iconH = IconSizes[ICONSIZE_48];
+            int iconW = IconSizes[IconSize::size_48x48];
+            int iconH = IconSizes[IconSize::size_48x48];
 
             if (s.cx > maxTextWidth)
                 s.cx = maxTextWidth;
@@ -3279,7 +3291,7 @@ void CFilesWindow::SetQuickSearchCaretPos()
     SelectObject(hDC, hOldFont);
 }
 
-void CFilesWindow::SetupListBoxScrollBars()
+void CPanelWindow::SetupListBoxScrollBars()
 {
     CALL_STACK_MESSAGE_NONE
     ListBox->OldVertSI.cbSize = 0; // force call to SetScrollInfo
@@ -3287,9 +3299,9 @@ void CFilesWindow::SetupListBoxScrollBars()
     ListBox->SetupScrollBars(UPDATE_HORZ_SCROLL | UPDATE_VERT_SCROLL);
 }
 
-void CFilesWindow::RefreshForConfig()
+void CPanelWindow::RefreshForConfig()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::RefreshForConfig()");
+    CALL_STACK_MESSAGE1("CPanelWindow::RefreshForConfig()");
     if (Is(ptZIPArchive))
     { // u archivu zajistime refresh tak, ze poskodime znamku archivu
         SetZIPArchiveSize(CQuadWord(-1, -1));
@@ -3304,7 +3316,7 @@ void CFilesWindow::RefreshForConfig()
 
 // doslo ke zmene barev nebo barevne hloubky obrazovky; uz jsou vytvorene nove imagelisty
 // pro tooblary a je treba je priradit controlum, ktere je pozuivaji
-void CFilesWindow::OnColorsChanged()
+void CPanelWindow::OnColorsChanged()
 {
     if (DirectoryLine != NULL && DirectoryLine->ToolBar != NULL)
     {
@@ -3329,36 +3341,34 @@ void CFilesWindow::OnColorsChanged()
     }
 }
 
-CViewModeEnum
-CFilesWindow::GetViewMode()
+ViewMode::Value CPanelWindow::GetViewMode()
 {
     if (ListBox == NULL)
     {
         TRACE_E("ListBox == NULL");
-        return vmDetailed;
+        return ViewMode::detailed;
     }
     return ListBox->ViewMode;
 }
 
-CIconSizeEnum
-CFilesWindow::GetIconSizeForCurrentViewMode()
+IconSize::Value CPanelWindow::GetIconSizeForCurrentViewMode()
 {
-    CViewModeEnum viewMode = GetViewMode();
+    ViewMode::Value viewMode = GetViewMode();
     switch (viewMode)
     {
-    case vmBrief:
-    case vmDetailed:
-        return ICONSIZE_16;
+    case ViewMode::brief:
+    case ViewMode::detailed:
+        return IconSize::size_16x16;
 
-    case vmIcons:
-        return ICONSIZE_32;
+    case ViewMode::icons:
+        return IconSize::size_32x32;
 
-    case vmTiles:
-    case vmThumbnails:
-        return ICONSIZE_48;
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
+        return IconSize::size_48x48;
 
     default:
         TRACE_E("GetIconSizeForCurrentViewMode() unknown ViewMode=" << viewMode);
-        return ICONSIZE_16;
+        return IconSize::size_16x16;
     }
 }

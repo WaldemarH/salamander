@@ -709,30 +709,30 @@ BOOL InitSpawnName(HWND parent);
 void PackSetErrorHandler(BOOL (*handler)(HWND parent, const WORD errNum, ...));
 
 // zjisteni obsahu archivu
-BOOL PackList(CFilesWindow* panel, const char* archiveFileName, CSalamanderDirectory& dir,
+BOOL PackList(CPanelWindow* panel, const char* archiveFileName, CSalamanderDirectory& dir,
               CPluginDataInterfaceAbstract*& pluginData, CPluginData*& plugin);
 
 // vybaleni pozadovanych souboru z archivu (vola UniversalUncompress)
-BOOL PackUncompress(HWND parent, CFilesWindow* panel, const char* archiveFileName,
+BOOL PackUncompress(HWND parent, CPanelWindow* panel, const char* archiveFileName,
                     CPluginDataInterfaceAbstract* pluginData,
                     const char* targetDir, const char* archiveRoot,
                     SalEnumSelection nextName, void* param);
 
 // Univerzalni rozbaleni archivu (pro rozbaleni celeho archivu)
 BOOL PackUniversalUncompress(HWND parent, const char* command, TPackErrorTable* const errorTable,
-                             const char* initDir, BOOL expandInitDir, CFilesWindow* panel,
+                             const char* initDir, BOOL expandInitDir, CPanelWindow* panel,
                              const BOOL supportLongNames, const char* archiveFileName,
                              const char* targetDir, const char* archiveRoot,
                              SalEnumSelection nextName, void* param, BOOL needANSIListFile);
 
 // Vybaleni jednoho souboru z archivu (pro viewer)
-BOOL PackUnpackOneFile(CFilesWindow* panel, const char* archiveFileName,
+BOOL PackUnpackOneFile(CPanelWindow* panel, const char* archiveFileName,
                        CPluginDataInterfaceAbstract* pluginData, const char* nameInArchive,
                        CFileData* fileData, const char* targetPath, const char* newFileName,
                        BOOL* renamingNotSupported);
 
 // Zabaleni pozadovanych souboru do archivu (vola UniversalCompress)
-BOOL PackCompress(HWND parent, CFilesWindow* panel, const char* archiveFileName,
+BOOL PackCompress(HWND parent, CPanelWindow* panel, const char* archiveFileName,
                   const char* archiveRoot, BOOL move, const char* sourceDir,
                   SalEnumSelection2 nextName, void* param);
 
@@ -744,7 +744,7 @@ BOOL PackUniversalCompress(HWND parent, const char* command, TPackErrorTable* co
                            void* param, BOOL needANSIListFile);
 
 // Vymazani pozadovanych souboru z archivu
-BOOL PackDelFromArc(HWND parent, CFilesWindow* panel, const char* archiveFileName,
+BOOL PackDelFromArc(HWND parent, CPanelWindow* panel, const char* archiveFileName,
                     CPluginDataInterfaceAbstract* pluginData,
                     const char* archiveRoot, SalEnumSelection nextName,
                     void* param);

@@ -46,15 +46,14 @@ void CMainWindow::ClearPluginFSFromHistory(CPluginFSInterfaceAbstract* fs)
     DirHistory->ClearPluginFSFromHistory(fs);
 }
 
-void CMainWindow::DirHistoryAddPathUnique(int type, const char* pathOrArchiveOrFSName,
+void CMainWindow::DirHistoryAddPathUnique(CPathHistoryItem::Type::Value type, const char* pathOrArchiveOrFSName,
                                           const char* archivePathOrFSUserPart, HICON hIcon,
                                           CPluginFSInterfaceAbstract* pluginFS,
                                           CPluginFSInterfaceEncapsulation* curPluginFS)
 {
     if (CanAddToDirHistory)
     {
-        DirHistory->AddPathUnique(type, pathOrArchiveOrFSName, archivePathOrFSUserPart, hIcon,
-                                  pluginFS, curPluginFS);
+        DirHistory->AddPathUnique(type, pathOrArchiveOrFSName, archivePathOrFSUserPart, hIcon, pluginFS, curPluginFS);
         if (LeftPanel != NULL)
             LeftPanel->DirectoryLine->SetHistory(DirHistory->HasPaths());
         if (RightPanel != NULL)
@@ -67,17 +66,17 @@ void CMainWindow::DirHistoryAddPathUnique(int type, const char* pathOrArchiveOrF
     }
 }
 
-void CMainWindow::DirHistoryRemoveActualPath(CFilesWindow* panel)
+void CMainWindow::DirHistoryRemoveActualPath(CPanelWindow* panel)
 {
     if (panel->Is(ptZIPArchive))
     {
-        DirHistory->RemoveActualPath(1, panel->GetZIPArchive(), panel->GetZIPPath(), NULL, NULL);
+        DirHistory->RemoveActualPath( CPathHistoryItem::Type::archiv, panel->GetZIPArchive(), panel->GetZIPPath(), NULL, NULL);
     }
     else
     {
         if (panel->Is(ptDisk))
         {
-            DirHistory->RemoveActualPath(0, panel->GetPath(), NULL, NULL, NULL);
+            DirHistory->RemoveActualPath( CPathHistoryItem::Type::disk, panel->GetPath(), NULL, NULL, NULL);
         }
         else
         {
@@ -86,8 +85,7 @@ void CMainWindow::DirHistoryRemoveActualPath(CFilesWindow* panel)
                 char curPath[MAX_PATH];
                 if (panel->GetPluginFS()->NotEmpty() && panel->GetPluginFS()->GetCurrentPath(curPath))
                 {
-                    DirHistory->RemoveActualPath(2, panel->GetPluginFS()->GetPluginFSName(), curPath,
-                                                 panel->GetPluginFS()->GetInterface(), panel->GetPluginFS());
+                    DirHistory->RemoveActualPath( CPathHistoryItem::Type::fs, panel->GetPluginFS()->GetPluginFSName(), curPath, panel->GetPluginFS()->GetInterface(), panel->GetPluginFS());
                 }
             }
         }
@@ -203,7 +201,7 @@ void CMainWindow::MakeFileList()
     BOOL files = FALSE; // kurzor na souboru nebo adresari nebo oznaceni
     BOOL upDir = FALSE; // pritomnost ".."
 
-    CFilesWindow* panel = GetActivePanel();
+    CPanelWindow* panel = GetActivePanel();
 
     upDir = (panel->Dirs->Count != 0 && strcmp(panel->Dirs->At(0).Name, "..") == 0);
     int caret = panel->GetCaretIndex();
@@ -215,10 +213,10 @@ void CMainWindow::MakeFileList()
                 files = (panel->Dirs->Count + panel->Files->Count > 0);
             else
             {
-                int count = panel->GetSelCount();
+                int count = panel->GetSelectedCount();
                 if (count == 1)
                 {
-                    files = (panel->GetSel(0) == FALSE);
+                    files = (panel->GetSelected(0) == FALSE);
                 }
                 else
                     files = (count > 0);
@@ -294,7 +292,7 @@ void CMainWindow::MakeFileList()
                 BOOL deleteFile = TRUE;
                 if (panel->MakeFileList(hFile))
                 {
-                    panel->SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                    panel->SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                     PostMessage(panel->HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                     deleteFile = FALSE;
                 }
@@ -379,7 +377,7 @@ BOOL GetNextFileFromPanel(int index, char* path, char* name, void* param)
     {
         BOOL upDir = (data->Window->Dirs->Count != 0 &&
                       strcmp(data->Window->Dirs->At(0).Name, "..") == 0);
-        data->Count = data->Window->GetSelCount();
+        data->Count = data->Window->GetSelectedCount();
         if (data->Count < 0)
             data->Count = 0;
         if (data->Count == 0) // bez oznaceni -> bereme fokus
@@ -402,7 +400,7 @@ BOOL GetNextFileFromPanel(int index, char* path, char* name, void* param)
         data->Index = new int[data->Count];
         if (data->Index == NULL)
             return FALSE; // chyba
-        data->Window->GetSelItems(data->Count, data->Index);
+        data->Window->GetSelectedItems(data->Count, data->Index);
     }
     if (index >= 0 && index < data->Count)
     {
@@ -418,7 +416,7 @@ BOOL GetNextFileFromPanel(int index, char* path, char* name, void* param)
             delete[] (data->Index);
             data->Index = NULL;
         }
-        data->Window->SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+        data->Window->SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
         PostMessage(data->Window->HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
         return FALSE;
     }
@@ -630,8 +628,7 @@ void RemoveRedundantBackslahes(char *text)
 }
 */
 
-void CMainWindow::UserMenu(HWND parent, int itemIndex, UM_GetNextFileName getNextFile, void* data,
-                           CUserMenuAdvancedData* userMenuAdvancedData)
+void CMainWindow::UserMenu(HWND parent, int itemIndex, UM_GetNextFileName getNextFile, void* data, CUserMenuAdvancedData* userMenuAdvancedData)
 {
     CALL_STACK_MESSAGE2("CMainWindow::UserMenu(%d, ,)", itemIndex);
     if (itemIndex >= 0 && itemIndex < UserMenuItems->Count)
@@ -641,45 +638,61 @@ void CMainWindow::UserMenu(HWND parent, int itemIndex, UM_GetNextFileName getNex
         int errorPos1, errorPos2;
         CUserMenuValidationData userMenuValidationData;
         BOOL ok = TRUE;
-        if (ValidateUserMenuArguments(parent, UserMenuItems->At(itemIndex)->Arguments, errorPos1, errorPos2,
-                                      &userMenuValidationData))
+
+        if (ValidateUserMenuArguments(parent, UserMenuItems->At(itemIndex)->Arguments, errorPos1, errorPos2, &userMenuValidationData))
         {
             if (userMenuValidationData.UsesListOfSelNames && userMenuAdvancedData->ListOfSelNames[0] == 0)
             {
-                SalMessageBox(parent, LoadStr(userMenuAdvancedData->ListOfSelNamesIsEmpty ? IDS_EMPTYLISTOFSELNAMES : IDS_TOOLONGLISTOFSELNAMES),
-                              LoadStr(IDS_USERMENUERROR), MB_OK | MB_ICONEXCLAMATION);
+                SalMessageBox(
+                    parent,
+                    LoadStr(userMenuAdvancedData->ListOfSelNamesIsEmpty ? IDS_EMPTYLISTOFSELNAMES : IDS_TOOLONGLISTOFSELNAMES),
+                    LoadStr(IDS_USERMENUERROR),
+                    MB_OK | MB_ICONEXCLAMATION
+                );
                 ok = FALSE;
             }
             if (ok && userMenuValidationData.UsesListOfSelFullNames && userMenuAdvancedData->ListOfSelFullNames[0] == 0)
             {
-                SalMessageBox(parent, LoadStr(userMenuAdvancedData->ListOfSelFullNamesIsEmpty ? IDS_EMPTYLISTOFSELFULLNAMES : IDS_TOOLONGLISTOFSELFULLNAMES),
-                              LoadStr(IDS_USERMENUERROR), MB_OK | MB_ICONEXCLAMATION);
+                SalMessageBox(
+                    parent,
+                    LoadStr(userMenuAdvancedData->ListOfSelFullNamesIsEmpty ? IDS_EMPTYLISTOFSELFULLNAMES : IDS_TOOLONGLISTOFSELFULLNAMES),
+                    LoadStr(IDS_USERMENUERROR),
+                    MB_OK | MB_ICONEXCLAMATION
+                );
                 ok = FALSE;
             }
             if (ok && userMenuValidationData.UsesFullPathLeft && userMenuAdvancedData->FullPathLeft[0] == 0)
             {
-                SalMessageBox(parent, LoadStr(IDS_NOTDEFFULLPATHLEFT),
-                              LoadStr(IDS_USERMENUERROR), MB_OK | MB_ICONEXCLAMATION);
+                SalMessageBox(parent, LoadStr(IDS_NOTDEFFULLPATHLEFT), LoadStr(IDS_USERMENUERROR), MB_OK | MB_ICONEXCLAMATION);
                 ok = FALSE;
             }
             if (ok && userMenuValidationData.UsesFullPathRight && userMenuAdvancedData->FullPathRight[0] == 0)
             {
-                SalMessageBox(parent, LoadStr(IDS_NOTDEFFULLPATHRIGHT),
-                              LoadStr(IDS_USERMENUERROR), MB_OK | MB_ICONEXCLAMATION);
+                SalMessageBox(parent, LoadStr(IDS_NOTDEFFULLPATHRIGHT), LoadStr(IDS_USERMENUERROR), MB_OK | MB_ICONEXCLAMATION);
                 ok = FALSE;
             }
             if (ok && userMenuValidationData.UsesFullPathInactive && userMenuAdvancedData->FullPathInactive[0] == 0)
             {
-                SalMessageBox(parent, LoadStr(IDS_NOTDEFFULLPATHINACTIVE),
-                              LoadStr(IDS_USERMENUERROR), MB_OK | MB_ICONEXCLAMATION);
+                SalMessageBox(parent, LoadStr(IDS_NOTDEFFULLPATHINACTIVE), LoadStr(IDS_USERMENUERROR), MB_OK | MB_ICONEXCLAMATION);
                 ok = FALSE;
             }
-            if (ok && userMenuValidationData.UsedCompareType != 0)
+            if (
+                ok
+                &&
+                ( userMenuValidationData.UsedCompareType != CUserMenuValidationData::Type::not_set )
+            )
             {
-                if ((userMenuValidationData.UsedCompareType == 6 /* file-or-dir-left-right */ ||
-                     userMenuValidationData.UsedCompareType == 7 /* file-or-dir-active-inactive */) &&
-                    userMenuAdvancedData->CompareName1[0] == 0 &&
-                    userMenuAdvancedData->CompareName2[0] == 0)
+                if (
+                    (
+                        ( userMenuValidationData.UsedCompareType == CUserMenuValidationData::Type::fileOrDir_leftRight )
+                        ||
+                        ( userMenuValidationData.UsedCompareType == CUserMenuValidationData::Type::fileOrDir_activeInactive )
+                    )
+                    &&
+                    ( userMenuAdvancedData->CompareName1[0] == 0 )
+                    &&
+                    ( userMenuAdvancedData->CompareName2[0] == 0 )
+                )
                 { // nevime jestli chce porovnavat soubory nebo adresare, musime se zeptat (dialog pro vyber jmen se lisi pro soubory/adresare)
                     MSGBOXEX_PARAMS params;
                     memset(&params, 0, sizeof(params));
@@ -698,9 +711,14 @@ MENU_TEMPLATE_ITEM MsgBoxButtons[] =
   {MNTT_PE, 0
 };
 */
-                    sprintf(aliasBtnNames, "%d\t%s\t%d\t%s",
-                            DIALOG_YES, LoadStr(IDS_MSGBOXBTN_FILES),
-                            DIALOG_NO, LoadStr(IDS_MSGBOXBTN_DIRS));
+                    sprintf(
+                        aliasBtnNames,
+                        "%d\t%s\t%d\t%s",
+                        DIALOG_YES,
+                        LoadStr(IDS_MSGBOXBTN_FILES),
+                        DIALOG_NO,
+                        LoadStr(IDS_MSGBOXBTN_DIRS)
+                    );
                     params.AliasBtnNames = aliasBtnNames;
                     userMenuAdvancedData->CompareNamesAreDirs = (SalMessageBoxEx(&params) == DIALOG_NO);
                 }
@@ -708,9 +726,16 @@ MENU_TEMPLATE_ITEM MsgBoxButtons[] =
                 BOOL swapNames = FALSE;
                 BOOL clearNames = FALSE;
                 BOOL comparingFiles = TRUE;
-                switch (userMenuValidationData.UsedCompareType)
+
+                switch ( userMenuValidationData.UsedCompareType )
                 {
-                case 1: // file-left-right
+                case CUserMenuValidationData::Type::file_activeInactive:
+                {
+                    if (userMenuAdvancedData->CompareNamesAreDirs)
+                        clearNames = TRUE;
+                    break;
+                }
+                case CUserMenuValidationData::Type::file_leftRight:
                 {
                     if (userMenuAdvancedData->CompareNamesReversed)
                         swapNames = TRUE;
@@ -719,14 +744,14 @@ MENU_TEMPLATE_ITEM MsgBoxButtons[] =
                     break;
                 }
 
-                case 2: // file-active-inactive
+                case CUserMenuValidationData::Type::dir_activeInactive:
                 {
-                    if (userMenuAdvancedData->CompareNamesAreDirs)
+                    comparingFiles = FALSE;
+                    if (!userMenuAdvancedData->CompareNamesAreDirs)
                         clearNames = TRUE;
                     break;
                 }
-
-                case 3: // dir-left-right
+                case CUserMenuValidationData::Type::dir_leftRight:
                 {
                     comparingFiles = FALSE;
                     if (userMenuAdvancedData->CompareNamesReversed)
@@ -736,25 +761,16 @@ MENU_TEMPLATE_ITEM MsgBoxButtons[] =
                     break;
                 }
 
-                case 4: // dir-active-inactive
+                case CUserMenuValidationData::Type::fileOrDir_activeInactive:
                 {
-                    comparingFiles = FALSE;
-                    if (!userMenuAdvancedData->CompareNamesAreDirs)
-                        clearNames = TRUE;
+                    comparingFiles = !userMenuAdvancedData->CompareNamesAreDirs;
                     break;
                 }
-
-                case 6: // file-or-dir-left-right
+                case CUserMenuValidationData::Type::fileOrDir_leftRight:
                 {
                     comparingFiles = !userMenuAdvancedData->CompareNamesAreDirs;
                     if (userMenuAdvancedData->CompareNamesReversed)
                         swapNames = TRUE;
-                    break;
-                }
-
-                case 7: // file-or-dir-active-inactive
-                {
-                    comparingFiles = !userMenuAdvancedData->CompareNamesAreDirs;
                     break;
                 }
                 }
@@ -1073,11 +1089,11 @@ BOOL CMainWindow::HandleCtrlLetter(char c)
                     }
                     else
                     {
-                        int count = GetActivePanel()->GetSelCount();
+                        int count = GetActivePanel()->GetSelectedCount();
                         if (count == 1)
                         {
                             int index;
-                            GetActivePanel()->GetSelItems(1, &index);
+                            GetActivePanel()->GetSelectedItems(1, &index);
                             files = index != 0;
                         }
                         else
@@ -1164,15 +1180,15 @@ void CMainWindow::ChangePanel(BOOL force)
     if (IsIconic(HWindow))
         return;
 
-    CFilesWindow* p1 = GetActivePanel();
-    CFilesWindow* p2 = GetNonActivePanel();
+    CPanelWindow*   p1 = GetActivePanel();        //Will become non-active.
+    CPanelWindow*   p2 = GetNonActivePanel();     //Will become active.
 
     BOOL change = FALSE;
     if (force || p2->CanBeFocused())
         change = TRUE;
     else
     {
-        // pokud je panel ZOOMed, minimalizujeme ho a ZOOMneme ten druhy
+        // if the panel is ZOOMed, we minimize it and ZOOM the other one
         if (IsPanelZoomed(TRUE) || IsPanelZoomed(FALSE))
         {
             if (IsPanelZoomed(TRUE))
@@ -1188,13 +1204,13 @@ void CMainWindow::ChangePanel(BOOL force)
     {
         SetActivePanel(p2);
 
-        // zajistime prekresleni aktivni hlavicky panelu
+        // we ensure redrawn active panel headers
         if (p1->DirectoryLine != NULL)
             p1->DirectoryLine->InvalidateAndUpdate(FALSE);
         if (p2->DirectoryLine != NULL)
             p2->DirectoryLine->InvalidateAndUpdate(FALSE);
 
-        UpdateDriveBars(); // zamackneme v drive bar spravny disk
+        UpdateDriveBars(); // we lock the correct disk in the drive bar
 
         //    ReleaseMenuNew();
         if (EditMode)
@@ -1214,15 +1230,15 @@ void CMainWindow::ChangePanel(BOOL force)
             p2->SetCaretIndex(i, FALSE);
         }
         EditWindowSetDirectory();
-        IdleRefreshStates = TRUE; // pri pristim Idle vynutime kontrolu stavovych promennych
+        IdleRefreshStates = TRUE; // pri pristim Idle vynutime kontrolu stavovych promennych / force checking of state variables on next Idle
         MainWindow->UpdateDefaultDir(TRUE);
 
-        // rozesleme tu novinu do vsech naloadenejch pluginu
-        Plugins.Event(PLUGINEVENT_PANELACTIVATED, p2 == LeftPanel ? PANEL_LEFT : PANEL_RIGHT);
+    //Send active panel to all loaded plugins.
+        Plugins.Event( PLUGINEVENT_PANELACTIVATED, p2 == LeftPanel ? PANEL_LEFT : PANEL_RIGHT );
     }
 }
 
-void CMainWindow::FocusPanel(CFilesWindow* focus, BOOL testIfMainWndActive)
+void CMainWindow::FocusPanel(CPanelWindow* focus, BOOL testIfMainWndActive)
 {
     CALL_STACK_MESSAGE2("CMainWindow::FocusPanel(, %d)", testIfMainWndActive);
     MainWindow->CancelPanelsUI(); // cancel QuickSearch and QuickEdit
@@ -1238,7 +1254,7 @@ void CMainWindow::FocusPanel(CFilesWindow* focus, BOOL testIfMainWndActive)
             focus->OnSetFocus(FALSE); // simulace fokusu v panelu
     }
 
-    CFilesWindow* old = GetActivePanel();
+    CPanelWindow* old = GetActivePanel();
     SetActivePanel(focus);
 
     UpdateDriveBars(); // zamackneme v drive bar spravny disk
@@ -1473,121 +1489,148 @@ BOOL IsDescendant(HWND hWndParent, HWND hWndChild)
     return FALSE;
 }
 
-DWORD
-CMainWindow::MapClientArea(POINT point)
+DWORD CMainWindow::MapClientArea( POINT point )
 {
-    DWORD dwContext = 0;
+//Get mouse location.
+    const auto      location = MouseLocation( point );
 
-    CMainWindowsHitTestEnum hit = HitTest(point.x, point.y);
-    CToolBar* toolbar = NULL;
+//Get location id.
+    DWORD       dwContext = 0;
+    CToolBar*   pToolbar = NULL;
 
-    switch (hit)
+    switch ( location )
     {
-    case mwhteMenu:
+    case MouseLocation::menu:
+    {
+    //Menu
         dwContext = IDH_MENUBAR;
         break;
-
-    case mwhteTopToolbar:
+    }
+    case MouseLocation::toolbar_top:
     {
+    //Top toolbar
         dwContext = IDH_TOPTOOLBAR;
-        toolbar = TopToolBar;
+        pToolbar = TopToolBar;
         break;
     }
-
-    case mwhtePluginsBar:
+    case MouseLocation::toolbar_plugins:
+    {
+    //Plugins toolbar
         dwContext = IDH_PLUGINSBAR;
         break;
-
-    case mwhteMiddleToolbar:
+    }
+    case MouseLocation::toolbar_middle:
     {
+    //Middle toolbar
         dwContext = IDH_MIDDLETOOLBAR;
-        toolbar = MiddleToolBar;
+        pToolbar = MiddleToolBar;
         break;
     }
-
-    case mwhteUMToolbar:
+    case MouseLocation::toolbar_userMenu:
+    {
+    //User menu toolbar
         dwContext = IDH_UMTOOLBAR;
         break;
-
-    case mwhteHPToolbar:
+    }
+    case MouseLocation::toolbar_hotPaths:
+    {
+    //Hot paths toolbar
         dwContext = IDH_HPTOOLBAR;
         break;
-
-    case mwhteDriveBar:
+    }
+    case MouseLocation::toolbar_drive:
+    {
+    //Drive toolbar
         dwContext = IDH_DRIVEBAR;
         break;
-
-    case mwhteCmdLine:
+    }
+    case MouseLocation::commandLine:
+    {
+    //Command line
         dwContext = IDH_COMMANDLINE;
         break;
-
-    case mwhteBottomToolbar:
+    }
+    case MouseLocation::toolbar_bottom:
     {
+    //Bottom toolbar
         dwContext = IDH_BOTTOMTOOLBAR;
-        toolbar = BottomToolBar;
+        pToolbar = BottomToolBar;
         break;
     }
-
-    case mwhteSplitLine:
+    case MouseLocation::splitLine_middleToolbar:
+    {
+    //Middle toolbar split line
         dwContext = IDH_SPLITBAR;
         break;
-
-    case mwhteLeftDirLine:
+    }
+    case MouseLocation::panel_left_dirLine:
     {
+    //Left panel directory line
         dwContext = IDH_DIRECTORYLINE;
 
         if (LeftPanel->DirectoryLine->ToolBar != NULL &&
             LeftPanel->DirectoryLine->ToolBar->HWindow != NULL)
-            toolbar = LeftPanel->DirectoryLine->ToolBar;
+            pToolbar = LeftPanel->DirectoryLine->ToolBar;
         break;
     }
-
-    case mwhteRightDirLine:
+    case MouseLocation::panel_right_dirLine:
     {
+    //Right panel directory line
         dwContext = IDH_DIRECTORYLINE;
 
         if (RightPanel->DirectoryLine->ToolBar != NULL &&
             RightPanel->DirectoryLine->ToolBar->HWindow != NULL)
-            toolbar = RightPanel->DirectoryLine->ToolBar;
+            pToolbar = RightPanel->DirectoryLine->ToolBar;
         break;
     }
-
-    case mwhteLeftHeaderLine:
-    case mwhteRightHeaderLine:
+    case MouseLocation::panel_left_headerLine:
+    case MouseLocation::panel_right_headerLine:
+    {
+    //Left or right panel header line
         dwContext = IDH_HEADERLINE;
         break;
-
-    case mwhteLeftStatusLine:
-    case mwhteRightStatusLine:
+    }
+    case MouseLocation::panel_left_statusLine:
+    case MouseLocation::panel_right_statusLine:
+    {
+    //Left or right panel status line
         dwContext = IDH_INFOLINE;
         break;
-
-    case mwhteLeftWorkingArea:
-    case mwhteRightWorkingArea:
+    }
+    case MouseLocation::panel_left_workingArea:
+    case MouseLocation::panel_right_workingArea:
+    {
+    //Left or rights working area
         dwContext = IDH_WORKINGAREA;
         break;
     }
+    }
 
-    // vytahneme IDcko tlacitka, na ktere user kliknul
-    if (toolbar != NULL)
+//Was a toolbar button clicked?
+    if ( pToolbar != NULL )
     {
-        POINT p;
-        p = point;
-        ScreenToClient(toolbar->HWindow, &p);
-        int index = toolbar->HitTest(p.x, p.y);
-        if (index != -1)
+    //Convert position relative to toolbar area.
+        ScreenToClient( pToolbar->HWindow, &point );
+
+    //Was a toolbar clicked?
+        int index = pToolbar->HitTest( point.x, point.y );
+
+        if ( index != -1 )
         {
-            TLBI_ITEM_INFO2 tii;
-            tii.Mask = TLBI_MASK_ID;
-            if (toolbar->GetItemInfo2(index, TRUE, &tii))
-                dwContext = tii.ID;
+        //Yes -> get its id.
+            TLBI_ITEM_INFO2     info_toolbarItem = { .Mask = TLBI_MASK_ID };
+
+            if ( pToolbar->GetItemInfo2( index, TRUE, &info_toolbarItem ) )
+            {
+                dwContext = info_toolbarItem.ID;
+            }
         }
     }
+
     return dwContext;
 }
 
-DWORD
-CMainWindow::MapNonClientArea(int iHit)
+DWORD CMainWindow::MapNonClientArea(int iHit)
 {
     DWORD dwContext = 0;
     switch (iHit)
@@ -2041,7 +2084,7 @@ void CMainWindow::BringLockedUIToolWnd()
 
 // ****************************************************************************
 
-CFilesWindow*
+CPanelWindow*
 CMainWindow::GetPanel(int panel)
 {
     switch (panel)
@@ -2063,7 +2106,7 @@ CMainWindow::GetPanel(int panel)
 void CMainWindow::PostFocusNameInPanel(int panel, const char* path, const char* name)
 {
     CALL_STACK_MESSAGE4("CMainWindow::FocusNameInPanel(%d, %s, %s)", panel, path, name);
-    CFilesWindow* p = GetPanel(panel);
+    CPanelWindow* p = GetPanel(panel);
     if (p != NULL)
     {
         static char pathBackup[MAX_PATH + 200];

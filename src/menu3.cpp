@@ -152,7 +152,7 @@ BOOL CMenuSharedResources::Create(HWND hParent, int width, int height)
 
     // cernobila bitmapa pro masky
     MonoBitmap = new CBitmap();
-    int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+    int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
     int bwWidth = max(MenuBitmapWidth, iconSize); // musi se nam do ni vejit male ikonky
     MonoBitmap->CreateBmpBW(bwWidth, bwWidth);
 
@@ -707,7 +707,7 @@ void CMenuPopup::DrawCheckImage(HDC hDC, CMenuItem* item, int yOffset, BOOL sele
     int targetBmpH = ImageHeight;
     if (item->HIcon != NULL)
     {
-        int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+        int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
         targetBmpW = iconSize;
         targetBmpH = iconSize;
     }
@@ -764,7 +764,7 @@ void CMenuPopup::DrawCheckImage(HDC hDC, CMenuItem* item, int yOffset, BOOL sele
     {
         hImageList = HMenuMarkImageList;
         imageIndex = item->Type & MENU_TYPE_RADIOCHECK ? 1 : 0;
-        int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+        int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
         targetBmpW = iconSize; // rozmery HMenuMarkImageList
         targetBmpH = iconSize;
     }
@@ -778,7 +778,7 @@ void CMenuPopup::DrawCheckImage(HDC hDC, CMenuItem* item, int yOffset, BOOL sele
         // cela bitmapa bude bila (pozadi)
         PatBlt(SharedRes->MonoBitmap->HMemDC, 0, 0, targetBmpW, targetBmpH, WHITENESS);
 
-        int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+        int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
 
         // prenesu do ni cernobilou verzi ikonky (bila bude bila)
         if (item->HIcon != NULL)
@@ -814,7 +814,7 @@ void CMenuPopup::DrawCheckImage(HDC hDC, CMenuItem* item, int yOffset, BOOL sele
         yO++;
         //    }
 
-        int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+        int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
 
         if (item->HIcon != NULL)
             DrawIconEx(SharedRes->CacheBitmap->HMemDC, /*1 + */ xO + 1, myYOffset + /*1 + */ yO + 1,

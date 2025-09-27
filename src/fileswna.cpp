@@ -14,21 +14,21 @@
 #include "shellib.h"
 #include "pack.h"
 
-void CFilesWindow::PluginFSFilesAction(CPluginFSActionType type)
+void CPanelWindow::PluginFSFilesAction(CPluginFSActionType type)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::PluginFSFilesAction(%d)", type);
+    CALL_STACK_MESSAGE2("CPanelWindow::PluginFSFilesAction(%d)", type);
     if (Dirs->Count + Files->Count == 0)
         return;
     if (!Is(ptPluginFS) || !GetPluginFS()->NotEmpty())
         return;
     int panel = MainWindow->LeftPanel == this ? PANEL_LEFT : PANEL_RIGHT;
-    CFilesWindow* target = (MainWindow->LeftPanel == this ? MainWindow->RightPanel : MainWindow->LeftPanel);
+    CPanelWindow* target = (MainWindow->LeftPanel == this ? MainWindow->RightPanel : MainWindow->LeftPanel);
     BOOL unselect = FALSE;
 
     BeginSuspendMode(); // cmuchal si da pohov
     BeginStopRefresh(); // jen aby se nedistribuovaly zpravy o zmenach na cestach
 
-    int count = GetSelCount();
+    int count = GetSelectedCount();
     int selectedDirs = 0;
     if (count > 0)
     {
@@ -52,7 +52,7 @@ void CFilesWindow::PluginFSFilesAction(CPluginFSActionType type)
         if (count == 0)
             i = GetCaretIndex();
         else
-            GetSelItems(1, &i);
+            GetSelectedItems(1, &i);
 
         if (i < 0 || i >= Dirs->Count + Files->Count)
         {
@@ -314,7 +314,7 @@ void CFilesWindow::PluginFSFilesAction(CPluginFSActionType type)
 
     if (unselect) // ma se provest odznaceni polozek?
     {
-        SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+        SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
         PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
         UpdateWindow(MainWindow->HWindow);
     }
@@ -323,9 +323,9 @@ void CFilesWindow::PluginFSFilesAction(CPluginFSActionType type)
     EndSuspendMode(); // ted uz zase cmuchal nastartuje
 }
 
-void CFilesWindow::RefreshVisibleItemsArray()
+void CPanelWindow::RefreshVisibleItemsArray()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::RefreshVisibleItemsArray()");
+    CALL_STACK_MESSAGE1("CPanelWindow::RefreshVisibleItemsArray()");
 
     if (!VisibleItemsArray.IsArrValid(NULL))
         VisibleItemsArray.RefreshArr(this);
@@ -333,9 +333,9 @@ void CFilesWindow::RefreshVisibleItemsArray()
         VisibleItemsArraySurround.RefreshArr(this);
 }
 
-void CFilesWindow::DragDropToArcOrFS(CTmpDragDropOperData* data)
+void CPanelWindow::DragDropToArcOrFS(CTmpDragDropOperData* data)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::DragDropToArcOrFS()");
+    CALL_STACK_MESSAGE1("CPanelWindow::DragDropToArcOrFS()");
     if (data->Data->Names.Count == 0)
         return; // neni co delat
     if (data->Data->SrcPath[0] == 0)
@@ -415,7 +415,7 @@ void CFilesWindow::DragDropToArcOrFS(CTmpDragDropOperData* data)
                 if (nameFound[foundIndex] == FALSE)
                     nameFound[foundIndex] = TRUE;
                 else // duplikat = pracuje se se vsemi jmeny (mozna nebyla oznacena), jestli bude vadit, resit prednostne pres case-sensitive porovnavani
-                    TRACE_E("CFilesWindow::DragDropToArcOrFS(): duplicate names found! (names are compared case-insensitive)");
+                    TRACE_E("CPanelWindow::DragDropToArcOrFS(): duplicate names found! (names are compared case-insensitive)");
             }
             else
                 continue; // o tento soubor/adresar user nestoji (jmeno nebylo v data-objektu)
@@ -722,11 +722,11 @@ void CFilesWindow::DragDropToArcOrFS(CTmpDragDropOperData* data)
                                 TRACE_E("Plugin has refused to open FS (maybe it even does not start).");
                         }
                         else
-                            TRACE_E("Unexpected situation in CFilesWindow::DragDropToArcOrFS() - unable to work with plugin.");
+                            TRACE_E("Unexpected situation in CPanelWindow::DragDropToArcOrFS() - unable to work with plugin.");
                     }
                     else
                     {
-                        TRACE_E("Unexpected situation in CFilesWindow::DragDropToArcOrFS() - file-system " << data->ArchiveOrFSName << " was not found.");
+                        TRACE_E("Unexpected situation in CPanelWindow::DragDropToArcOrFS() - file-system " << data->ArchiveOrFSName << " was not found.");
                     }
                 }
 
@@ -744,7 +744,7 @@ void CFilesWindow::DragDropToArcOrFS(CTmpDragDropOperData* data)
     else
     {
         if (FilesActionInProgress)
-            TRACE_E("Unexpected situation in CFilesWindow::DragDropToArcOrFS(): FilesActionInProgress is TRUE!");
+            TRACE_E("Unexpected situation in CPanelWindow::DragDropToArcOrFS(): FilesActionInProgress is TRUE!");
     }
 
     // uvolneni dat
@@ -831,7 +831,7 @@ void SortNamesCS(char** names, int left, int right)
         SortNamesCS(names, i, right);
 }
 
-void CVisibleItemsArray::RefreshArr(CFilesWindow* panel)
+void CVisibleItemsArray::RefreshArr(CPanelWindow* panel)
 {
     CALL_STACK_MESSAGE1("CVisibleItemsArray::RefreshArr()");
     HANDLES(EnterCriticalSection(&Monitor));

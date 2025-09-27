@@ -135,7 +135,7 @@ CEditListBox::CEditListBox(HWND hDlg, int ctrlID, DWORD flags, CObjectOrigin ori
     GetTextMetrics(hdc, &tm);
     SelectObject(hdc, hOldFont);
     HANDLES(ReleaseDC(HWindow, hdc));
-    int itemHeight = max(tm.tmHeight + 4, IconSizes[ICONSIZE_16]);
+    int itemHeight = max(tm.tmHeight + 4, IconSizes[IconSize::size_16x16]);
     SendMessage(HWindow, LB_SETITEMHEIGHT, 0, MAKELPARAM(itemHeight, 0));
 
     // MakeDragList subclassne listbox a prestaneme dostavat zakaldni message jako je
@@ -165,7 +165,13 @@ int CEditListBox::AddItem(INT_PTR itemID)
     // LB_INSERTSTRING predat lParam == 0. Message pak vrati LB_ERR (-1) a polozku
     // neprida. Obchazime to tak, ze davame dummy lParam == 1 a skutecnou hodnotu
     // nastavujeme v druhem kroku volanim LB_SETITEMDATA pro prave pridanou polozku
-    LRESULT res = SendMessage(HWindow, LB_INSERTSTRING, ItemsCount, 1); // 1 je dumy hodnota, obchazime chybu WinXP
+    //
+    // Under Windows XP with Common Controls 6 connections (using manifest.xml) MS has an error:
+    // in the case of the owner draw listbox without the LBS_HASSTRINGS flag, it is not possible in LB_ADDSTRING a
+    // LB_INSERTSTRING sell lParam == 0. Message then returns LB_ERR (-1) and item
+    // will not add. We work around it by giving dummy lParam == 1 and a real value
+    // set in the second step by calling LB_SETITEMDATA for the just added item
+    LRESULT res = SendMessage(HWindow, LB_INSERTSTRING, ItemsCount, 1); // 1 is a dummy value, we bypass the WinXP error
     if (res != LB_ERR)
     {
         SendMessage(HWindow, LB_SETITEMDATA, res, ((Flags & ELB_ITEMINDEXES) ? ItemsCount : itemID));
@@ -181,7 +187,7 @@ int CEditListBox::InsertItem(INT_PTR itemID, int index)
         TRACE_E("CEditListBox::InsertItem is not ready for ELB_ITEMINDEXES Flag");
         return LB_ERR;
     }
-    LRESULT res = SendMessage(HWindow, LB_INSERTSTRING, index, 1); // 1 je dumy hodnota, obchazime chybu WinXP
+    LRESULT res = SendMessage(HWindow, LB_INSERTSTRING, index, 1); // 1 is a dummy value, we bypass the WinXP error
     if (res != LB_ERR)
     {
         SendMessage(HWindow, LB_SETITEMDATA, res, itemID);
@@ -468,7 +474,7 @@ void CEditListBox::OnBeginEdit(int start, int end)
 
     int iconWidth = 0;
     if (Flags & ELB_SHOWICON)
-        iconWidth = IconSizes[ICONSIZE_16] + 2;
+        iconWidth = IconSizes[IconSize::size_16x16] + 2;
 
     EditLine->Create("edit",
                      "",
@@ -594,7 +600,7 @@ void CEditListBox::OnDrawItem(LPARAM lParam)
 
             RECT itemRect = lpdis->rcItem;
             if (Flags & ELB_SHOWICON)
-                itemRect.left += IconSizes[ICONSIZE_16];
+                itemRect.left += IconSizes[IconSize::size_16x16];
 
             FillRect(lpdis->hDC, &itemRect, (HBRUSH)(UINT_PTR)(bkColor + 1));
             INT_PTR itemID = (INT_PTR)SendMessage(HWindow, LB_GETITEMDATA, lpdis->itemID, 0);
@@ -637,7 +643,7 @@ void CEditListBox::OnDrawItem(LPARAM lParam)
                         // pod NT40US + 256 barvach se v pozadi zobrazuje cerny flek; tento
                         // patch problem resi
                         HBRUSH hBrush = HANDLES(CreateSolidBrush(GetSysColor(COLOR_WINDOW)));
-                        int iconSize = IconSizes[ICONSIZE_16];
+                        int iconSize = IconSizes[IconSize::size_16x16];
                         DrawIconEx(lpdis->hDC, lpdis->rcItem.left + 1, lpdis->rcItem.top + 1,
                                    DispInfo.HIcon, iconSize, iconSize, 0, hBrush /*(HBRUSH)(COLOR_WINDOW + 1)*/, DI_NORMAL);
                         HANDLES(DeleteObject(hBrush));
@@ -646,7 +652,7 @@ void CEditListBox::OnDrawItem(LPARAM lParam)
                     {
                         // musime podmazat pozadi
                         RECT r = lpdis->rcItem;
-                        r.right = IconSizes[ICONSIZE_16] + 2;
+                        r.right = IconSizes[IconSize::size_16x16] + 2;
                         FillRect(lpdis->hDC, &r, (HBRUSH)(COLOR_WINDOW + 1));
                     }
                 }
@@ -938,7 +944,7 @@ CEditListBox::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 CommandParent(LBN_SELCHANGE);
             }
 
-            if ((Flags & ELB_SHOWICON) && (pt.x < IconSizes[ICONSIZE_16] + 2))
+            if ((Flags & ELB_SHOWICON) && (pt.x < IconSizes[IconSize::size_16x16] + 2))
             {
                 DispInfo.ItemID = (INT_PTR)SendMessage(HWindow, LB_GETITEMDATA, index, 0);
                 DispInfo.Index = index;
@@ -1051,7 +1057,7 @@ CEditListBox::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
         else
         {
             ReleaseCapture();
-            if ((Flags & ELB_SHOWICON) && (LOWORD(lParam) < IconSizes[ICONSIZE_16] + 2))
+            if ((Flags & ELB_SHOWICON) && (LOWORD(lParam) < IconSizes[IconSize::size_16x16] + 2))
             {
             }
             else if (!SelChanged && index != -1)

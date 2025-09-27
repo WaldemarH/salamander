@@ -73,27 +73,42 @@ public:
 
 // ****************************************************************************
 
-char* DupStr(const char* txt)
+TCHAR* DupStr( const TCHAR* text, int size_codeUnits )
 {
-    if (txt == NULL)
-        return NULL;
-    int l = (int)strlen(txt);
-    char* s = (char*)malloc(l + 1);
-    if (s == NULL)
+//Validate.
+    if ( text == NULL )
     {
-        TRACE_E("Low memory.");
+    //Not defined -> ignore.
         return NULL;
     }
-    memcpy(s, txt, l + 1);
-    return s;
-}
 
-char* DupStrEx(const char* str, BOOL& err)
-{
-    char* s = DupStr(str);
-    if (str != NULL && s == NULL)
-        err = TRUE;
-    return s;
+//Get length.
+    if ( size_codeUnits >= 0 )
+    {
+    //Include NUL character.
+        size_codeUnits += 1;
+    }
+    else
+    {
+    //Get length of string.
+        size_codeUnits = (int)_tcslen( text ) + 1;
+    }
+
+//Allocate memory for clone.
+    const int   text_size_codeUnits = size_codeUnits * sizeof( TCHAR );
+    TCHAR*      text_clone = (TCHAR*)malloc( text_size_codeUnits );
+
+    if ( text_clone == NULL )
+    {
+        TRACE_E( "Low memory." );
+
+        return NULL;
+    }
+
+//Copy text.
+    memcpy( text_clone, text, text_size_codeUnits );
+
+    return text_clone;
 }
 
 // ****************************************************************************

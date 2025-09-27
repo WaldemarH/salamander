@@ -38,5 +38,5 @@ UINT WINAPI ExtractIcons(LPCTSTR szFileName, int nIconIndex, int cxIcon, int cyI
                          HICON* phicon, UINT* piconid, UINT nIcons, UINT flags);
 
 // komentar viz spl_gen.h/GetFileIcon
-BOOL GetFileIcon(const char* path, BOOL pathIsPIDL, HICON* hIcon, CIconSizeEnum iconSize,
+BOOL GetFileIcon(const char* path, BOOL pathIsPIDL, HICON* hIcon, IconSize::Value iconSize,
                  BOOL fallbackToDefIcon, BOOL defIconIsDir);

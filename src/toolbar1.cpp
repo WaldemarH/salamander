@@ -186,7 +186,7 @@ int CToolBar::GetNeededWidth()
                 width = max(width, Padding.IconLeft + ImageWidth + Padding.IconRight);
             if (HasIcon)
             {
-                int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+                int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
                 width = max(width, Padding.IconLeft + iconSize + Padding.IconRight);
             }
         }
@@ -249,7 +249,7 @@ int CToolBar::GetNeededHeight()
             if (HImageList != NULL)
                 height = max(height, 3 + ImageHeight + 3);
             if (HasIcon)
-                height = max(height, 3 + GetIconSizeForSystemDPI(ICONSIZE_16) + 3);
+                height = max(height, 3 + GetIconSizeForSystemDPI(IconSize::size_16x16) + 3);
         }
 
         height += 2 * Padding.ToolBarVertical;
@@ -827,8 +827,7 @@ void CToolBar::OnColorsChanged()
         CacheBitmap->ReCreateForScreenDC();
 }
 
-LRESULT
-CToolBar::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CToolBar::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     SLOW_CALL_STACK_MESSAGE4("CToolBar::WindowProc(0x%X, 0x%IX, 0x%IX)", uMsg, wParam, lParam);
     switch (uMsg)

@@ -361,8 +361,7 @@ BOOL CMessageBox::CopyToClipboard()
     return ret;
 }
 
-INT_PTR
-CMessageBox::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CMessageBox::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -523,7 +522,7 @@ CMessageBox::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
             hIcon = NULL;
             if (iconID != 0)
-                hIcon = SalLoadIcon(NULL, iconID, ICONSIZE_32);
+                hIcon = SalLoadIcon(NULL, iconID, IconSize::size_32x32);
         }
 
         int iconWidth = 0;

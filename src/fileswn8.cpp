@@ -15,7 +15,7 @@
 
 //
 // ****************************************************************************
-// CFilesWindow
+// CPanelWindow
 //
 
 int DeleteThroughRecycleBinAux(SHFILEOPSTRUCT* fo)
@@ -53,9 +53,9 @@ BOOL PathContainsValidComponents(char* path, BOOL cutPath)
     return TRUE;
 }
 
-BOOL CFilesWindow::DeleteThroughRecycleBin(int* selection, int selCount, CFileData* oneFile)
+BOOL CPanelWindow::DeleteThroughRecycleBin(int* selection, int selCount, CFileData* oneFile)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::DeleteThroughRecycleBin(, %d,)", selCount);
+    CALL_STACK_MESSAGE2("CPanelWindow::DeleteThroughRecycleBin(, %d,)", selCount);
 
     int i = 0;
     char path[MAX_PATH];
@@ -98,7 +98,7 @@ BOOL CFilesWindow::DeleteThroughRecycleBin(int* selection, int selCount, CFileDa
 
     CShellExecuteWnd shellExecuteWnd;
     SHFILEOPSTRUCT fo;
-    fo.hwnd = shellExecuteWnd.Create(MainWindow->HWindow, "SEW: CFilesWindow::DeleteThroughRecycleBin");
+    fo.hwnd = shellExecuteWnd.Create(MainWindow->HWindow, "SEW: CPanelWindow::DeleteThroughRecycleBin");
     fo.wFunc = FO_DELETE;
     fo.pFrom = names.Text;
     fo.pTo = NULL;
@@ -107,7 +107,7 @@ BOOL CFilesWindow::DeleteThroughRecycleBin(int* selection, int selCount, CFileDa
     fo.hNameMappings = NULL;
     fo.lpszProgressTitle = "";
     // provedeme samotne mazani - uzasne snadne, bohuzel jim sem tam pada ;-)
-    CALL_STACK_MESSAGE1("CFilesWindow::DeleteThroughRecycleBin::SHFileOperation");
+    CALL_STACK_MESSAGE1("CPanelWindow::DeleteThroughRecycleBin::SHFileOperation");
     BOOL ret = DeleteThroughRecycleBinAux(&fo) == 0;
     SetCurrentDirectoryToSystem();
 
@@ -131,9 +131,9 @@ void PluginFSConvertPathToExternal(char* path)
 }
 
 // countSizeMode - 0 normalni vypocet, 1 vypocet pro vybranou polozku, 2 vypocet pro vsechny podadresare
-void CFilesWindow::FilesAction(CActionType type, CFilesWindow* target, int countSizeMode)
+void CPanelWindow::FilesAction(CActionType type, CPanelWindow* target, int countSizeMode)
 {
-    CALL_STACK_MESSAGE3("CFilesWindow::FilesAction(%d, , %d)", type, countSizeMode);
+    CALL_STACK_MESSAGE3("CPanelWindow::FilesAction(%d, , %d)", type, countSizeMode);
     if (Dirs->Count + Files->Count == 0)
         return;
 
@@ -165,7 +165,7 @@ void CFilesWindow::FilesAction(CActionType type, CFilesWindow* target, int count
         int* indexes = NULL;
         int files = 0;
         int dirs = 0;
-        int count = GetSelCount();
+        int count = GetSelectedCount();
         if (countSizeMode == 0 && count > 0)
         {
             indexes = new int[count];
@@ -179,7 +179,7 @@ void CFilesWindow::FilesAction(CActionType type, CFilesWindow* target, int count
             }
             else
             {
-                GetSelItems(count, indexes);
+                GetSelectedItems(count, indexes);
                 int i = count;
                 while (i--)
                 {
@@ -359,7 +359,7 @@ void CFilesWindow::FilesAction(CActionType type, CFilesWindow* target, int count
                 if (count == 0)
                     i = GetCaretIndex();
                 else
-                    GetSelItems(1, &i);
+                    GetSelectedItems(1, &i);
 
                 if (i < 0 || i >= Dirs->Count + Files->Count || // spatny index (zadne soubory)
                     i == 0 && subDir)                           // se ".." nepracujem
@@ -627,7 +627,7 @@ void CFilesWindow::FilesAction(CActionType type, CFilesWindow* target, int count
                                             SetFileAttributes(path, nullFileAttrs);
                                         }
                                     }
-                                    SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                                    SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                                     PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                                 }
                                 else
@@ -863,11 +863,11 @@ void CFilesWindow::FilesAction(CActionType type, CFilesWindow* target, int count
                                                 TRACE_E("Plugin has refused to open FS (maybe it even does not start).");
                                         }
                                         else
-                                            TRACE_E("Unexpected situation in CFilesWindow::FilesAction() - unable to work with plugin.");
+                                            TRACE_E("Unexpected situation in CPanelWindow::FilesAction() - unable to work with plugin.");
                                     }
                                     else
                                     {
-                                        TRACE_E("Unexpected situation in CFilesWindow::FilesAction() - file-system " << fsName << " was not found.");
+                                        TRACE_E("Unexpected situation in CPanelWindow::FilesAction() - file-system " << fsName << " was not found.");
                                     }
                                 }
 
@@ -880,7 +880,7 @@ void CFilesWindow::FilesAction(CActionType type, CFilesWindow* target, int count
 
                                 if (unselect) // odznacime soubory/adresare v panelu
                                 {
-                                    SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                                    SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                                     PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                                 }
 
@@ -940,7 +940,7 @@ void CFilesWindow::FilesAction(CActionType type, CFilesWindow* target, int count
             {
                 if (DeleteThroughRecycleBin(indexes, count, f))
                 {
-                    SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                    SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                     PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                     UpdateWindow(MainWindow->HWindow);
                 }
@@ -1120,7 +1120,7 @@ void CFilesWindow::FilesAction(CActionType type, CFilesWindow* target, int count
                         {
                             if (res2)
                             {
-                                SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+                                SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
                                 PostMessage(HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
                             }
                             if (!emptyScript && nextFocus[0] != 0)
@@ -1234,9 +1234,9 @@ BOOL EmailFilesAddDirectory(CSimpleMAPI* mapi, const char* path, BOOL* errGetFil
 // pokud jde o adresar, vola pro nej funkci EmailFilesAddDirectory
 // pokud jde o soubor, prida ho do mapi
 // pokud vse probehne dobre, necha vytvorit email
-void CFilesWindow::EmailFiles()
+void CPanelWindow::EmailFiles()
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::EmailFiles()");
+    CALL_STACK_MESSAGE1("CPanelWindow::EmailFiles()");
     if (Dirs->Count + Files->Count == 0)
         return;
     if (!Is(ptDisk))
@@ -1254,7 +1254,7 @@ void CFilesWindow::EmailFiles()
             if (mapi->Init(HWindow))
             {
                 BOOL send = TRUE;
-                int selCount = GetSelCount();
+                int selCount = GetSelectedCount();
                 int alloc = (selCount == 0 ? 1 : selCount);
 
                 int* indexes;
@@ -1268,7 +1268,7 @@ void CFilesWindow::EmailFiles()
                     HCURSOR oldCur = SetCursor(LoadCursor(NULL, IDC_WAIT));
 
                     if (selCount > 0)
-                        GetSelItems(selCount, indexes);
+                        GetSelectedItems(selCount, indexes);
                     else
                         indexes[0] = GetCaretIndex();
 
@@ -1369,9 +1369,9 @@ void CFilesWindow::EmailFiles()
     EndStopRefresh(); // ted uz zase cmuchal nastartuje
 }
 
-BOOL CFilesWindow::OpenFocusedInOtherPanel(BOOL activate)
+BOOL CPanelWindow::OpenFocusedInOtherPanel(BOOL activate)
 {
-    CFilesWindow* otherPanel = (this == MainWindow->LeftPanel) ? MainWindow->RightPanel : MainWindow->LeftPanel;
+    CPanelWindow* otherPanel = (this == MainWindow->LeftPanel) ? MainWindow->RightPanel : MainWindow->LeftPanel;
     if (otherPanel == NULL)
         return FALSE;
 
@@ -1448,32 +1448,44 @@ BOOL CFilesWindow::OpenFocusedInOtherPanel(BOOL activate)
     return FALSE;
 }
 
-void CFilesWindow::ChangePathToOtherPanelPath()
+void CPanelWindow::ChangePathToOtherPanelPath( CPanelWindow* pPanel_other, const char* pHotText )
 {
-    CFilesWindow* panel = (this == MainWindow->LeftPanel) ? MainWindow->RightPanel : MainWindow->LeftPanel;
-    if (panel == NULL)
-        return;
-
-    if (panel->Is(ptDisk))
+//Was the other panel define?
+    if ( pPanel_other == nullptr )
     {
-        ChangePathToDisk(HWindow, panel->GetPath());
+    //No, get the non-active panel.
+        pPanel_other = ( MainWindow->LeftPanel ) ? MainWindow->RightPanel : MainWindow->LeftPanel;
     }
-    else
+    if ( pPanel_other == NULL )
     {
-        if (panel->Is(ptZIPArchive))
-        {
-            ChangePathToArchive(panel->GetZIPArchive(), panel->GetZIPPath());
-        }
-        else
-        {
-            if (panel->Is(ptPluginFS))
-            {
-                char path[2 * MAX_PATH];
-                lstrcpyn(path, panel->GetPluginFS()->GetPluginFSName(), MAX_PATH - 1);
-                strcat(path, ":");
-                if (panel->GetPluginFS()->GetCurrentPath(path + strlen(path)))
-                    ChangeDir(path, -1, NULL, 3 /*change-dir*/, NULL, FALSE);
-            }
-        }
+        return;
+    }
+
+//Change to other's panel path.
+    switch ( pPanel_other->GetPanelType() )
+    {
+    case ptDisk:
+    {
+    //Regular disk.
+        ChangePathToDisk( HWindow, ( pHotText != nullptr ) ? pHotText : pPanel_other->GetPath() );
+        break;
+    }
+    case ptZIPArchive:
+    {
+    //ZIP archive
+        ChangePathToArchive( pPanel_other->GetZIPArchive(), pPanel_other->GetZIPPath() );
+        break;
+    }
+    case ptPluginFS:
+    {
+    //FS
+        char path[2 * MAX_PATH];
+        lstrcpyn(path, pPanel_other->GetPluginFS()->GetPluginFSName(), MAX_PATH - 1);
+        strcat(path, ":");
+
+        if (pPanel_other->GetPluginFS()->GetCurrentPath(path + strlen(path)))
+            ChangeDir(path, -1, NULL, 3 /*change-dir*/, NULL, FALSE);
+        break;
+    }
     }
 }

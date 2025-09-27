@@ -13,12 +13,12 @@
 #include "worker.h"
 #include "gui.h"
 
-void CFilesWindow::DragEnter()
+void CPanelWindow::DragEnter()
 {
     ScrollObject.BeginScroll(TRUE);
 }
 
-void CFilesWindow::DragLeave()
+void CPanelWindow::DragLeave()
 {
     ScrollObject.EndScroll();
 }
@@ -56,28 +56,28 @@ BOOL CFilesMap::CreateMap()
         DestroyMap();
     }
 
-    CViewModeEnum panelMode = Panel->GetViewMode();
+    ViewMode::Value panelMode = Panel->GetViewMode();
     int dirsCount = Panel->Dirs->Count;
     int count = dirsCount + Panel->Files->Count;
     int columns = Panel->ListBox->ColumnsCount;
     int rows;
     switch (panelMode)
     {
-    case vmDetailed:
+    case ViewMode::detailed:
     {
         rows = Panel->ListBox->ItemsCount;
         break;
     }
 
-    case vmBrief:
+    case ViewMode::brief:
     {
         rows = Panel->ListBox->EntireItemsInColumn;
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         rows = (Panel->ListBox->ItemsCount + Panel->ListBox->ColumnsCount - 1) /
                Panel->ListBox->ColumnsCount;
@@ -99,7 +99,7 @@ BOOL CFilesMap::CreateMap()
     // projedu adresare a soubory a nastavim odpovidajici CFilesMapItem
     CFilesMapItem* itemIter = Map;
 
-    if (panelMode == vmBrief || panelMode == vmDetailed)
+    if (panelMode == ViewMode::brief || panelMode == ViewMode::detailed)
     {
         // Brief || Detailed
         // polozky budou ulozeny shora dolu a pak zleve doprava (pro Brief)
@@ -122,12 +122,12 @@ BOOL CFilesMap::CreateMap()
                     if (*s == '.' && *(s + 1) == '.' && *(s + 2) == 0)
                         s = NULL;
 
-                    width = IconSizes[ICONSIZE_16] + 2;
+                    width = IconSizes[IconSize::size_16x16] + 2;
 
                     int len;
                     if (s != NULL)
                     {
-                        if ((!isDir || Configuration.SortDirsByExt) && Panel->GetViewMode() == vmDetailed &&
+                        if ((!isDir || Configuration.SortDirsByExt) && Panel->GetViewMode() == ViewMode::detailed &&
                             Panel->IsExtensionInSeparateColumn() && f->Ext[0] != 0 && f->Ext > f->Name + 1) // vyjimka pro jmena jako ".htaccess", ukazuji se ve sloupci Name i kdyz jde o pripony
                         {
                             len = (int)(f->Ext - f->Name - 1);
@@ -145,10 +145,10 @@ BOOL CFilesMap::CreateMap()
                     GetTextExtentPoint32(dc, s, len, &sz);
                     width += sz.cx + 4;
 
-                    if (Panel->GetViewMode() == vmDetailed && width > (int)Panel->Columns[0].Width - 1)
+                    if (Panel->GetViewMode() == ViewMode::detailed && width > (int)Panel->Columns[0].Width - 1)
                         width = Panel->Columns[0].Width - 1;
                 }
-                if (Configuration.FullRowSelect && Panel->GetViewMode() == vmBrief)
+                if (Configuration.FullRowSelect && Panel->GetViewMode() == ViewMode::brief)
                 {
                     width = Panel->Columns[0].Width - 10; // korekce
                 }
@@ -222,22 +222,22 @@ void CFilesMap::SetAnchor(int x, int y)
     // prevedu x a y na absolutni hodnoty
     switch (Panel->GetViewMode())
     {
-    case vmBrief:
+    case ViewMode::brief:
     {
         x += Panel->ListBox->GetItemWidth() * GetScrollPos(Panel->ListBox->HHScrollBar, SB_CTL);
         break;
     }
 
-    case vmDetailed:
+    case ViewMode::detailed:
     {
         x += Panel->ListBox->XOffset;
         y += Panel->ListBox->GetItemHeight() * Panel->ListBox->TopIndex;
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         y += Panel->ListBox->TopIndex;
         break;
@@ -247,7 +247,7 @@ void CFilesMap::SetAnchor(int x, int y)
     BOOL updateNeeded = FALSE;
     if (!(GetKeyState(VK_SHIFT) & 0x8000) && !(GetKeyState(VK_CONTROL) & 0x8000))
     {
-        updateNeeded = (Panel->GetSelCount() != 0);
+        updateNeeded = (Panel->GetSelectedCount() != 0);
         int count = Panel->Dirs->Count + Panel->Files->Count;
         int i;
         for (i = 0; i < count; i++)
@@ -262,9 +262,9 @@ void CFilesMap::SetAnchor(int x, int y)
 CFilesMapItem*
 CFilesMap::GetMapItem(int column, int row)
 {
-    CViewModeEnum panelMode = Panel->GetViewMode();
+    ViewMode::Value panelMode = Panel->GetViewMode();
     int index;
-    if (panelMode == vmBrief || panelMode == vmDetailed)
+    if (panelMode == ViewMode::brief || panelMode == ViewMode::detailed)
         index = column * Rows + row; // polozky jsou shora dolu a pak zleva doprava
     else
         index = row * Columns + column; // polozky jsou zleva doprava a pak shora dolu
@@ -296,22 +296,22 @@ void CFilesMap::SetPoint(int x, int y)
     // prevedu x a y na absolutni hodnoty
     switch (Panel->GetViewMode())
     {
-    case vmBrief:
+    case ViewMode::brief:
     {
         x += Panel->ListBox->ItemWidth * GetScrollPos(Panel->ListBox->HHScrollBar, SB_CTL);
         break;
     }
 
-    case vmDetailed:
+    case ViewMode::detailed:
     {
         x += Panel->ListBox->XOffset;
         y += Panel->ListBox->GetItemHeight() * Panel->ListBox->TopIndex;
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         y += Panel->ListBox->TopIndex;
         break;
@@ -393,7 +393,7 @@ void CFilesMap::SetPoint(int x, int y)
         rect.bottom = newRect.bottom;
 
     // prohledam ho
-    CViewModeEnum panelMode = Panel->GetViewMode();
+    ViewMode::Value panelMode = Panel->GetViewMode();
     int row, col;
     CFilesMapItem* item;
     int count = Panel->Dirs->Count + Panel->Files->Count;
@@ -403,7 +403,7 @@ void CFilesMap::SetPoint(int x, int y)
         for (col = rect.left; col <= rect.right; col++)
         {
             // osetrim hranici pole
-            if (panelMode == vmBrief || panelMode == vmDetailed)
+            if (panelMode == ViewMode::brief || panelMode == ViewMode::detailed)
             {
                 // Brief || Detailed
                 if (Rows * col + row >= count || row >= Rows)
@@ -423,18 +423,18 @@ void CFilesMap::SetPoint(int x, int y)
             BOOL inOld = PointInRect(col, row, oldRect);
             if (inOld)
             {
-                if (panelMode == vmBrief || panelMode == vmDetailed)
+                if (panelMode == ViewMode::brief || panelMode == ViewMode::detailed)
                 {
                     int mx = col * Panel->ListBox->ItemWidth;
                     int mw = item->Width;
                     if (oldRectLeft > mx + mw)
                         inOld = FALSE;
                 }
-                else if (panelMode == vmIcons || panelMode == vmThumbnails)
+                else if (panelMode == ViewMode::icons || panelMode == ViewMode::thumbnails)
                 {
                     int mw;
                     int mh;
-                    if (panelMode == vmThumbnails)
+                    if (panelMode == ViewMode::thumbnails)
                     {
                         mw = Panel->ListBox->ThumbnailWidth + 2;
                         mh = Panel->ListBox->ThumbnailHeight + 2;
@@ -453,8 +453,8 @@ void CFilesMap::SetPoint(int x, int y)
                 }
                 else
                 {
-                    int mw = IconSizes[ICONSIZE_48];
-                    int mh = IconSizes[ICONSIZE_48];
+                    int mw = IconSizes[IconSize::size_48x48];
+                    int mh = IconSizes[IconSize::size_48x48];
                     int mx = col * Panel->ListBox->ItemWidth + 4;
                     int my = row * Panel->ListBox->ItemHeight + 4;
                     if (oldRectRight < mx || oldRectLeft > mx + mw ||
@@ -465,18 +465,18 @@ void CFilesMap::SetPoint(int x, int y)
             BOOL inNew = PointInRect(col, row, newRect);
             if (inNew)
             {
-                if (panelMode == vmBrief || panelMode == vmDetailed)
+                if (panelMode == ViewMode::brief || panelMode == ViewMode::detailed)
                 {
                     int mx = col * Panel->ListBox->ItemWidth;
                     int mw = item->Width;
                     if (newRectLeft > mx + mw)
                         inNew = FALSE;
                 }
-                else if (panelMode == vmIcons || panelMode == vmThumbnails)
+                else if (panelMode == ViewMode::icons || panelMode == ViewMode::thumbnails)
                 {
                     int mw;
                     int mh;
-                    if (panelMode == vmThumbnails)
+                    if (panelMode == ViewMode::thumbnails)
                     {
                         mw = Panel->ListBox->ThumbnailWidth + 2;
                         mh = Panel->ListBox->ThumbnailHeight + 2;
@@ -495,8 +495,8 @@ void CFilesMap::SetPoint(int x, int y)
                 }
                 else
                 {
-                    int mw = IconSizes[ICONSIZE_48];
-                    int mh = IconSizes[ICONSIZE_48];
+                    int mw = IconSizes[IconSize::size_48x48];
+                    int mh = IconSizes[IconSize::size_48x48];
                     int mx = col * Panel->ListBox->ItemWidth + 4;
                     int my = row * Panel->ListBox->ItemHeight + 4;
                     if (newRectRight < mx || newRectLeft > mx + mw ||
@@ -583,7 +583,7 @@ void CFilesMap::GetCROfPoint(int x, int y, int& column, int& row)
 {
     CALL_STACK_MESSAGE3("CFilesMap::GetCROfPoint(%d, %d, )", x, y);
     row = (y - Panel->ListBox->FilesRect.top) / Panel->ListBox->ItemHeight;
-    if (Panel->GetViewMode() == vmDetailed)
+    if (Panel->GetViewMode() == ViewMode::detailed)
         column = 0;
     else
         column = x / Panel->ListBox->ItemWidth;
@@ -636,25 +636,25 @@ void CFilesMap::DrawDragBox(POINT p)
     int anchorX = AnchorX;
     int anchorY = AnchorY;
 
-    CViewModeEnum panelMode = Panel->GetViewMode();
+    ViewMode::Value panelMode = Panel->GetViewMode();
     switch (panelMode)
     {
-    case vmBrief:
+    case ViewMode::brief:
     {
         anchorX -= Panel->ListBox->ItemWidth * GetScrollPos(Panel->ListBox->HHScrollBar, SB_CTL);
         break;
     }
 
-    case vmDetailed:
+    case ViewMode::detailed:
     {
         anchorX -= Panel->ListBox->XOffset;
         anchorY -= Panel->ListBox->GetItemHeight() * Panel->ListBox->TopIndex;
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         anchorY -= Panel->ListBox->TopIndex;
         break;
@@ -713,7 +713,7 @@ BOOL CScrollPanel::BeginScroll(BOOL scrollInside)
     if (ScrollInside)
         GetCursorPos(&LastMousePoint);
     ExistTimer = SetTimer(Panel->ListBox->HWindow, IDT_PANELSCROLL,
-                          Panel->GetViewMode() == vmBrief ? 200 : 100, NULL) != 0;
+                          Panel->GetViewMode() == ViewMode::brief ? 200 : 100, NULL) != 0;
     if (ExistTimer)
         OnWMTimer();
     return ExistTimer;
@@ -766,7 +766,7 @@ void CScrollPanel::OnWMTimer()
             else if (x > filesRect.right - border)
                 xDelta = 1;
 
-            if (Panel->GetViewMode() == vmDetailed)
+            if (Panel->GetViewMode() == ViewMode::detailed)
                 xDelta *= (border / 2);
 
             if (y < filesRect.top + border)
@@ -774,9 +774,9 @@ void CScrollPanel::OnWMTimer()
             else if (y > filesRect.bottom - border)
                 yDelta = 1;
 
-            if (Panel->GetViewMode() == vmIcons ||
-                Panel->GetViewMode() == vmThumbnails ||
-                Panel->GetViewMode() == vmTiles)
+            if (Panel->GetViewMode() == ViewMode::icons ||
+                Panel->GetViewMode() == ViewMode::thumbnails ||
+                Panel->GetViewMode() == ViewMode::tiles)
                 yDelta *= Panel->ListBox->ItemHeight / 4;
         }
     }
@@ -807,7 +807,7 @@ void CScrollPanel::OnWMTimer()
     Panel->ScrollingWindow = TRUE;
     switch (Panel->GetViewMode())
     {
-    case vmBrief:
+    case ViewMode::brief:
     {
         // Brief
         if (xDelta != 0)
@@ -824,7 +824,7 @@ void CScrollPanel::OnWMTimer()
         break;
     }
 
-    case vmDetailed:
+    case ViewMode::detailed:
     {
         // Detailed
         if (xDelta != 0)
@@ -848,9 +848,9 @@ void CScrollPanel::OnWMTimer()
         break;
     }
 
-    case vmIcons:
-    case vmThumbnails:
-    case vmTiles:
+    case ViewMode::icons:
+    case ViewMode::thumbnails:
+    case ViewMode::tiles:
     {
         // Icons || Thumbnails
         if (yDelta != 0)

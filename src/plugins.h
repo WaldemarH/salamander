@@ -650,7 +650,7 @@ public:
         return r;
     }
 
-    CIconList* GetSimplePluginIcons(CIconSizeEnum iconSize)
+    CIconList* GetSimplePluginIcons(IconSize::Value iconSize)
     {
         CALL_STACK_MESSAGE3("CPluginDataInterfaceEncapsulation::GetSimplePluginIcons() (%s v. %s)",
                             DLLName, Version);
@@ -658,13 +658,13 @@ public:
         int size;
         switch (iconSize)
         {
-        case ICONSIZE_16:
+        case IconSize::size_16x16:
             size = SALICONSIZE_16;
             break;
-        case ICONSIZE_32:
+        case IconSize::size_32x32:
             size = SALICONSIZE_32;
             break;
-        case ICONSIZE_48:
+        case IconSize::size_48x48:
             size = SALICONSIZE_48;
             break;
         default:
@@ -781,20 +781,20 @@ public:
 
     // nepotrebuje Enter/LeavePlugin, protoze smi pouzivat ze sal-general jen metody,
     // ktere jsou volatelne z libovolneho threadu (coz operace s panelem nejsou)
-    HICON GetPluginIcon(const CFileData* file, CIconSizeEnum iconSize, BOOL& destroyIcon)
+    HICON GetPluginIcon(const CFileData* file, IconSize::Value iconSize, BOOL& destroyIcon)
     {
         CALL_STACK_MESSAGE4("CPluginDataInterfaceEncapsulation::GetPluginIcon(%s,) (%s v. %s)",
                             file->Name, DLLName, Version);
         int size;
         switch (iconSize)
         {
-        case ICONSIZE_16:
+        case IconSize::size_16x16:
             size = SALICONSIZE_16;
             break;
-        case ICONSIZE_32:
+        case IconSize::size_32x32:
             size = SALICONSIZE_32;
             break;
-        case ICONSIZE_48:
+        case IconSize::size_48x48:
             size = SALICONSIZE_48;
             break;
         default:
@@ -1179,8 +1179,8 @@ public:
 
     void CompleteDirectoryLineHotPath(char* path, int pathBufSize)
     {
-        CALL_STACK_MESSAGE5("CPluginFSInterfaceEncapsulation::CompleteDirectoryLineHotPath(%s, %d) (%s v. %s)",
-                            path, pathBufSize, DLLName, Version);
+        CALL_STACK_MESSAGE5("CPluginFSInterfaceEncapsulation::CompleteDirectoryLineHotPath(%s, %d) (%s v. %s)", path, pathBufSize, DLLName, Version);
+
         if (IsServiceSupported(FS_SERVICE_GETNEXTDIRLINEHOTPATH))
         {
             EnterPlugin();
@@ -1530,10 +1530,10 @@ public:
 class CSalamanderView : public CSalamanderViewAbstract
 {
 protected:
-    CFilesWindow* Panel;
+    CPanelWindow* Panel;
 
 public:
-    CSalamanderView(CFilesWindow* panel);
+    CSalamanderView(CPanelWindow* panel);
 
     // -------------- panel ----------------
     virtual DWORD WINAPI GetViewMode();
@@ -1871,7 +1871,7 @@ public:
     void Clear();
 
     // pomocna nevirtualni funkce pro ziskani ukazatele na panel podle PATH_TYPE_XXX
-    CFilesWindow* WINAPI GetPanel(int panel);
+    CPanelWindow* WINAPI GetPanel(int panel);
 
     // Implementace metod CSalamanderGeneralAbstract:
 
@@ -2294,8 +2294,7 @@ public:
     virtual BOOL WINAPI GetMenuItemHotKey(int id, WORD* hotKey, char* hotKeyText, int hotKeyTextSize);
 
     virtual LONG WINAPI SalRegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpData, PLONG lpcbData);
-    virtual LONG WINAPI SalRegQueryValueEx(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved,
-                                           LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+    virtual LONG WINAPI SalRegQueryValueEx(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
 
     virtual DWORD WINAPI SalGetFileAttributes(const char* fileName);
 
@@ -2568,9 +2567,9 @@ public:
     // 'parent' je "parent" okno messageboxu, 'index' je index tohoto plug-inu v Plugins,
     // vraci TRUE pokud 'suid' byl nalezen mezi polozkami menu tohoto plug-inu,
     // vraci 'unselect'=navratova hodnota volani plug-inu ExecuteMenuItem
-    BOOL ExecuteMenuItem(CFilesWindow* panel, HWND parent, int index, int suid, BOOL& unselect);
+    BOOL ExecuteMenuItem(CPanelWindow* panel, HWND parent, int index, int suid, BOOL& unselect);
     // 'id' je interni ID commandu; ExecuteMenuItem2 se pouziva pro Last Command
-    BOOL ExecuteMenuItem2(CFilesWindow* panel, HWND parent, int index, int id, BOOL& unselect);
+    BOOL ExecuteMenuItem2(CPanelWindow* panel, HWND parent, int index, int id, BOOL& unselect);
 
     // volani plug-inu: HelpForMenuItem
     // zobrazi help k prikazu menu s identifikacnim cislem 'suid' (reakce na WM_COMMAND),
@@ -2587,38 +2586,38 @@ public:
     BOOL BuildMenu(HWND parent, BOOL force);
 
     // volani plug-inu: ListArchive
-    BOOL ListArchive(CFilesWindow* panel, const char* archiveFileName, CSalamanderDirectory& dir,
+    BOOL ListArchive(CPanelWindow* panel, const char* archiveFileName, CSalamanderDirectory& dir,
                      CPluginDataInterfaceAbstract*& pluginData);
 
     // volani plug-inu: UnpackArchive
-    BOOL UnpackArchive(CFilesWindow* panel, const char* archiveFileName,
+    BOOL UnpackArchive(CPanelWindow* panel, const char* archiveFileName,
                        CPluginDataInterfaceAbstract* pluginData,
                        const char* targetDir, const char* archiveRoot,
                        SalEnumSelection nextName, void* param);
 
     // volani plug-inu: UnpackOneFile
-    BOOL UnpackOneFile(CFilesWindow* panel, const char* archiveFileName,
+    BOOL UnpackOneFile(CPanelWindow* panel, const char* archiveFileName,
                        CPluginDataInterfaceAbstract* pluginData, const char* nameInArchive,
                        const CFileData* fileData, const char* targetDir,
                        const char* newFileName, BOOL* renamingNotSupported);
 
     // volani plug-inu: PackToArchive
-    BOOL PackToArchive(CFilesWindow* panel, const char* archiveFileName,
+    BOOL PackToArchive(CPanelWindow* panel, const char* archiveFileName,
                        const char* archiveRoot, BOOL move, const char* sourceDir,
                        SalEnumSelection2 nextName, void* param);
 
     // volani plug-inu: DeleteFromArchive
-    BOOL DeleteFromArchive(CFilesWindow* panel, const char* archiveFileName,
+    BOOL DeleteFromArchive(CPanelWindow* panel, const char* archiveFileName,
                            CPluginDataInterfaceAbstract* pluginData, const char* archiveRoot,
                            SalEnumSelection nextName, void* param);
 
     // volani plug-inu: UnpackWholeArchive
-    BOOL UnpackWholeArchive(CFilesWindow* panel, const char* archiveFileName, const char* mask,
+    BOOL UnpackWholeArchive(CPanelWindow* panel, const char* archiveFileName, const char* mask,
                             const char* targetDir, BOOL delArchiveWhenDone,
                             CDynamicString* archiveVolumes);
 
     // volani plug-inu: CanCloseArchive
-    BOOL CanCloseArchive(CFilesWindow* panel, const char* archiveFileName, BOOL force);
+    BOOL CanCloseArchive(CPanelWindow* panel, const char* archiveFileName, BOOL force);
 
     // volani plug-inu: CanViewFile
     BOOL CanViewFile(const char* name);
@@ -3025,7 +3024,7 @@ public:
 
     // spousti prikaz menu s identifikacnim cislem 'suid' (reakce na WM_COMMAND),
     // 'parent' je "parent" okno messageboxu, vraci TRUE pokud se ma zrusit oznaceni v panelu
-    BOOL ExecuteMenuItem(CFilesWindow* panel, HWND parent, int suid);
+    BOOL ExecuteMenuItem(CPanelWindow* panel, HWND parent, int suid);
 
     // zobrazi help k prikazu menu s identifikacnim cislem 'suid' (reakce na WM_COMMAND v HelpMode),
     // 'parent' je "parent" okno messageboxu, vraci TRUE pokud se help zobrazil
@@ -3103,11 +3102,11 @@ public:
 
     // reakce na prikaz Plugins/Last Commad -- pokud existuje nejaky Last Command, spusti ho
     // 'parent' je "parent" okno messageboxu, vraci TRUE pokud se ma zrusit oznaceni v panelu
-    BOOL OnLastCommand(CFilesWindow* panel, HWND parent);
+    BOOL OnLastCommand(CPanelWindow* panel, HWND parent);
 
     // execute commandu vyvolany horkou klavesou; 'pluginIndex' a 'menuItemIndex' urcuji command
     // 'parent' je "parent" okno messageboxu, vraci TRUE pokud se ma zrusit oznaceni v panelu
-    BOOL ExecuteCommand(int pluginIndex, int menuItemIndex, CFilesWindow* panel, HWND parent);
+    BOOL ExecuteCommand(int pluginIndex, int menuItemIndex, CPanelWindow* panel, HWND parent);
 
     // projde pole Order, vyradi z nej jiz neexistujici pluginy a na konec pripoji
     // nove pluginy, ktere v poli jeste nemaji zaznam
@@ -3161,7 +3160,7 @@ public:
 
     // rakce na WM_(SYS)KEYDOWN v panelu nebo edit line -- pluginy prohledaji menu,
     // zda nemaji tuto hot key zabranou; pokud zpravu zpracuji, vraci TRUE, jinak FALSE
-    BOOL HandleKeyDown(WPARAM wParam, LPARAM lParam, CFilesWindow* activePanel, HWND hParent);
+    BOOL HandleKeyDown(WPARAM wParam, LPARAM lParam, CPanelWindow* activePanel, HWND hParent);
 
     // nastavi promenne LastPlgCmdPlugin a LastPlgCmdID
     void SetLastPlgCmd(const char* dllName, int id);

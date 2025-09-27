@@ -17,9 +17,9 @@ enum CBorderLines
 
 enum CSecurityIconState
 {
-    sisNone = 0x00,      // ikona neni zobrazena
-    sisUnsecured = 0x01, // zobrazena ikona odemceneho zamku
-    sisSecured = 0x02    // zobrazena ikona zamceneho zamku
+    sisNone = 0x00,      // icon not displayed
+    sisUnsecured = 0x01, // unlocked padlock icon displayed
+    sisSecured = 0x02    // locked padlock icon displayed
 };
 
 /*
@@ -56,32 +56,72 @@ struct CHotTrackItem
     WORD Pixels;       // jejich delka v bodech
 };
 
-class CStatusWindow : public CWindow
+class CStatusWindow : public CWindow        //Status window is shown on top (history directory list) and at the bottom as detail information.
 {
+    protected: struct RectEx : public RECT
+    {
+    //Functions
+        public: RectEx& operator=( const RECT& from )
+        {
+        //Copy operator.
+            left = from.left;
+            right = from.right;
+            top = from.top;
+            bottom = from.bottom;
+
+            return *this;
+        };
+
+        public: inline POINT Center() const
+        {
+        //Get the center of the RECT.
+            return { .x = left + ( right - left )/2, .y = bottom + ( top - bottom )/2 };
+        }
+
+        public: inline bool IsMouseInside( const LONG xPosition, const LONG yPosition ) const
+        {
+        //Is mouse position inside the rect?
+            return (
+                ( xPosition >= left )
+                &&
+                ( xPosition < right )
+                &&
+                ( yPosition >= top )
+                &&
+                ( yPosition < bottom )
+            );
+        };
+        public: inline bool IsMouseInside( const POINT position ) const
+        {
+        //Forward call.
+            return IsMouseInside( position.x, position.y );
+        };
+    };
+
 public:
     CMainToolBar* ToolBar;
-    CFilesWindow* FilesWindow;
+    CPanelWindow* PanelWindow;
 
 protected:
     TDirectArray<CHotTrackItem> HotTrackItems;
     BOOL HotTrackItemsMeasured;
 
-    int Border; // oddelovaci cara nahore/dole
+    int Border; // dividing line up/down
     char* Text;
-    int TextLen; // pocet znaku na ukazateli 'Text' bez terminatoru
-    char* Size;
-    int PathLen;          // -1 (cesta je cely Text), jinak delka cesty v Text (zbytek je filter)
-    BOOL History;         // zobrazovat sipku mezi textem a size?
-    BOOL Hidden;          // zobrazovat symbo filtru?
-    int HiddenFilesCount; // kolik je odfiltrovanych souboru
-    int HiddenDirsCount;  // a adresaru
+    int TextLen; // the number of characters on the 'Text' pointer without the terminator
+    char* DiskSpaceAvailable;
+    int PathLen;          // -1 (the path is all Text), otherwise the length of the path in Text (the rest is a filter)
+    BOOL History;         // display sip between text and size? //zobrazovat sipku mezi textem a size?
+    BOOL Hidden;          // show filter symbol?
+    int HiddenFilesCount; // how many files are filtered out
+    int HiddenDirsCount;  // to address
     BOOL WholeTextVisible;
 
     BOOL ShowThrobber;             // TRUE pokud se ma zobrazovat 'progress' throbber za textem/hidden filtrem (nezalezi na existenci okna)
     BOOL DelayedThrobber;          // TRUE pokud uz bezi timer pro zobrazeni throbbera
     DWORD DelayedThrobberShowTime; // kolik bude GetTickCount() v okamziku, kdy se ma zobrazit zpozdeny throbber (0 = nezobrazujeme se zpozdenim)
     BOOL Throbber;                 // zobrazovat 'progress' throbber za textem/hidden filtrem? (TRUE jen pokud existuje okno)
-    int ThrobberFrame;             // index aktualniho policka animace
+    int ThrobberFrameIndex = 0;     // index aktualniho policka animace
     char* ThrobberTooltip;         // pokud je NULL, nebude zobrazen
     int ThrobberID;                // identifikacni cislo throbbera (-1 = neplatne)
 
@@ -89,7 +129,7 @@ protected:
     char* SecurityTooltip; // pokud je NULL, nebude zobrazen
 
     int Allocated;
-    int* AlpDX; // pole delek (od nulteho do Xteho znaku v retezci)
+    int* AlpDX; // array of lengths (from zero to the Xth character in the string)
     BOOL Left;
 
     int ToolBarWidth; // aktualni sirka toolbary
@@ -97,25 +137,29 @@ protected:
     int EllipsedChars; // pocet vypustenych znaku za rootem; jinak -1
     int EllipsedWidth; // delka vypusteho retezce za rootem; jinak -1
 
-    CHotTrackItem* HotItem;     // vysvicena polozka
-    CHotTrackItem* LastHotItem; // posledni vysvicena poozka
-    BOOL HotSize;               // vysvicena je polozka size
-    BOOL HotHistory;            // vysvicena je polozka history
-    BOOL HotZoom;               // vysvicena je polozka zoom
-    BOOL HotHidden;             // vysviceny je symbol filtru
-    BOOL HotSecurity;           // vysviceny je symbol zamku
+    bool m_Hot_Highlight_Filtered = false;            //Set when the item is highlighted.
+    bool m_Hot_Highlight_History = false;
+    bool m_Hot_Highlight_Security = false;
+    bool m_Hot_Highlight_Size = false;
+    bool m_Hot_Highlight_Throbber = false;
+    bool m_Hot_Highlight_Zoom = false;
+    CHotTrackItem* m_Hot_Item = nullptr;            // selected item
+    CHotTrackItem* m_Hot_Item_Last = nullptr;       // last posted position
 
-    RECT TextRect;     // kam jsme vysmazili text
-    RECT HiddenRect;   // kam jsme vysmazili symbol filtru
-    RECT SizeRect;     // kam jsme vysmazili text size
-    RECT HistoryRect;  // kam jsme vysmazili drop down pro history
-    RECT ZoomRect;     // kam jsme vysmazili drop down pro history
-    RECT ThrobberRect; // kam jsme vysmazili throbber
-    RECT SecurityRect; // kam jsme vysmazili zamek
+    RectEx m_Rect_Filtered;                           //Location of the icons/text.
+    RectEx m_Rect_History;
+    RectEx m_Rect_Security;
+    RectEx m_Rect_Size;
+    RectEx m_Rect_Text;
+    RectEx m_Rect_Throbber;
+    RectEx m_Rect_Zoom;
+    RectEx m_Rect_Whole;
+
     int MaxTextRight;
     BOOL MouseCaptured;
     BOOL RButtonDown;
     BOOL LButtonDown;
+    BOOL MButtonDown;
     POINT LButtonDownPoint; // kde user stisknul LButton
 
     int Height;
@@ -129,7 +173,7 @@ protected:
     IDropTarget* IDropTargetPtr;
 
 public:
-    CStatusWindow(CFilesWindow* filesWindow, int border, CObjectOrigin origin = ooAllocated);
+    CStatusWindow(CPanelWindow* pPanelWindow, int border, CObjectOrigin origin = ooAllocated);
     ~CStatusWindow();
 
     BOOL SetSubTexts(DWORD* subTexts, DWORD subTextsCount);
@@ -180,8 +224,9 @@ public:
     BOOL SetDriveIcon(HICON hIcon);     // ikona se okopiruje do imagelistu - destrukci musi zajistit volajici kod
     void SetDrivePressed(BOOL pressed); // zamackne drive ikonku
 
-    BOOL GetTextFrameRect(RECT* r);   // vrati obdelnik kolem textu v souradnicich obrazovky
-    BOOL GetFilterFrameRect(RECT* r); // vrati obdelnik kolem symbolu filtru v souradnicich obrazovky
+    BOOL GetRect(RECT* r);              // returns window's rect in screen coordinates
+    BOOL GetRect_TextFrame(RECT* r);    // returns a rectangle around the text in screen coordinates
+    BOOL GetRect_FilterFrame(RECT* r);  // returns a rectangle around the filter symbol in screen coordinates
 
     // mohlo dojit ke zmene barevne hloubky obrazovky; je treba prebuildit CacheBitmap
     void OnColorsChanged();
@@ -198,9 +243,4 @@ protected:
     // po ukonceni tazeni je treba tento imagelist uvolnit
     // vstupem je bod, ke kteremu se napocitaji offsety dxHotspot a dyHotspot
     HIMAGELIST CreateDragImage(const char* text, int& dxHotspot, int& dyHotspot, int& imgWidth, int& imgHeight);
-
-    void PaintThrobber(HDC hDC);
-    //    void RepaintThrobber();
-
-    void PaintSecurity(HDC hDC);
 };

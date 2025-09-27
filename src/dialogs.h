@@ -1036,15 +1036,15 @@ protected:
 // ****************************************************************************
 
 class CFileTimeStamps;
-class CFilesWindow;
+class CPanelWindow;
 class CArchiveUpdateDlg : public CCommonDialog
 {
 protected:
     CFileTimeStamps* FileStamps;
-    CFilesWindow* Panel;
+    CPanelWindow* Panel;
 
 public:
-    CArchiveUpdateDlg(HWND hParent, CFileTimeStamps* fileStamps, CFilesWindow* panel);
+    CArchiveUpdateDlg(HWND hParent, CFileTimeStamps* fileStamps, CPanelWindow* panel);
 
     void EnableButtons();
 
@@ -1338,14 +1338,14 @@ struct CConnectionItem
 class CDisconnectDialog : public CCommonDialog
 {
 protected:
-    CFilesWindow* Panel; // panel, ze ktereho byl vyvolan Disconnect a ze ktereho cerpame defualt cestu
+    CPanelWindow* Panel; // panel, ze ktereho byl vyvolan Disconnect a ze ktereho cerpame defualt cestu
     HWND HListView;
     HIMAGELIST HImageList;
     BOOL NoConncection;
     TDirectArray<CConnectionItem> Connections;
 
 public:
-    CDisconnectDialog(CFilesWindow* panel);
+    CDisconnectDialog(CPanelWindow* panel);
     ~CDisconnectDialog();
 
     const char* GetFocusedPath();                 // vrati cestu vybraneho sharu; lze volat az po navratu z dialogu
@@ -1438,8 +1438,8 @@ protected:
     BOOL EnableByContent;
     BOOL EnableSubdirs;
     BOOL EnableCompAttrsOfSubdirs;
-    CFilesWindow* LeftPanel;
-    CFilesWindow* RightPanel;
+    CPanelWindow* LeftPanel;
+    CPanelWindow* RightPanel;
 
     int OriginalWidth;    // plna sirka dialogu
     int OriginalHeight;   // plna vyska dialogu
@@ -1450,8 +1450,8 @@ protected:
 public:
     CCompareDirsDialog(HWND hParent, BOOL enableByDateAndTime, BOOL enableBySize,
                        BOOL enableByAttrs, BOOL enableByContent, BOOL enableSubdirs,
-                       BOOL enableCompAttrsOfSubdirs, CFilesWindow* leftPanel,
-                       CFilesWindow* rightPanel);
+                       BOOL enableCompAttrsOfSubdirs, CPanelWindow* leftPanel,
+                       CPanelWindow* rightPanel);
 
     virtual void Validate(CTransferInfo& ti);
     virtual void Transfer(CTransferInfo& ti);

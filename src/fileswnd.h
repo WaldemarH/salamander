@@ -3,6 +3,9 @@
 
 #pragma once
 
+#include "filesbox2.h"
+#include "plugins.h"
+
 #define NUM_OF_CHECKTHREADS 30                   // max. pocet threadu pro "neblokujici" testy pristupnosti cest
 #define ICONOVR_REFRESH_PERIOD 2000              // minimalni odstup refreshu icon-overlays v panelu (viz IconOverlaysChangedOnPath)
 #define MIN_DELAY_BETWEENINACTIVEREFRESHES 2000  // minimalni odstup refreshu pri neaktivnim hl. okne
@@ -31,9 +34,9 @@ enum CPluginFSActionType
 
 enum CPanelType
 {
-    ptDisk,       // aktualni cesta je "c:\path" nebo UNC
-    ptZIPArchive, // aktualni cesta je do archivu (obsluhuje bud plug-in nebo kod pro podporu externich archivatoru)
-    ptPluginFS,   // aktualni cesta je na plug-inovy file-system (obsluhuje plug-in)
+    ptDisk,       // the current path is "c:\path" or UNC
+    ptZIPArchive, // the current path is to the archive (handled by either a plug-in or code to support external archivers)
+    ptPluginFS,   // the current path is to the plug-in file system (served by the plug-in)
 };
 
 struct CAttrsData // data pro atChangeAttrs
@@ -162,7 +165,7 @@ class CIconCache;
 class CSalamanderDirectory;
 struct IContextMenu2;
 class CPathHistory;
-class CFilesWindow;
+class CPanelWindow;
 class CMenuNew;
 class CMenuPopup;
 
@@ -171,10 +174,7 @@ class CMenuPopup;
 // oldPluginFSDir nebo oldArchiveDir), oldFiles, oldDirs
 // pokud je dealloc FALSE nerusi oldFiles, oldDirs, oldPluginFSDir, ani oldArchiveDir,
 // vola jen Clear() a DestroyMembers(), v opacnem pripade na tyto objekty vola delete
-void ReleaseListingBody(CPanelType oldPanelType, CSalamanderDirectory*& oldArchiveDir,
-                        CSalamanderDirectory*& oldPluginFSDir,
-                        CPluginDataInterfaceEncapsulation& oldPluginData,
-                        CFilesArray*& oldFiles, CFilesArray*& oldDirs, BOOL dealloc);
+void ReleaseListingBody(CPanelType oldPanelType, CSalamanderDirectory*& oldArchiveDir, CSalamanderDirectory*& oldPluginFSDir, CPluginDataInterfaceEncapsulation& oldPluginData, CFilesArray*& oldFiles, CFilesArray*& oldDirs, BOOL dealloc);
 
 //****************************************************************************
 //
@@ -193,7 +193,7 @@ struct CFilesMapItem
 class CFilesMap
 {
 protected:
-    CFilesWindow* Panel; // nas panel
+    CPanelWindow* Panel; // nas panel
 
     int Rows; // pocet radku a sloupcu obsazenych v mape
     int Columns;
@@ -209,7 +209,7 @@ public:
     CFilesMap();
     ~CFilesMap();
 
-    void SetPanel(CFilesWindow* panel) { Panel = panel; }
+    void SetPanel(CPanelWindow* panel) { Panel = panel; }
 
     BOOL CreateMap();  // naalokuje Mapu a naleje do ni delky adresaru a souboru
     void DestroyMap(); // uvolnim prostredky a nastavim promenne
@@ -248,7 +248,7 @@ inline BOOL CFilesMap::PointInRect(int col, int row, RECT r)
 class CScrollPanel
 {
 protected:
-    CFilesWindow* Panel; // nas panel
+    CPanelWindow* Panel; // nas panel
     BOOL ExistTimer;
     BOOL ScrollInside;      // rolujeme na vnitrnich hranach panelu
     POINT LastMousePoint;   // pokud je nahozen ScrollInside, zajisti presnejsi identifikaci pozadavku o rolovani
@@ -258,7 +258,7 @@ public:
     CScrollPanel();
     ~CScrollPanel();
 
-    void SetPanel(CFilesWindow* panel) { Panel = panel; }
+    void SetPanel(CPanelWindow* panel) { Panel = panel; }
 
     BOOL BeginScroll(BOOL scrollInside = FALSE); // tuto metodu zavolame pred zacatkem tazeni
     void EndScroll();                            // uklid
@@ -289,14 +289,14 @@ struct CFileTimeStampsItem
              DWORD attr);
 };
 
-class CFilesWindow;
+class CPanelWindow;
 
 class CFileTimeStamps
 {
 protected:
     char ZIPFile[MAX_PATH];                   // jmeno archivu, ve kterem jsou ulozeny vsechny sledovane soubory
     TIndirectArray<CFileTimeStampsItem> List; // seznam souboru a pro jejich update potrebnych dat
-    CFilesWindow* Panel;                      // panel, pro ktery pracujeme
+    CPanelWindow* Panel;                      // panel, pro ktery pracujeme
 
 public:
     CFileTimeStamps() : List(10, 5)
@@ -315,7 +315,7 @@ public:
 
     const char* GetZIPFile() { return ZIPFile; }
 
-    void SetPanel(CFilesWindow* panel) { Panel = panel; }
+    void SetPanel(CPanelWindow* panel) { Panel = panel; }
 
     // pridava soubor + jeho znamku do seznamu, zaroven jsou zde vedeny informace potrebne
     // pro update souboru v archivu
@@ -430,9 +430,9 @@ public:
     // destrukce vsech drzenych dat mimo Path
     void Clean();
 
-    BOOL Store(CFilesWindow* panel);
+    BOOL Store(CPanelWindow* panel);
 
-    void Restore(CFilesWindow* panel);
+    void Restore(CPanelWindow* panel);
 
     // vraci NULL, pokud neni nalezena zadne polozka se stejnou cestou
     CDirectorySizes* Get(const char* path);
@@ -453,14 +453,14 @@ protected:
 class CQuickRenameWindow : public CWindow
 {
 protected:
-    CFilesWindow* FilesWindow;
+    CPanelWindow* PanelWindow;
     BOOL CloseEnabled;
     BOOL SkipNextCharacter;
 
 public:
     CQuickRenameWindow();
 
-    void SetPanel(CFilesWindow* filesWindow);
+    void SetPanel(CPanelWindow* filesWindow);
     void SetCloseEnabled(BOOL closeEnabled);
     BOOL GetCloseEnabled();
 
@@ -478,7 +478,7 @@ private:
     char Path[MAX_PATH];      // cesta pro panel typu ptDisk - normal ("c:\path") nebo UNC ("\\server\share\path")
     BOOL SuppressAutoRefresh; // TRUE = user dal cancel behem cteni listingu adresare a vybral docasne potlaceni autorefreshe
 
-    CPanelType PanelType; // typ panelu (disk, archiv, plugin FS)
+    CPanelType PanelType;       // panel type (disk, archive, FS plugin)
 
     BOOL MonitorChanges; // maji se monitorovat zmeny (autorefresh) ?
     UINT DriveType;      // disk+archiv: typ cesty Path (viz MyGetDriveType())
@@ -619,7 +619,7 @@ public:
 
 //****************************************************************************
 //
-// CFilesWindow
+// CPanelWindow
 //
 
 struct CViewerMasksItem;
@@ -627,7 +627,7 @@ struct CEditorMasksItem;
 struct CHighlightMasksItem;
 class CDrivesList;
 
-// mode pro CFilesWindow::CopyFocusedNameToClipboard
+// mode pro CPanelWindow::CopyFocusedNameToClipboard
 enum CCopyFocusedNameModeEnum
 {
     cfnmShort, // pouze kratky nazev (example.txt)
@@ -671,7 +671,7 @@ public:
     // slouzi k obnove pole podle aktualniho stavu panelu a zobrazenych polozek;
     // zvysuje cislo verze pole + oznaci ho za platne
     // vola jen panel v idle rezimu
-    void RefreshArr(CFilesWindow* panel);
+    void RefreshArr(CPanelWindow* panel);
 
     // pokud je pole naplnene a platne a obsahuje 'name', vraci TRUE; navic vraci
     // v 'isArrValid' TRUE pokud je pole naplnene a platne a ve 'versionNum'
@@ -702,9 +702,7 @@ CTargetPathState GetTargetPathState(CTargetPathState upperDirState, const char* 
 typedef PVOID HDEVNOTIFY;
 #endif // HDEVNOTIFY
 
-enum CViewModeEnum;
-
-class CFilesWindow : public CFilesWindowAncestor
+class CPanelWindow : public CFilesWindowAncestor
 {
 public:
     CViewTemplate* ViewTemplate;            // ukazatel na sablonu, ktera urcuje rezim, nazev a viditelnost
@@ -754,8 +752,8 @@ public:
     int LastFocus; // kvuli eliminaci zbytecneho prepisu status l.
 
     CFilesBox* ListBox;
-    CStatusWindow *StatusLine,
-        *DirectoryLine;
+    CStatusWindow *StatusLine;
+    CStatusWindow *DirectoryLine;
 
     BOOL StatusLineVisible;
     BOOL DirectoryLineVisible;
@@ -815,11 +813,12 @@ public:
     BOOL NeedRefreshAfterIconsReading; // bude po ukonceni nacitani ikonek potreba refresh?
     int RefreshAfterIconsReadingTime;  // "cas" nejnovejsiho refreshe, ktery prisel behem nacitani ikonek
 
-    CPathHistory* PathHistory; // historie prochazeni pro tento panel
+    CPathHistory* PathHistory; // browsing history for this panel
+    bool historyMenuShown = false;
 
     DWORD HiddenDirsFilesReason; // bitove pole, urcuje z jakeho duvodu jsou soubory/adresare skryty (HIDDEN_REASON_xxx)
-    int HiddenDirsCount,         // pocet skrytych adresaru v panelu (pocet skipnutych)
-        HiddenFilesCount;        // pocet skrytych souboru v panelu (pocet skipnutych)
+    int HiddenDirsCount;         // pocet skrytych adresaru v panelu (pocet skipnutych)
+    int HiddenFilesCount;        // pocet skrytych souboru v panelu (pocet skipnutych)
 
     HANDLE ExecuteAssocEvent;           // event, ktery "spusti" mazani souboru vypakovanych v ExecuteFromArchive
     BOOL AssocUsed;                     // bylo pouzito vypakovavani pres asociace ?
@@ -829,7 +828,7 @@ public:
     BOOL FilterEnabled; // je filter pouzity
 
     BOOL QuickSearchMode;           // rezim Quick Search ?
-    short CaretHeight;              // nastavuje se pri mereni fontu v CFilesWindow
+    short CaretHeight;              // nastavuje se pri mereni fontu v CPanelWindow
     char QuickSearch[MAX_PATH];     // jmeno souboru hledaneho pres Quick Search
     char QuickSearchMask[MAX_PATH]; // maska quick-searche (muze obsahovat '/' za lib. pocet znaku)
     int SearchIndex;                // kde je kurzor pri Quick Search
@@ -896,8 +895,8 @@ public:
     DWORD NextIconOvrRefreshTime;             // cas, kdy ma smysl zase zacit sledovat notifikace o zmenach icon-overlays v tomto panelu (viz IconOverlaysChangedOnPath())
 
 public:
-    CFilesWindow(CMainWindow* parent);
-    ~CFilesWindow();
+    CPanelWindow(CMainWindow* parent);
+    ~CPanelWindow();
 
     BOOL IsGood() { return DirectoryLine != NULL &&
                            StatusLine != NULL && ListBox != NULL && Files != NULL && Dirs != NULL &&
@@ -910,6 +909,10 @@ public:
 
     // promaze vsechny drzene historie
     void ClearHistory();
+    bool History_IsMenuShown() const
+    {
+        return historyMenuShown;
+    };
 
     // uspi resp. probudi icon-readera -> prestane sahat do IconCache resp. zacne nacitat
     // ikonky do IconCache; obe metody je mozne volat opakovane - system: posledni volani plati
@@ -957,14 +960,12 @@ public:
     // 'errorTitle' je titulek message boxu s chybou; pokud je 'nextFocus' != NULL a Windows/archiv
     // cesta neobsahuje '\\' nebo na '\\' jen konci, nakopiruje se cesta do 'nextFocus' (viz
     // SalGetFullName)
-    BOOL ParsePath(char* path, int& type, BOOL& isDir, char*& secondPart, const char* errorTitle,
-                   char* nextFocus, int* error, int pathBufSize);
+    BOOL ParsePath(char* path, int& type, BOOL& isDir, char*& secondPart, const char* errorTitle, char* nextFocus, int* error, int pathBufSize);
 
     void Execute(int index); // enter + l_dblclk
     // soubor z archivu, execute (edit==FALSE) nebo edit (edit + editWithMenuParent != NULL znamena
     // "edit with")
-    void ExecuteFromArchive(int index, BOOL edit = FALSE, HWND editWithMenuParent = NULL,
-                            const POINT* editWithMenuPoint = NULL);
+    void ExecuteFromArchive(int index, BOOL edit = FALSE, HWND editWithMenuParent = NULL, const POINT* editWithMenuPoint = NULL);
 
     void ChangeSortType(CSortType newType, BOOL reverse, BOOL force = FALSE);
 
@@ -981,15 +982,11 @@ public:
     // je-li 'failReason' != NULL, nastavuje se na jednu z CHPPFR_XXX konstant;
     // jen pri FS v panelu: 'tryCloseReason' je duvod volani CPluginFSInterfaceAbstract::TryCloseOrDetach()
     // vraci TRUE pri uspechu
-    BOOL ChangeToFixedDrive(HWND parent, BOOL* noChange = NULL, BOOL refreshListBox = TRUE,
-                            BOOL canForce = FALSE, int* failReason = NULL,
-                            int tryCloseReason = FSTRYCLOSE_CHANGEPATH);
+    BOOL ChangeToFixedDrive(HWND parent, BOOL* noChange = NULL, BOOL refreshListBox = TRUE, BOOL canForce = FALSE, int* failReason = NULL, int tryCloseReason = FSTRYCLOSE_CHANGEPATH);
 
     // zkusi zmenit cestu na Configuration.IfPathIsInaccessibleGoTo, kdyz neuspeje, zkusi
     // jeste zmenit cestu na fixed-drive (vola ChangeToFixedDrive); vraci TRUE pri uspechu
-    BOOL ChangeToRescuePathOrFixedDrive(HWND parent, BOOL* noChange = NULL, BOOL refreshListBox = TRUE,
-                                        BOOL canForce = FALSE, int tryCloseReason = FSTRYCLOSE_CHANGEPATH,
-                                        int* failReason = NULL);
+    BOOL ChangeToRescuePathOrFixedDrive(HWND parent, BOOL* noChange = NULL, BOOL refreshListBox = TRUE, BOOL canForce = FALSE, int tryCloseReason = FSTRYCLOSE_CHANGEPATH, int* failReason = NULL);
 
     // pomocna metoda:
     // slouzi jako priprava pro CloseCurrentPath, pripravi uzavreni/odlozeni soucasne cesty (update
@@ -1003,8 +1000,7 @@ public:
     // muze byt cesta jen uzavrena (vraci v 'detachFS' FALSE); jen pri FS v panelu: 'tryCloseReason'
     // je duvod volani CPluginFSInterfaceAbstract::TryCloseOrDetach()
     // 'parent' je parent message-boxu
-    BOOL PrepareCloseCurrentPath(HWND parent, BOOL canForce, BOOL canDetach, BOOL& detachFS,
-                                 int tryCloseReason);
+    BOOL PrepareCloseCurrentPath(HWND parent, BOOL canForce, BOOL canDetach, BOOL& detachFS, int tryCloseReason);
     // pomocna metoda:
     // dokonci zavirani/odkladani soucasne cesty zapocate pomoci PrepareCloseCurrentPath; je-li 'cancel'
     // TRUE, dojde k obnove soucasne cesty (cesta se nezavre, nezmeni; zajisti volani
@@ -1020,8 +1016,7 @@ public:
     // je-li 'canChangeSourceUID' TRUE, je mozne zmenit EnumFileNamesSourceUID a tim zrusit
     // enumeraci souboru z panelu (napr. pro viewer), FALSE se pouziva pri zmene cesty na stejnou
     // cestu, jaka uz v panelu byla (obdoba refreshe, jen pres hot-path, focus-name, atd.)
-    void CloseCurrentPath(HWND parent, BOOL cancel, BOOL detachFS, BOOL newPathIsTheSame,
-                          BOOL isRefresh, BOOL canChangeSourceUID);
+    void CloseCurrentPath(HWND parent, BOOL cancel, BOOL detachFS, BOOL newPathIsTheSame, BOOL isRefresh, BOOL canChangeSourceUID);
 
     // pomocna metoda:
     // na FS reprezentovanem 'pluginFS' zmeni cestu na 'fsName':'fsUserPart' nebo (pokud neni pristupna)
@@ -1045,13 +1040,7 @@ public:
     // nacteni (pokud vraci chybu, puvodni listing je netknuty), pokud dojde k chybe alokace
     // tmp objektu, vraci se v 'keepOldListing' FALSE a puvodni listing se muze zrusit (pokud
     // se zmeni cesta na FS, jinak se puvodni listing pouzije beze zmeny)
-    BOOL ChangeAndListPathOnFS(const char* fsName, int fsNameIndex, const char* fsUserPart,
-                               CPluginFSInterfaceEncapsulation& pluginFS, CSalamanderDirectory* dir,
-                               CPluginDataInterfaceAbstract*& pluginData, BOOL& shorterPath,
-                               int& pluginIconsType, int mode, BOOL firstCall,
-                               BOOL* cancel, const char* currentPath,
-                               int currentPathFSNameIndex, BOOL forceUpdate,
-                               char* cutFileName, BOOL* keepOldListing);
+    BOOL ChangeAndListPathOnFS(const char* fsName, int fsNameIndex, const char* fsUserPart, CPluginFSInterfaceEncapsulation& pluginFS, CSalamanderDirectory* dir, CPluginDataInterfaceAbstract*& pluginData, BOOL& shorterPath, int& pluginIconsType, int mode, BOOL firstCall, BOOL* cancel, const char* currentPath, int currentPathFSNameIndex, BOOL forceUpdate, char* cutFileName, BOOL* keepOldListing);
 
     // zmena cesty - relativni i absolutni cesty na windows cesty (UNC a C:\path), pripadne zkracuje cestu;
     // pokud jde o zmenu v ramci jednoho disku (vcetne archivu), najde platny adresar i za cenu
@@ -1068,11 +1057,8 @@ public:
     // je-li shorterPathWarning TRUE, otevre pri zkraceni cesty msg-box s chybou (jen pokud nejde o refresh)
     // jen pri FS v panelu: 'tryCloseReason' je duvod volani CPluginFSInterfaceAbstract::TryCloseOrDetach()
     // vraci TRUE pokud se podarilo vylistovat pozadovanou cestu
-    BOOL ChangePathToDisk(HWND parent, const char* path, int suggestedTopIndex = -1,
-                          const char* suggestedFocusName = NULL, BOOL* noChange = NULL,
-                          BOOL refreshListBox = TRUE, BOOL canForce = FALSE, BOOL isRefresh = FALSE,
-                          int* failReason = NULL, BOOL shorterPathWarning = TRUE,
-                          int tryCloseReason = FSTRYCLOSE_CHANGEPATH);
+    BOOL ChangePathToDisk(HWND parent, const char* path, int suggestedTopIndex = -1, const char* suggestedFocusName = NULL, BOOL* noChange = NULL, BOOL refreshListBox = TRUE, BOOL canForce = FALSE, BOOL isRefresh = FALSE, int* failReason = NULL, BOOL shorterPathWarning = TRUE, int tryCloseReason = FSTRYCLOSE_CHANGEPATH);
+
     // zmena cesty do archivu, pouze absolutni windows cesty (archive je UNC nebo C:\path\archive);
     // je-li suggestedTopIndex != -1, bude nastaven top-index;
     // je-li suggestedFocusName != NULL a bude v novem seznamu, bude vybrano;
@@ -1088,10 +1074,8 @@ public:
     //   otevrit (nebo neexistuje), otevre v panelu aspon cestu k archivu (pripadne zkracenou, pri chybe
     //   cesty nechodi na fixed disk);
     // vraci TRUE pokud se podarilo vylistovat pozadovanou cestu
-    BOOL ChangePathToArchive(const char* archive, const char* archivePath, int suggestedTopIndex = -1,
-                             const char* suggestedFocusName = NULL, BOOL forceUpdate = FALSE,
-                             BOOL* noChange = NULL, BOOL refreshListBox = TRUE, int* failReason = NULL,
-                             BOOL isRefresh = FALSE, BOOL canFocusFileName = FALSE, BOOL isHistory = FALSE);
+    BOOL ChangePathToArchive(const char* archive, const char* archivePath, int suggestedTopIndex = -1, const char* suggestedFocusName = NULL, BOOL forceUpdate = FALSE, BOOL* noChange = NULL, BOOL refreshListBox = TRUE, int* failReason = NULL, BOOL isRefresh = FALSE, BOOL canFocusFileName = FALSE, BOOL isHistory = FALSE);
+
     // zmena cesty do plug-inoveho FS;
     // je-li suggestedTopIndex != -1, bude nastaven top-index;
     // je-li suggestedFocusName != NULL a bude v novem seznamu, bude vybrano;
@@ -1115,11 +1099,8 @@ public:
     // k fokusu tohoto souboru (vraci FALSE - doslo ke zkraceni cesty);
     // je-li 'convertPathToInternal' TRUE, vola se CPluginInterfaceForFSAbstract::ConvertPathToInternal();
     // vraci TRUE pokud se podarilo vylistovat pozadovanou cestu
-    BOOL ChangePathToPluginFS(const char* fsName, const char* fsUserPart, int suggestedTopIndex = -1,
-                              const char* suggestedFocusName = NULL, BOOL forceUpdate = FALSE,
-                              int mode = 2, BOOL* noChange = NULL, BOOL refreshListBox = TRUE,
-                              int* failReason = NULL, BOOL isRefresh = FALSE,
-                              BOOL canFocusFileName = FALSE, BOOL convertPathToInternal = FALSE);
+    BOOL ChangePathToPluginFS(const char* fsName, const char* fsUserPart, int suggestedTopIndex = -1, const char* suggestedFocusName = NULL, BOOL forceUpdate = FALSE, int mode = 2, BOOL* noChange = NULL, BOOL refreshListBox = TRUE, int* failReason = NULL, BOOL isRefresh = FALSE, BOOL canFocusFileName = FALSE, BOOL convertPathToInternal = FALSE);
+
     // zmena cesty do odpojeneho plug-inoveho FS (v MainWindow->DetachedFSList na indexu 'fsIndex');
     // je-li suggestedTopIndex != -1, bude nastaven top-index;
     // je-li suggestedFocusName != NULL a bude v novem seznamu, bude vybrano;
@@ -1130,11 +1111,8 @@ public:
     // v pripade, ze fsUserPart obsahuje jmeno souboru a canFocusFileName je TRUE, dojde
     // k fokusu tohoto souboru (vraci FALSE - doslo ke zkraceni cesty);
     // vraci TRUE pokud se podarilo vylistovat pozadovanou cestu
-    BOOL ChangePathToDetachedFS(int fsIndex, int suggestedTopIndex = -1,
-                                const char* suggestedFocusName = NULL, BOOL refreshListBox = TRUE,
-                                int* failReason = NULL, const char* newFSName = NULL,
-                                const char* newUserPart = NULL, int mode = -1,
-                                BOOL canFocusFileName = FALSE);
+    BOOL ChangePathToDetachedFS(int fsIndex, int suggestedTopIndex = -1, const char* suggestedFocusName = NULL, BOOL refreshListBox = TRUE, int* failReason = NULL, const char* newFSName = NULL, const char* newUserPart = NULL, int mode = -1, BOOL canFocusFileName = FALSE);
+
     // meni cestu v panelu, vstupem muze byt absolutni i relativni cesta a to jak windows, tak do archivu
     // nebo cesta na FS (absolutni/relativni si resi primo plug-in); pokud je vstupem cesta k souboru,
     // dojde k fokusu tohoto souboru;
@@ -1149,10 +1127,7 @@ public:
     // ma se ukazat cela cesta z linku, ne jen cast, na ktere se zjistila chyba (user jinak cestu
     // z linku nedostane);
     // vraci TRUE pokud se podarilo vylistovat pozadovanou cestu
-    BOOL ChangeDir(const char* newDir = NULL, int suggestedTopIndex = -1,
-                   const char* suggestedFocusName = NULL, int mode = 3 /*change-dir*/,
-                   int* failReason = NULL, BOOL convertFSPathToInternal = TRUE,
-                   BOOL showNewDirPathInErrBoxes = FALSE);
+    BOOL ChangeDir(const char* newDir = NULL, int suggestedTopIndex = -1, const char* suggestedFocusName = NULL, int mode = 3 /*change-dir*/, int* failReason = NULL, BOOL convertFSPathToInternal = TRUE, BOOL showNewDirPathInErrBoxes = FALSE);
 
     // mene ortodoxni verze ChangeDir: vraci TRUE i pokud ChangeDir vraci FALSE a 'failReason'
     // je CHPPFR_SHORTERPATH nebo CHPPFR_FILENAMEFOCUSED
@@ -1201,6 +1176,7 @@ public:
 
     void SelectUnselect(BOOL forceIncludeDirs, BOOL select, BOOL showMaskDlg);
     void InvertSelection(BOOL forceIncludeDirs);
+    void SelectFocusedAndUnselectOthers(BOOL forceIncludeDirs);
 
     // 'select' - TRUE: pujde o select FALSE: unselect
     // 'byName' - TRUE: vyberou se vsechny polozky se stejnym jmenem, jako ma polozka focusnuta
@@ -1240,9 +1216,7 @@ public:
     // 'templateIndex' udava index sablony, ktera ma byt vybrana.
     // pokud je sablona na pozadovanem indexu neplatna, bude vybrana sablona s indexem 2 (detailed)
     // pokud je 'preserveTopIndex' TRUE, zachova se topIndex (nebude zajistena viditelnost focusu)
-    BOOL SelectViewTemplate(int templateIndex, BOOL canRefreshPath,
-                            BOOL calledFromPluginBeforeListing, DWORD columnValidMask = VALID_DATA_ALL,
-                            BOOL preserveTopIndex = FALSE, BOOL salamanderIsStarting = FALSE);
+    BOOL SelectViewTemplate(int templateIndex, BOOL canRefreshPath, BOOL calledFromPluginBeforeListing, DWORD columnValidMask = VALID_DATA_ALL, BOOL preserveTopIndex = FALSE, BOOL salamanderIsStarting = FALSE);
 
     // vrati FALSE, pokud pripona neni definovana (viz VALID_DATA_EXTENSION) nebo je pripona
     // (CFileData::Ext) soucasti sloupce Name; jinak vrati TRUE (pro CFileData::Ext existuje
@@ -1260,12 +1234,10 @@ public:
     // v brief rezimu vraci 0
     int GetResidualColumnWidth(int nameColWidth = 0);
 
-    void ChangeAttr(BOOL setCompress = FALSE, BOOL compressed = FALSE,
-                    BOOL setEncryption = FALSE, BOOL encrypted = FALSE);
+    void ChangeAttr(BOOL setCompress = FALSE, BOOL compressed = FALSE, BOOL setEncryption = FALSE, BOOL encrypted = FALSE);
     void Convert(); // konverze znakovych sad + koncu radek
     // handlerID udava, kterym viewerm/editorem se ma soubor otevrit; 0xFFFFFFFF = zadny preferovany
-    void ViewFile(char* name, BOOL altView, DWORD handlerID, int enumFileNamesSourceUID,
-                  int enumFileNamesLastFileIndex);           // name == NULL -> polozka pod kurzorem v panelu
+    void ViewFile(char* name, BOOL altView, DWORD handlerID, int enumFileNamesSourceUID, int enumFileNamesLastFileIndex);           // name == NULL -> polozka pod kurzorem v panelu
     void EditFile(char* name, DWORD handlerID = 0xFFFFFFFF); // name == NULL -> polozka pod kurzorem v panelu
     void EditNewFile();
     // na zaklade dostupnych vieweru naplni popup
@@ -1276,8 +1248,7 @@ public:
     void OnViewFileWith(int index);
     // view-file-with: vybali menu s vyberem vieweru; name == NULL -> polozka pod kurzorem v panelu;
     // handlerID != NULL -> vraci jen cislo vybraneho handleru (neotevira viewer), pri chybe vraci 0xFFFFFFFF
-    void ViewFileWith(char* name, HWND hMenuParent, const POINT* menuPos, DWORD* handlerID,
-                      int enumFileNamesSourceUID, int enumFileNamesLastFileIndex);
+    void ViewFileWith(char* name, HWND hMenuParent, const POINT* menuPos, DWORD* handlerID, int enumFileNamesSourceUID, int enumFileNamesLastFileIndex);
 
     // na zaklade dostupnych editoru naplni popup
     void FillEditWithMenu(CMenuPopup* popup);
@@ -1295,9 +1266,9 @@ public:
     BOOL SetUnescapedHotPathToEmptyPos();
     void GotoRoot();
 
-    void FilesAction(CActionType type, CFilesWindow* target = NULL, int countSizeMode = 0);
+    void FilesAction(CActionType type, CPanelWindow* target = NULL, int countSizeMode = 0);
     void PluginFSFilesAction(CPluginFSActionType type);
-    void CreateDir(CFilesWindow* target);
+    void CreateDir(CPanelWindow* target);
     void RenameFile(int specialIndex = -1);
     void RenameFileInternal(CFileData* f, const char* formatedFileName, BOOL* mayChange, BOOL* tryAgain);
     void DropCopyMove(BOOL copy, char* targetPath, CCopyMoveData* data);
@@ -1305,27 +1276,11 @@ public:
     // provede vymaz pomoci API funkce SHFileOperation (jen pokud mazeme do kose)
     BOOL DeleteThroughRecycleBin(int* selection, int selCount, CFileData* oneFile);
 
-    BOOL BuildScriptMain(COperations* script, CActionType type, char* targetPath,
-                         char* mask, int selCount, int* selection,
-                         CFileData* oneFile, CAttrsData* attrsData,
-                         CChangeCaseData* chCaseData, BOOL onlySize,
-                         CCriteriaData* filterCriteria);
-    BOOL BuildScriptDir(COperations* script, CActionType type, char* sourcePath,
-                        BOOL sourcePathSupADS, char* targetPath, CTargetPathState targetPathState,
-                        BOOL targetPathSupADS, BOOL targetPathIsFAT32, char* mask, char* dirName,
-                        char* dirDOSName, CAttrsData* attrsData, char* mapName,
-                        DWORD sourceDirAttr, CChangeCaseData* chCaseData, BOOL firstLevelDir,
-                        BOOL onlySize, BOOL fastDirectoryMove, CCriteriaData* filterCriteria,
-                        BOOL* canDelUpperDirAfterMove, FILETIME* sourceDirTime,
-                        DWORD srcAndTgtPathsFlags);
-    BOOL BuildScriptFile(COperations* script, CActionType type, char* sourcePath,
-                         BOOL sourcePathSupADS, char* targetPath, CTargetPathState targetPathState,
-                         BOOL targetPathSupADS, BOOL targetPathIsFAT32, char* mask, char* fileName,
-                         char* fileDOSName, const CQuadWord& fileSize, CAttrsData* attrsData,
-                         char* mapName, DWORD sourceFileAttr, CChangeCaseData* chCaseData,
-                         BOOL onlySize, FILETIME* fileLastWriteTime, DWORD srcAndTgtPathsFlags);
-    BOOL BuildScriptMain2(COperations* script, BOOL copy, char* targetDir,
-                          CCopyMoveData* data);
+    BOOL BuildScriptMain(COperations* script, CActionType type, char* targetPath, char* mask, int selCount, int* selection, CFileData* oneFile, CAttrsData* attrsData, CChangeCaseData* chCaseData, BOOL onlySize, CCriteriaData* filterCriteria);
+    BOOL BuildScriptDir(COperations* script, CActionType type, char* sourcePath, 
+                        BOOL sourcePathSupADS, char* targetPath, CTargetPathState targetPathState, BOOL targetPathSupADS, BOOL targetPathIsFAT32, char* mask, char* dirName, char* dirDOSName, CAttrsData* attrsData, char* mapName, DWORD sourceDirAttr, CChangeCaseData* chCaseData, BOOL firstLevelDir, BOOL onlySize, BOOL fastDirectoryMove, CCriteriaData* filterCriteria, BOOL* canDelUpperDirAfterMove, FILETIME* sourceDirTime, DWORD srcAndTgtPathsFlags);
+    BOOL BuildScriptFile(COperations* script, CActionType type, char* sourcePath, BOOL sourcePathSupADS, char* targetPath, CTargetPathState targetPathState, BOOL targetPathSupADS, BOOL targetPathIsFAT32, char* mask, char* fileName, char* fileDOSName, const CQuadWord& fileSize, CAttrsData* attrsData, char* mapName, DWORD sourceFileAttr, CChangeCaseData* chCaseData, BOOL onlySize, FILETIME* fileLastWriteTime, DWORD srcAndTgtPathsFlags);
+    BOOL BuildScriptMain2(COperations* script, BOOL copy, char* targetDir, CCopyMoveData* data);
 
     virtual LRESULT WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -1353,8 +1308,7 @@ public:
     // (nejen thumbnaily zmenenych souboru); 'isInactiveRefresh' je TRUE pokud je to refresh
     // v neaktivnim okne, budeme nacitat jen viditelne ikony/thumbnaily/overlaye, ostatni se
     // nactou az po aktivaci hl. okna
-    void RefreshDirectory(BOOL probablyUselessRefresh = FALSE, BOOL forceReloadThumbnails = FALSE,
-                          BOOL isInactiveRefresh = FALSE);
+    void RefreshDirectory(BOOL probablyUselessRefresh = FALSE, BOOL forceReloadThumbnails = FALSE, BOOL isInactiveRefresh = FALSE);
 
     // read-dir (archivy, FS, disk), sort
     // parent je parent message-boxu
@@ -1364,9 +1318,7 @@ public:
     // je-li readDirectory FALSE, nevola se ReadDirectory
     // je-li isRefresh TRUE, provadi se timto refresh cesty v panelu
     // vraci TRUE pokud byl uspesny ReadDirectory
-    BOOL CommonRefresh(HWND parent, int suggestedTopIndex = -1,
-                       const char* suggestedFocusName = NULL, BOOL refreshListBox = TRUE,
-                       BOOL readDirectory = TRUE, BOOL isRefresh = FALSE);
+    BOOL CommonRefresh(HWND parent, int suggestedTopIndex = -1, const char* suggestedFocusName = NULL, BOOL refreshListBox = TRUE, BOOL readDirectory = TRUE, BOOL isRefresh = FALSE);
 
     // zajisti refresh panelu po zmene konfigurace (u archivu meni casovou znamku, aby doslo k refreshi)
     void RefreshForConfig();
@@ -1378,7 +1330,7 @@ public:
     // rozpakovavani nebo mazani z archivu (nejen ZIP); 'target' muze byt NULL
     // pokud 'tgtPath' neni NULL; neni-li 'tgtPath' NULL, dojde k vybaleni na
     // tuto cestu bez dotazu userovi
-    void UnpackZIPArchive(CFilesWindow* target, BOOL deleteOp = FALSE, const char* tgtPath = NULL);
+    void UnpackZIPArchive(CPanelWindow* target, BOOL deleteOp = FALSE, const char* tgtPath = NULL);
     // mazani z archivu (nejen ZIP) - jen vola UnpackZIPArchive
     void DeleteFromZIPArchive();
     // presune vsechny soubory ze source adresare do target adresare,
@@ -1393,8 +1345,8 @@ public:
     // do souboru hFile naleje seznam oznacenych souboru
     BOOL MakeFileList(HANDLE hFile);
 
-    void Pack(CFilesWindow* target, int pluginIndex = -1, const char* pluginName = NULL, int delFilesAfterPacking = 0);
-    void Unpack(CFilesWindow* target, int pluginIndex = -1, const char* pluginName = NULL, const char* unpackMask = NULL);
+    void Pack(CPanelWindow* target, int pluginIndex = -1, const char* pluginName = NULL, int delFilesAfterPacking = 0);
+    void Unpack(CPanelWindow* target, int pluginIndex = -1, const char* pluginName = NULL, const char* unpackMask = NULL);
 
     void CalculateOccupiedZIPSpace(int countSizeMode = 0);
 
@@ -1402,24 +1354,18 @@ public:
     void GetContextMenuPos(POINT* p);
 
     // pomocna funkce pro DrawBriefDetailedItem a DrawIconThumbnailItem
-    void SetFontAndColors(HDC hDC, CHighlightMasksItem* highlightMasksItem,
-                          CFileData* f, BOOL isItemFocusedOrEditMode,
-                          int itemIndex);
+    void SetFontAndColors(HDC hDC, CHighlightMasksItem* highlightMasksItem, CFileData* f, BOOL isItemFocusedOrEditMode, int itemIndex);
 
     // pomocna funkce pro DrawBriefDetailedItem a DrawIconThumbnailItem
     // pokud je overlayRect ruzne od NULL, umisti se overlay do jeho leveho dolniho rohu
-    void DrawIcon(HDC hDC, CFileData* f, BOOL isDir, BOOL isItemUpDir,
-                  BOOL isItemFocusedOrEditMode, int x, int y, CIconSizeEnum iconSize,
-                  const RECT* overlayRect, DWORD drawFlags);
+    void DrawIcon(HDC hDC, CFileData* f, BOOL isDir, BOOL isItemUpDir, BOOL isItemFocusedOrEditMode, int x, int y, IconSize::Value iconSize, const RECT* overlayRect, DWORD drawFlags);
 
     // kresli polozku pro Brief a Detailed rezim (ikonka 16x16 vlevo, za ni vpravo text)
     void DrawBriefDetailedItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD drawFlags);
     // kresli polozku pro Icon a Thumbnails rezim (ikonka/thumbnail nahore, pod ni text)
-    void DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD drawFlags,
-                               CIconSizeEnum iconSize);
+    void DrawIconThumbnailItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD drawFlags, IconSize::Value iconSize);
     // kresli polozku pro Tiles rezim (ikonka vlevo, za ni vpravo multiline texty)
-    void DrawTileItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD drawFlags,
-                      CIconSizeEnum iconSize);
+    void DrawTileItem(HDC hTgtDC, int itemIndex, RECT* itemRect, DWORD drawFlags, IconSize::Value iconSize);
 
     void CalculateDirSizes(); // vypocet velikosti vsech podadresaru
 
@@ -1487,7 +1433,7 @@ public:
 
     // pokusi se otevrit focusnuty soubor jako shortcut, vytahnout z nej target
     // a ten focusnout v panelu 'panel'
-    void FocusShortcutTarget(CFilesWindow* panel);
+    void FocusShortcutTarget(CPanelWindow* panel);
 
     // 'scroll' to partially (TRUE), full (FALSE) visible
     // forcePaint zajisti prekresleni i v pripade, ze se index nemeni
@@ -1506,20 +1452,20 @@ public:
     // RepaintListBox(DRAWFLAG_DIRTY_ONLY | DRAWFLAG_SKIP_VISTEST);
     // pouze prvni metoda SetSel dokaze na explicitni zadost polozky prekreslit
     // prvni dve motody (SetSel a SetSelRange) metody neoznaci polozku ".." z directories
-    void SetSel(BOOL select, int index, BOOL repaintDirtyItems = FALSE); // If index is -1 the selection is added to or removed from all strings
+    void SetSelected(BOOL select, int index, BOOL repaintDirtyItems = FALSE); // If index is -1 the selection is added to or removed from all strings
     // vraci TRUE, pokud se alespon jedne polozce zmenil stav, jinak vraci FALSE
-    BOOL SetSelRange(BOOL select, int firstIndex, int lastIndex);
-    void SetSel(BOOL select, CFileData* data); // data musi byt drzena prislusnym seznamem
+    BOOL SetSelectedRange(BOOL select, int firstIndex, int lastIndex);
+    void SetSelected(BOOL select, CFileData* data); // data musi byt drzena prislusnym seznamem
 
-    BOOL GetSel(int index);
-    int GetSelItems(int itemsCountMax, int* items, BOOL focusedItemFirst = FALSE); // je-li 'focusedItemFirst' TRUE: od tohoto jsme ustoupili (viz telo GetSelItems): pro kontextova menu zaciname od fokusle polozky a koncime polozku pres fokusem (je tam mezilehle vraceni na zacatek seznamu jmen) (system to tak dela taky, viz Add To Windows Media Player List na MP3 souborech)
+    BOOL GetSelected(int index);
+    int GetSelectedItems(int itemsCountMax, int* items, BOOL focusedItemFirst = FALSE); // je-li 'focusedItemFirst' TRUE: od tohoto jsme ustoupili (viz telo GetSelItems): pro kontextova menu zaciname od fokusle polozky a koncime polozku pres fokusem (je tam mezilehle vraceni na zacatek seznamu jmen) (system to tak dela taky, viz Add To Windows Media Player List na MP3 souborech)
 
-    // pokud je GetSelCount > 0, vrati se TRUE, je-li vybran alespon jeden adresar (nepocita se ".."); jinak se vrati FALSE
-    // pokud je GetSelCount == 0, vrati se TRUE, je-li focusen adresar (nepocita se ".."); jinak se vrati FALSE
+    // pokud je GetSelectedCount > 0, vrati se TRUE, je-li vybran alespon jeden adresar (nepocita se ".."); jinak se vrati FALSE
+    // pokud je GetSelectedCount == 0, vrati se TRUE, je-li focusen adresar (nepocita se ".."); jinak se vrati FALSE
     BOOL SelectionContainsDirectory();
     BOOL SelectionContainsFile(); // to same pro soubory
 
-    int GetSelCount(); // vrati pocet vybranych polozek
+    int GetSelectedCount(); // vrati pocet vybranych polozek
 
     void SelectFocusedItemAndGetName(char* name, int nameMax);
     void UnselectItemWithName(const char* name);
@@ -1609,7 +1555,7 @@ public:
     BOOL OpenFocusedInOtherPanel(BOOL activate);
 
     // otevre v panelu cestu z druheho panelu
-    void ChangePathToOtherPanelPath();
+    void ChangePathToOtherPanelPath( CPanelWindow* pPanel_other = nullptr, const char* pHotText = nullptr );
 
     // vola se v idle rezimu Salamandera, pokud je treba, uklada se zde pole
     // viditelnych polozek
@@ -1618,8 +1564,8 @@ public:
     // drag&drop z disku do archivu nebo plugin-FS
     void DragDropToArcOrFS(CTmpDragDropOperData* data);
 
-    CViewModeEnum GetViewMode();
-    CIconSizeEnum GetIconSizeForCurrentViewMode();
+    ViewMode::Value GetViewMode();
+    IconSize::Value GetIconSizeForCurrentViewMode();
 
     void SetThumbnailSize(int size);
     int GetThumbnailSize();
@@ -1676,7 +1622,7 @@ extern CNames GlobalSelection; // ulozene oznaceni, sdilene obema panely
 
 extern CDirectorySizesHolder DirectorySizesHolder; // drzi seznam jmen adresaru+velikosti se znamou velikosti
 
-extern CFilesWindow* DropSourcePanel; // pro zamezeni drag&dropu z/do stejneho panelu
+extern CPanelWindow* DropSourcePanel; // pro zamezeni drag&dropu z/do stejneho panelu
 extern BOOL OurClipDataObject;        // TRUE pri "paste" naseho IDataObject
                                       // (detekce vlastni copy/move rutiny s cizimi daty)
 

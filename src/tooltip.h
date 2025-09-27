@@ -36,12 +36,15 @@
 
 class CToolTip : public CWindow
 {
-    enum TipTimerModeEnum
+    protected: struct TooltipTimerMode
     {
-        ttmNone,         // nebezi zadny casovac
-        ttmWaitingOpen,  // ceka se na otevreni tool tipu
-        ttmWaitingClose, // ceka se na zavreni tool tipu
-        ttmWaitingKill,  // ceka se na vystup z rezimu zobrazovani
+        public: enum Value
+        {
+            none,               //no timer is running
+            waitingOpen,        //waiting for the tool tip to open
+            waitingClose,       //waiting for the tool tip to close
+            waitingDestroy,     //waiting to exit display mode
+        };
     };
 
 protected:
@@ -49,7 +52,7 @@ protected:
     int TextLen;
     HWND HNotifyWindow;
     DWORD LastID;
-    TipTimerModeEnum WaitingMode;
+    TooltipTimerMode::Value WaitingMode;
     DWORD HideCounter;
     DWORD HideCounterMax;
     POINT LastCursorPos;

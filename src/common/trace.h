@@ -479,7 +479,7 @@ uintptr_t __TRACE_beginthreadex(void* security, unsigned stack_size,
 
 #endif // MULTITHREADED_TRACE_ENABLE
 
-// info-trace, manualne zadana pozice v souboru
+// info-trace, manually entered position in the file
 #define TRACE_MI(file, line, str) \
     (::EnterCriticalSection(&__Trace.CriticalSection), __Trace.StoreLastError(), \
      __Trace.OStream() << str, __Trace) \

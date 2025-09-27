@@ -20,7 +20,7 @@
 
 //
 // ****************************************************************************
-// CFilesWindow
+// CPanelWindow
 //
 
 int DeltaForTotalCount(int total)
@@ -51,9 +51,9 @@ BOOL IsFilePlaceholder(WIN32_FIND_DATA const* findData)
            (findData->dwReserved0 == IO_REPARSE_TAG_FILE_PLACEHOLDER);
 }
 
-BOOL CFilesWindow::ReadDirectory(HWND parent, BOOL isRefresh)
+BOOL CPanelWindow::ReadDirectory(HWND parent, BOOL isRefresh)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::ReadDirectory()");
+    CALL_STACK_MESSAGE1("CPanelWindow::ReadDirectory()");
 
     //  TRACE_I("ReadDirectory: begin");
 
@@ -94,12 +94,12 @@ BOOL CFilesWindow::ReadDirectory(HWND parent, BOOL isRefresh)
     if (Is(ptDisk))
     {
         // setting icon size for IconCache
-        CIconSizeEnum iconSize = GetIconSizeForCurrentViewMode();
+        IconSize::Value iconSize = GetIconSizeForCurrentViewMode();
         IconCache->SetIconSize(iconSize);
 
-        BOOL readThumbnails = (GetViewMode() == vmThumbnails);
+        BOOL readThumbnails = (GetViewMode() == ViewMode::thumbnails);
 
-        CALL_STACK_MESSAGE1("CFilesWindow::ReadDirectory::disk1");
+        CALL_STACK_MESSAGE1("CPanelWindow::ReadDirectory::disk1");
         // choosing plugins which can load thumbnails (for optimization)
         TIndirectArray<CPluginData> thumbLoaderPlugins(10, 10, dtNoDelete);
         TIndirectArray<CPluginData> foundThumbLoaderPlugins(10, 10, dtNoDelete); // the array for plugins which can load thumbnails for the current file
@@ -252,7 +252,7 @@ BOOL CFilesWindow::ReadDirectory(HWND parent, BOOL isRefresh)
         else
             upDir = strlen(GetPath()) > 3;
 
-        CALL_STACK_MESSAGE1("CFilesWindow::ReadDirectory::disk2");
+        CALL_STACK_MESSAGE1("CPanelWindow::ReadDirectory::disk2");
 
         CIconData iconData;
         iconData.FSFileData = NULL;
@@ -418,7 +418,7 @@ BOOL CFilesWindow::ReadDirectory(HWND parent, BOOL isRefresh)
                             {
                                 if (GetMonitorChanges()) // need to suppress monitoring of changes (autorefresh)
                                 {
-                                    DetachDirectory((CFilesWindow*)this);
+                                    DetachDirectory((CPanelWindow*)this);
                                     SetMonitorChanges(FALSE); // the changes won't be monitored anymore
                                 }
 
@@ -945,7 +945,7 @@ BOOL CFilesWindow::ReadDirectory(HWND parent, BOOL isRefresh)
             goto ADD_ITEM;
         }
         if (foundWin64RedirectedDirs >= 10)
-            TRACE_E("CFilesWindow::ReadDirectory(): foundWin64RedirectedDirs >= 10 (there are more redirected-dirs?)");
+            TRACE_E("CPanelWindow::ReadDirectory(): foundWin64RedirectedDirs >= 10 (there are more redirected-dirs?)");
 
 #endif // _WIN64
 
@@ -978,7 +978,7 @@ BOOL CFilesWindow::ReadDirectory(HWND parent, BOOL isRefresh)
             }
 
             // setting of icon size for IconCache
-            CIconSizeEnum iconSize = GetIconSizeForCurrentViewMode();
+            IconSize::Value iconSize = GetIconSizeForCurrentViewMode();
             IconCache->SetIconSize(iconSize);
 
             CFilesArray* ZIPFiles = GetArchiveDirFiles();
@@ -1242,7 +1242,7 @@ BOOL CFilesWindow::ReadDirectory(HWND parent, BOOL isRefresh)
                 }
 
                 // setting of icon size for IconCache
-                CIconSizeEnum iconSize = GetIconSizeForCurrentViewMode();
+                IconSize::Value iconSize = GetIconSizeForCurrentViewMode();
                 IconCache->SetIconSize(iconSize);
 
                 CFilesArray* FSFiles = GetFSFiles();
@@ -1522,7 +1522,7 @@ BOOL CFilesWindow::ReadDirectory(HWND parent, BOOL isRefresh)
 
                             // file/directories which don't have a simple icon will be addeed to icon-cache
                             {
-                                CALL_STACK_MESSAGE1("CFilesWindow::ReadDirectory::FS-icons-from-plugin");
+                                CALL_STACK_MESSAGE1("CPanelWindow::ReadDirectory::FS-icons-from-plugin");
 
                                 int count = FSFiles->Count + FSDirs->Count;
                                 int debugCount = 0;
@@ -1583,7 +1583,7 @@ BOOL CFilesWindow::ReadDirectory(HWND parent, BOOL isRefresh)
                                 }
                                 if (debugCount != Files->Count + Dirs->Count)
                                 {
-                                    TRACE_E("CFilesWindow::ReadDirectory(): unexpected situation: different count of filtered items "
+                                    TRACE_E("CPanelWindow::ReadDirectory(): unexpected situation: different count of filtered items "
                                             "for icon-reading ("
                                             << debugCount << ") and panel (" << Files->Count + Dirs->Count << ")!");
                                 }
@@ -1595,16 +1595,16 @@ BOOL CFilesWindow::ReadDirectory(HWND parent, BOOL isRefresh)
                             WakeupIconCacheThread(); // start to load icons
                         }
                         else
-                            TRACE_E("Unexpected situation (1) in v CFilesWindow::ReadDirectory().");
+                            TRACE_E("Unexpected situation (1) in v CPanelWindow::ReadDirectory().");
                     }
                 }
             }
             else
             {
-                TRACE_E("Unexpected situation (2) in CFilesWindow::ReadDirectory().");
+                TRACE_E("Unexpected situation (2) in CPanelWindow::ReadDirectory().");
                 DirectoryLine->SetHidden(HiddenFilesCount, HiddenDirsCount);
                 // setting of icon size for IconCache
-                CIconSizeEnum iconSize = GetIconSizeForCurrentViewMode();
+                IconSize::Value iconSize = GetIconSizeForCurrentViewMode();
                 IconCache->SetIconSize(iconSize);
                 //        TRACE_I("ReadDirectory: end");
                 return FALSE;
@@ -1682,9 +1682,9 @@ void SortFilesAndDirectories(CFilesArray* files, CFilesArray* dirs, CSortType so
     }
 }
 
-void CFilesWindow::SortDirectory(CFilesArray* files, CFilesArray* dirs)
+void CPanelWindow::SortDirectory(CFilesArray* files, CFilesArray* dirs)
 {
-    CALL_STACK_MESSAGE1("CFilesWindow::SortDirectory()");
+    CALL_STACK_MESSAGE1("CPanelWindow::SortDirectory()");
 
     if (files == NULL)
         files = Files;
@@ -1693,7 +1693,7 @@ void CFilesWindow::SortDirectory(CFilesArray* files, CFilesArray* dirs)
     SortFilesAndDirectories(files, dirs, SortType, ReverseSort, Configuration.SortDirsByName);
 
     // single-purpose monitors for changes of Configuration.SortUsesLocale and Configuration.SortDetectNumbers
-    // variables for the method CFilesWindow::RefreshDirectory
+    // variables for the method CPanelWindow::RefreshDirectory
     SortedWithRegSet = Configuration.SortUsesLocale;
     SortedWithDetectNum = Configuration.SortDetectNumbers;
     VisibleItemsArray.InvalidateArr();
@@ -1764,7 +1764,7 @@ BOOL IsWin64RedirectedDir(const char* path, char** lastSubDir, BOOL failIfDirWit
     return FALSE;
 }
 
-BOOL ContainsWin64RedirectedDir(CFilesWindow* panel, int* indexes, int count, char* redirectedDir, BOOL onlyAdded)
+BOOL ContainsWin64RedirectedDir(CPanelWindow* panel, int* indexes, int count, char* redirectedDir, BOOL onlyAdded)
 {
     redirectedDir[0] = 0;
     if (Windows64Bit && WindowsDirectory[0] != 0)
@@ -1894,10 +1894,10 @@ BOOL AddWin64RedirectedDir(const char* path, CFilesArray* dirs, WIN32_FIND_DATA*
 
 #endif // _WIN64
 
-BOOL CFilesWindow::ChangeDir(const char* newDir, int suggestedTopIndex, const char* suggestedFocusName,
+BOOL CPanelWindow::ChangeDir(const char* newDir, int suggestedTopIndex, const char* suggestedFocusName,
                              int mode, int* failReason, BOOL convertFSPathToInternal, BOOL showNewDirPathInErrBoxes)
 {
-    CALL_STACK_MESSAGE7("CFilesWindow::ChangeDir(%s, %d, %s, %d, , %d, %d)", newDir, suggestedTopIndex,
+    CALL_STACK_MESSAGE7("CPanelWindow::ChangeDir(%s, %d, %s, %d, , %d, %d)", newDir, suggestedTopIndex,
                         suggestedFocusName, mode, convertFSPathToInternal, showNewDirPathInErrBoxes);
 
     // backup the string (it could change during execution - e.g. Name from CFileData from panel)
@@ -1980,7 +1980,7 @@ CHANGE_AGAIN:
                     else
                     {
                         pluginFailure = TRUE;
-                        // TRACE_E("Unexpected situation in CFilesWindow::ChangeDir()");  // if the plugin is blocked by the user (if the registration key is missing)
+                        // TRACE_E("Unexpected situation in CPanelWindow::ChangeDir()");  // if the plugin is blocked by the user (if the registration key is missing)
                     }
                 }
 
@@ -2035,7 +2035,7 @@ CHANGE_AGAIN:
                     CPluginData* plugin = Plugins.Get(index);
                     if (!pluginFailure && plugin != NULL && plugin->InitDLL(MainWindow->HWindow, FALSE, TRUE, FALSE)) // plugin does not have to be loaded, in which case we let it load
                         plugin->GetPluginInterfaceForFS()->ConvertPathToExternal(fsName, fsNameIndex, fsUserPart);
-                    // else TRACE_E("Unexpected situation (2) in CFilesWindow::ChangeDir()");  // if the plugin is blocked by the user (if the registration key is missing)
+                    // else TRACE_E("Unexpected situation (2) in CPanelWindow::ChangeDir()");  // if the plugin is blocked by the user (if the registration key is missing)
 
                     goto CHANGE_AGAIN; // returning back to the dialog for entering the path
                 }
@@ -2309,7 +2309,7 @@ CHANGE_AGAIN:
                                 int len2 = (int)strlen(find.cFileName); // must fit (only the size of letters is changed - result of FindFirstFile)
                                 if ((int)strlen(st + 1) != len2)        // it does e.g. for "aaa  " returns "aaa", reproduce: Paste (text without quotes): "   "   %TEMP%\aaa   "   "
                                 {
-                                    TRACE_E("CFilesWindow::ChangeDir(): unexpected situation: FindFirstFile returned name with "
+                                    TRACE_E("CPanelWindow::ChangeDir(): unexpected situation: FindFirstFile returned name with "
                                             "different length: \""
                                             << find.cFileName << "\" for \"" << (st + 1) << "\"");
                                 }
@@ -2481,7 +2481,7 @@ CHANGE_AGAIN:
     return FALSE;
 }
 
-BOOL CFilesWindow::ChangeDirLite(const char* newDir)
+BOOL CPanelWindow::ChangeDirLite(const char* newDir)
 {
     int failReason;
     BOOL ret = ChangeDir(newDir, -1, NULL, 3, &failReason, TRUE);
@@ -2489,7 +2489,7 @@ BOOL CFilesWindow::ChangeDirLite(const char* newDir)
            failReason == CHPPFR_SUCCESS /* non-sense, but we are not bothered by it */;
 }
 
-BOOL CFilesWindow::ChangePathToDrvType(HWND parent, int driveType, const char* displayName)
+BOOL CPanelWindow::ChangePathToDrvType(HWND parent, int driveType, const char* displayName)
 {
     char path[MAX_PATH];
     const char* userFolderOneDrive = NULL;
@@ -2515,13 +2515,13 @@ BOOL CFilesWindow::ChangePathToDrvType(HWND parent, int driveType, const char* d
     return FALSE;
 }
 
-void CFilesWindow::ChangeDrive(char drive)
+void CPanelWindow::ChangeDrive(char drive)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::ChangeDrive(%u)", drive);
+    CALL_STACK_MESSAGE2("CPanelWindow::ChangeDrive(%u)", drive);
     //--- DefaultDire refresh
     MainWindow->UpdateDefaultDir(MainWindow->GetActivePanel() != this);
     //---  possible disk selection from the dialog
-    CFilesWindow* anotherPanel = (Parent->LeftPanel == this ? Parent->RightPanel : Parent->LeftPanel);
+    CPanelWindow* anotherPanel = (Parent->LeftPanel == this ? Parent->RightPanel : Parent->LeftPanel);
     if (drive == 0)
     {
         CDriveTypeEnum driveType = drvtUnknow; // dummy
@@ -2559,7 +2559,7 @@ void CFilesWindow::ChangeDrive(char drive)
         }
 
         case drvtOneDriveMenu:
-            TRACE_E("CFilesWindow::ChangeDrive(): unexpected drive type: drvtOneDriveMenu");
+            TRACE_E("CPanelWindow::ChangeDrive(): unexpected drive type: drvtOneDriveMenu");
             break;
 
         // is it Network?
@@ -2671,19 +2671,18 @@ void CFilesWindow::ChangeDrive(char drive)
     else
         TopIndexMem.Clear(); // long jump
 
-    ChangePathToDisk(HWindow, DefaultDir[LowerCase[drive] - 'a'], -1, NULL,
-                     NULL, TRUE, FALSE, FALSE, NULL, FALSE);
+    ChangePathToDisk(HWindow, DefaultDir[LowerCase[drive] - 'a'], -1, NULL, NULL, TRUE, FALSE, FALSE, NULL, FALSE);
 }
 
-void CFilesWindow::UpdateFilterSymbol()
+void CPanelWindow::UpdateFilterSymbol()
 {
     CALL_STACK_MESSAGE_NONE
     DirectoryLine->SetHidden(HiddenFilesCount, HiddenDirsCount);
 }
 
-void CFilesWindow::UpdateDriveIcon(BOOL check)
+void CPanelWindow::UpdateDriveIcon(BOOL check)
 {
-    CALL_STACK_MESSAGE2("CFilesWindow::UpdateDriveIcon(%d)", check);
+    CALL_STACK_MESSAGE2("CPanelWindow::UpdateDriveIcon(%d)", check);
     if (Is(ptDisk))
     {
         if (!check || CheckPath(FALSE) == ERROR_SUCCESS)
@@ -2707,7 +2706,7 @@ void CFilesWindow::UpdateDriveIcon(BOOL check)
         {
             if (DirectoryLine->HWindow != NULL)
             {
-                HICON hIcon = LoadArchiveIcon(IconSizes[ICONSIZE_16], IconSizes[ICONSIZE_16], IconLRFlags);
+                HICON hIcon = LoadArchiveIcon(IconSizes[IconSize::size_16x16], IconSizes[IconSize::size_16x16], IconLRFlags);
                 DirectoryLine->SetDriveIcon(hIcon);
                 HANDLES(DestroyIcon(hIcon));
             }
@@ -2728,7 +2727,7 @@ void CFilesWindow::UpdateDriveIcon(BOOL check)
                     }
                     else // standard
                     {
-                        icon = SalLoadIcon(HInstance, IDI_PLUGINFS, IconSizes[ICONSIZE_16]);
+                        icon = SalLoadIcon(HInstance, IDI_PLUGINFS, IconSizes[IconSize::size_16x16]);
                         DirectoryLine->SetDriveIcon(icon);
                         HANDLES(DestroyIcon(icon));
                     }

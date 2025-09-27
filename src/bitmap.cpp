@@ -11,10 +11,10 @@
 // CBitmap
 //
 
-CBitmap::CBitmap()
-{
-    Cleanup();
-}
+//CBitmap::CBitmap()
+//{
+//    Cleanup();
+//}
 
 void CBitmap::Cleanup()
 {

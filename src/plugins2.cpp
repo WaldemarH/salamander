@@ -518,7 +518,7 @@ BOOL CPlugins::FindLastCommand(int* pluginIndex, int* menuItemIndex, BOOL rebuil
     return FALSE;
 }
 
-BOOL CPlugins::OnLastCommand(CFilesWindow* panel, HWND parent)
+BOOL CPlugins::OnLastCommand(CPanelWindow* panel, HWND parent)
 {
     int pluginIndex;
     int menuItemIndex;
@@ -543,7 +543,7 @@ BOOL CPlugins::OnLastCommand(CFilesWindow* panel, HWND parent)
     return FALSE;
 }
 
-BOOL CPlugins::ExecuteCommand(int pluginIndex, int menuItemIndex, CFilesWindow* panel, HWND parent)
+BOOL CPlugins::ExecuteCommand(int pluginIndex, int menuItemIndex, CPanelWindow* panel, HWND parent)
 {
     CalculateStateCache();
 
@@ -914,13 +914,13 @@ void CPlugins::CalculateStateCache()
     }
 
     // MENU_EVENT_FILES_SELECTED a MENU_EVENT_DIRS_SELECTED
-    int count = MainWindow->GetActivePanel()->GetSelCount();
+    int count = MainWindow->GetActivePanel()->GetSelectedCount();
     if (count > 0)
     {
         int* buf = (int*)malloc(sizeof(int) * count);
         if (buf != NULL)
         {
-            if (MainWindow->GetActivePanel()->GetSelItems(count, buf) == count)
+            if (MainWindow->GetActivePanel()->GetSelectedItems(count, buf) == count)
             {
                 while (count-- > 0)
                 {
@@ -960,7 +960,7 @@ void CPlugins::InitSubMenuItems(HWND parent, CMenuPopup* submenu)
     }
 }
 
-BOOL CPlugins::ExecuteMenuItem(CFilesWindow* panel, HWND parent, int suid)
+BOOL CPlugins::ExecuteMenuItem(CPanelWindow* panel, HWND parent, int suid)
 {
     BOOL unselect;
     int i;
@@ -989,7 +989,7 @@ BOOL CPlugins::HelpForMenuItem(HWND parent, int suid)
 HIMAGELIST
 CPlugins::CreateIconsList(BOOL gray)
 {
-    int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+    int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
     HIMAGELIST hIL = ImageList_Create(iconSize, iconSize, GetImageListColorFlags() | ILC_MASK, 0, 1);
     if (hIL != NULL)
     {
@@ -1157,7 +1157,7 @@ BOOL CPlugins::AddItemsToChangeDrvMenu(CDrivesList* drvList, int& currentFSIndex
             }
             else
             {
-                drv.HIcon = SalLoadIcon(HInstance, IDI_PLUGINFS, IconSizes[ICONSIZE_16]);
+                drv.HIcon = SalLoadIcon(HInstance, IDI_PLUGINFS, IconSizes[IconSize::size_16x16]);
                 drv.HGrayIcon = NULL;
                 drv.DestroyIcon = TRUE;
             }
@@ -3565,7 +3565,7 @@ BOOL CPlugins::QueryHotKey(WPARAM wParam, LPARAM lParam, int* pluginIndex, int* 
     return FindHotKey(hotKey, FALSE, NULL, pluginIndex, menuItemIndex);
 }
 
-BOOL CPlugins::HandleKeyDown(WPARAM wParam, LPARAM lParam, CFilesWindow* activePanel, HWND hParent)
+BOOL CPlugins::HandleKeyDown(WPARAM wParam, LPARAM lParam, CPanelWindow* activePanel, HWND hParent)
 {
     CALL_STACK_MESSAGE3("CPlugins::HandleKeyDown(0x%IX, 0x%IX, , )", wParam, lParam);
 
@@ -3589,7 +3589,7 @@ BOOL CPlugins::HandleKeyDown(WPARAM wParam, LPARAM lParam, CFilesWindow* activeP
 
         if (ExecuteCommand(pluginIndex, menuItemIndex, activePanel, hParent))
         {
-            activePanel->SetSel(FALSE, -1, TRUE);                        // explicitni prekresleni
+            activePanel->SetSelected(FALSE, -1, TRUE);                        // explicitni prekresleni
             PostMessage(activePanel->HWindow, WM_USER_SELCHANGED, 0, 0); // sel-change notify
         }
 

@@ -3,6 +3,9 @@
 
 #include "precomp.h"
 
+//#include "nanosvg\nanosvg.h"
+//#include "nanosvg\nanosvgrast.h"
+
 #include "dep\pnglite\\pnglite.h"
 
 //******************************************************************************
@@ -2142,4 +2145,68 @@ BOOL CIconList::SaveToPNG(BYTE** rawPNG, DWORD* rawPNGSize)
         *rawPNGSize = callbackData.Size;
         return TRUE;
     }
+}
+
+BOOL WINAPI CIconList::CreateFromSVG(const int resID, const int nFrames, std::string rotate_parameter, const int rotate_angle )
+{
+    return FALSE;
+//
+//
+//
+//    auto    svg = LoadSVGResource(resID);
+//
+//    if ( svg.size() > 0 )
+//    {
+//    //Replace "{1}" text before parsing.
+//        if ( replaceParameter.size() > 0 )
+//        {
+//            auto    position = svg.find( "{1}", 0 );
+//
+//            if ( position != std::string::npos )
+//            {
+//                svg.replace( position, sizeof("{1}")-1, replaceParameter );
+//            }
+//        }
+//
+//    //Parse SVG.
+//        NSVGimage*  pImage = nsvgParse( svg.data(), "px", (float)GetSystemDPI() );
+//
+//    //Get SVG image size in screen DPI.
+//        float   image_scale;
+//        SIZE    image_size = { width, height };
+//
+//        GetScaleAndSize( pImage, &image_size, &image_scale, &Width, &Height );
+//
+//    //Raster SVG in different state colors.
+//        NSVGrasterizer*     pRasterizer = nsvgCreateRasterizer();
+//
+//        for ( int i = 0; i < SVGSTATE_COUNT; i++ )
+//        {
+//        //Is state bit flag defined?
+//            DWORD state = 1 << i;
+//
+//            if ( !( states & state ) )
+//            {
+//            //No -> skip it.
+//                continue;
+//            }
+//
+//        //Define shape color.
+//            ColorizeSVG(pImage, state, ( pColorIds != NULL ) ? pColorIds[i] : -1 );
+//
+//        //Create DIB.
+//            void*   lpMemBits;
+//
+//            CreateDIB( Width, Height, &HBitmaps[i], &lpMemBits );
+//
+//        //Draw the image.
+//            nsvgRasterize( pRasterizer, pImage, 0, 0, image_scale, (BYTE*)lpMemBits, Width, Height, Width * 4 );
+//        }
+//
+//    //Free resources.
+//        nsvgDeleteRasterizer( pRasterizer );
+//        nsvgDelete( pImage );
+//    }
+//
+//    return TRUE;
 }

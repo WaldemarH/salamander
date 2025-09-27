@@ -1056,14 +1056,14 @@ void DisplayMenuAux2(IContextMenu2* contextMenu, HMENU h)
 // CDrivesList
 //
 
-CDrivesList::CDrivesList(CFilesWindow* filesWindow, const char* currentPath,
+CDrivesList::CDrivesList(CPanelWindow* filesWindow, const char* currentPath,
                          CDriveTypeEnum* driveType, DWORD_PTR* driveTypeParam,
                          int* postCmd, void** postCmdParam, BOOL* fromContextMenu)
 {
     CALL_STACK_MESSAGE_NONE
     Drives = new TDirectArray<CDriveData>(30, 30);
     MenuPopup = NULL;
-    FilesWindow = filesWindow;
+    PanelWindow = filesWindow;
     DriveType = driveType;
     DriveTypeParam = driveTypeParam;
     lstrcpy(CurrentPath, currentPath);
@@ -1583,8 +1583,7 @@ void CDrivesList::AddToDrives(CDriveData& drv, int textResId, char hotkey, CDriv
     Drives->Add(drv);
 }
 
-BOOL CDrivesList::BuildData(BOOL noTimeout, TDirectArray<CDriveData>* copyDrives,
-                            DWORD copyCachedDrivesMask, BOOL getGrayIcons, BOOL forDriveBar)
+BOOL CDrivesList::BuildData(BOOL noTimeout, TDirectArray<CDriveData>* copyDrives, DWORD copyCachedDrivesMask, BOOL getGrayIcons, BOOL forDriveBar)
 {
     CALL_STACK_MESSAGE4("CDrivesList::BuildData(%d, , , %d, %d)", noTimeout, getGrayIcons, forDriveBar);
 
@@ -1877,12 +1876,12 @@ BOOL CDrivesList::BuildData(BOOL noTimeout, TDirectArray<CDriveData>* copyDrives
     {
         CPluginFSInterfaceEncapsulation** fsListItem = fsList;
         CPluginFSInterfaceEncapsulation* activePanelFS = NULL;
-        if (FilesWindow->Is(ptPluginFS))
+        if (PanelWindow->Is(ptPluginFS))
         {
-            activePanelFS = FilesWindow->GetPluginFS();
+            activePanelFS = PanelWindow->GetPluginFS();
             *fsListItem++ = activePanelFS;
         }
-        CFilesWindow* otherPanel = MainWindow->LeftPanel == FilesWindow ? MainWindow->RightPanel : MainWindow->LeftPanel;
+        CPanelWindow* otherPanel = MainWindow->LeftPanel == PanelWindow ? MainWindow->RightPanel : MainWindow->LeftPanel;
         CPluginFSInterfaceEncapsulation* nonactivePanelFS = NULL;
         if (otherPanel->Is(ptPluginFS))
         {
@@ -1954,7 +1953,7 @@ BOOL CDrivesList::BuildData(BOOL noTimeout, TDirectArray<CDriveData>* copyDrives
     }
     drv.PluginFS = NULL; // just for sure
     drv.DLLName = NULL;  // just for sure
-    int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+    int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
 
     // I will add the separator if it is not the first item and if there is no separator yet
     if (Drives->Count > 0 && !IsLastItemSeparator())
@@ -2043,7 +2042,7 @@ BOOL CDrivesList::BuildData(BOOL noTimeout, TDirectArray<CDriveData>* copyDrives
 
     // adding FS commands from all plug-ins
     if (!Plugins.AddItemsToChangeDrvMenu(this, currentFSIndex,
-                                         FilesWindow->GetPluginFS()->GetPluginInterfaceForFS()->GetInterface(),
+                                         PanelWindow->GetPluginFS()->GetPluginInterfaceForFS()->GetInterface(),
                                          getGrayIcons))
     {
         return FALSE;
@@ -2066,7 +2065,7 @@ BOOL CDrivesList::BuildData(BOOL noTimeout, TDirectArray<CDriveData>* copyDrives
 
     // determining the active item
     FocusIndex = -1;
-    if (FilesWindow->Is(ptPluginFS))
+    if (PanelWindow->Is(ptPluginFS))
     {
         if (currentFSIndex != -1)
             FocusIndex = currentFSIndex;
@@ -2096,7 +2095,8 @@ BOOL CDrivesList::BuildData(BOOL noTimeout, TDirectArray<CDriveData>* copyDrives
             drv.DriveText = txt;
             drv.Accessible = TRUE;
 
-            CFilesWindow* panel = MainWindow->GetNonActivePanel();
+        //Get icon of the other drive.
+            CPanelWindow* panel = MainWindow->GetNonActivePanel();
             if (panel->Is(ptDisk))
             {
                 UINT type = MyGetDriveType(panel->GetPath());
@@ -2255,7 +2255,7 @@ BOOL CDrivesList::LoadMenuFromData()
             mii.HIcon = item->HIcon;
             mii.HOverlay = NULL;
             if (item->Shared)
-                mii.HOverlay = HSharedOverlays[ICONSIZE_16];
+                mii.HOverlay = HSharedOverlays[IconSize::size_16x16];
             mii.String = item->DriveText;
             mii.State = 0;
             if (i == FocusIndex) // if FocusIndex==-1, nothing is marked
@@ -2392,7 +2392,7 @@ BOOL CDrivesList::ExecuteItem(int index, HWND hwnd, const RECT* exclude, BOOL* f
             strcpy(remoteName, item->DriveText + 2);
             name[0] = item->DriveText[0];
 
-            if (!RestoreNetworkConnection(FilesWindow->HWindow, name, remoteName))
+            if (!RestoreNetworkConnection(PanelWindow->HWindow, name, remoteName))
                 ret = FALSE;
         }
 
@@ -2419,7 +2419,7 @@ BOOL CDrivesList::Track()
 {
     CALL_STACK_MESSAGE1("CDrivesList::Track()");
     RECT r;
-    GetWindowRect(FilesWindow->HWindow, &r);
+    GetWindowRect(PanelWindow->HWindow, &r);
     int dirHeight = MainWindow->GetDirectoryLineHeight();
 
     RECT buttonRect;
@@ -2455,11 +2455,11 @@ BOOL CDrivesList::Track()
 
     if (FocusIndex != -1)
         MenuPopup->SetSelectedItemIndex(FocusIndex);
-    FilesWindow->OpenedDrivesList = this; // so that FilesWindow deliver us notifications
+    PanelWindow->OpenedDrivesList = this; // so that PanelWindow deliver us notifications
     DWORD cmd = MenuPopup->Track(MENU_TRACK_RETURNCMD | MENU_TRACK_SELECT | MENU_TRACK_VERTICAL,
                                  buttonRect.left, buttonRect.bottom,
-                                 FilesWindow->HWindow, &buttonRect);
-    FilesWindow->OpenedDrivesList = NULL;
+                                 PanelWindow->HWindow, &buttonRect);
+    PanelWindow->OpenedDrivesList = NULL;
 
     // let the returning variable be set
     if (cmd != 0)
@@ -2503,7 +2503,7 @@ BOOL IncludeDriveInDriveBar(CDriveTypeEnum dt)
 BOOL CDrivesList::FillDriveBar(CDriveBar* driveBar, BOOL bar2)
 {
     driveBar->DestroyImageLists();
-    int iconSize = GetIconSizeForSystemDPI(ICONSIZE_16);
+    int iconSize = GetIconSizeForSystemDPI(IconSize::size_16x16);
     driveBar->HDrivesIcons = ImageList_Create(iconSize, iconSize, GetImageListColorFlags() | ILC_MASK, 0, 1);
     driveBar->HDrivesIconsGray = ImageList_Create(iconSize, iconSize, GetImageListColorFlags() | ILC_MASK, 0, 1);
 
@@ -2548,7 +2548,7 @@ BOOL CDrivesList::FillDriveBar(CDriveBar* driveBar, BOOL bar2)
         tii.ImageIndex = imageIndex++;
         tii.HOverlay = NULL;
         if (item->Shared)
-            tii.HOverlay = HSharedOverlays[ICONSIZE_16];
+            tii.HOverlay = HSharedOverlays[IconSize::size_16x16];
         tii.ID = (bar2 ? CM_DRIVEBAR2_MIN : CM_DRIVEBAR_MIN) + i;
         driveBar->InsertItem2(0xFFFFFFFF, TRUE, &tii);
     }
@@ -2803,12 +2803,12 @@ BOOL CDrivesList::OnContextMenu(BOOL posByMouse, int itemIndex, int panel, const
         {
             CPluginFSInterfaceAbstract* fs = Drives->At(selectedIndex).PluginFS;
             // we need to verify, that 'fs' is still a valid interface
-            if (FilesWindow->Is(ptPluginFS) && FilesWindow->GetPluginFS()->GetInterface() == fs)
+            if (PanelWindow->Is(ptPluginFS) && PanelWindow->GetPluginFS()->GetInterface() == fs)
             { // active FS selection - we will do refresh
-                pluginData = Plugins.GetPluginData(FilesWindow->GetPluginFS()->GetPluginInterfaceForFS()->GetInterface());
+                pluginData = Plugins.GetPluginData(PanelWindow->GetPluginFS()->GetPluginInterfaceForFS()->GetInterface());
                 pluginFS = fs;
-                pluginFSName = FilesWindow->GetPluginFS()->GetPluginFSName();
-                pluginFSNameIndex = FilesWindow->GetPluginFS()->GetPluginFSNameIndex();
+                pluginFSName = PanelWindow->GetPluginFS()->GetPluginFSName();
+                pluginFSNameIndex = PanelWindow->GetPluginFS()->GetPluginFSNameIndex();
             }
             else
             {
@@ -2993,7 +2993,7 @@ BOOL CDrivesList::OnContextMenu(BOOL posByMouse, int itemIndex, int panel, const
                 stricmp(cmdName, "explore") != 0 &&    // not mandatory for explore
                 stricmp(cmdName, "link") != 0)         // not mandatory for create-short-cut
             {
-                CFilesWindow* win;
+                CPanelWindow* win;
                 int i;
                 for (i = 0; i < 2; i++)
                 {
@@ -3117,7 +3117,7 @@ BOOL CDrivesList::RebuildMenu()
     return TRUE;
 }
 
-BOOL CDrivesList::FindPanelPathIndex(CFilesWindow* panel, DWORD* index)
+BOOL CDrivesList::FindPanelPathIndex(CPanelWindow* panel, DWORD* index)
 {
     if (panel->Is(ptPluginFS))
     {

@@ -587,7 +587,7 @@ BOOL CPackerFormatConfig::SetFormat(int index, const char* ext, BOOL usePacker,
 // vraci index do tabulky formatu + 1 nebo FALSE (0) kdyz neni archiv
 int CPackerFormatConfig::PackIsArchive(const char* archiveName, int archiveNameLen)
 {
-    // j.r. makro jsem zakazal, protoze PackIsArchive se masivne vola z CFilesWindow::CommonRefresh()
+    // j.r. makro jsem zakazal, protoze PackIsArchive se masivne vola z CPanelWindow::CommonRefresh()
     CALL_STACK_MESSAGE_NONE
     //  CALL_STACK_MESSAGE2("PackIsArchive(%s)", archiveName);
     if (archiveName[0] == 0)

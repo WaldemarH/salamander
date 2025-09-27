@@ -251,7 +251,7 @@ public:
     BOOL RemovableSrcDisk;      // jde o cteni z vymenneho media?
     BOOL CanUseRecycleBin;      // lze pouzivat Recycle Bin? (jen local-fixed-drives)
     BOOL SameRootButDiffVolume; // TRUE pokud jde o Move mezi cestami se stejnym rootem, ale ruznymi svazky (aspon jedna cesta s junction-pointem)
-    BOOL TargetPathSupADS;      // TRUE pokud cil kopirovani/presouvani podporuje ADS (je nutne mazat ADSka souboru (nebo cele soubory) pred prepisem)
+    BOOL TargetPathSupADS;      // TRUE if the copy/move destination supports ADS (it is necessary to delete the ADS of the file (or entire files) before overwriting)
                                 //    BOOL TargetPathSupEFS;       // TRUE pokud cil kopirovani/presouvani podporuje EFS (aneb trochu mene obecne: je NTFS a ne FAT)
 
     // pro Copy/Move operace

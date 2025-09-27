@@ -1,5 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2023 Open Salamander Authors
-// SPDX-License-Identifier: GPL-2.0-or-later
+﻿
 
 #pragma once
 
@@ -33,28 +32,6 @@ Posilane zpravy:
     menu popup.
 */
 
-//*****************************************************************************
-//
-// CMenuWindowQueue
-//
-
-class CMenuWindowQueue
-{
-private:
-    TDirectArray<HWND> Data;
-    CRITICAL_SECTION DataCriticalSection; // kriticka sekce pro pristup k datum
-    BOOL UsingData;
-
-public:
-    CMenuWindowQueue();
-    ~CMenuWindowQueue();
-
-    BOOL Add(HWND hWindow);    // prida polozku do fronty, vraci uspech
-    void Remove(HWND hWindow); // odstrani polozku z fronty
-    void DispatchCloseMenu();  // posle vsem otevrenym oknum menu zpravu WM_USER_CLOSEMENU
-};
-
-extern CMenuWindowQueue MenuWindowQueue;
 
 //*****************************************************************************
 //
@@ -119,7 +96,7 @@ public:
     DWORD SkillLevel;  // honodta pro retezec popupu -- urcuje, kerer itemy budou zobrazeny
     BOOL HideAccel;    // maji se skryt akceleratory
 
-    const RECT* ExcludeRect; // tento obdelnik nesmime prekryt
+    const RECT* ExcludeRect; // This rectangle must not be overlapped.
 
     HANDLE HCloseEvent; // slouzi pro rozbehnuti message queue
 
@@ -376,7 +353,7 @@ public:
     //
     //   If you do not specify TPM_RETURNCMD in the 'flags' parameter, the return value
     //   is nonzero if the function succeeds and zero if it fails.
-    virtual DWORD WINAPI Track(DWORD trackFlags, int x, int y, HWND hwnd, const RECT* exclude);
+    virtual DWORD WINAPI Track(DWORD trackFlags, int x, int y, HWND hwnd_owner, const RECT* exclude);
 
     virtual BOOL WINAPI GetItemRect(int index, RECT* rect); // vrati obsany obdelnik kolem polozky v screen souradnicich
 
@@ -390,6 +367,8 @@ public:
     virtual void WINAPI SetPopupID(DWORD id);
     virtual DWORD WINAPI GetPopupID();
     virtual void WINAPI AssignHotKeys();
+
+    void OnMouseWheel(WPARAM wParam, LPARAM lParam);
 
 protected:
     void Cleanup(); // inicializuje objekt
@@ -440,8 +419,6 @@ protected:
     void EnsureItemVisible(int index); // pokud polozka lezi mimo zobrazenou oblast, zajisti
                                        // odrolovani a vykresleni polozek tak, aby byla cela
                                        // viditelna
-
-    void OnMouseWheel(WPARAM wParam, LPARAM lParam);
 
     // x, y jsou souradnice leveho horniho rohu okna
     // submenuItemPos slouzi k zaslani notifikace aplikaci

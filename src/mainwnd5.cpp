@@ -76,8 +76,8 @@ int MyCompareFileTime(FILETIME* lf, FILETIME* rf, int* foundDSTShifts, int* comp
 }
 
 // porovna dva soubory 'l' a 'r' podle datumu/casu
-int CompareFilesByTime(CFilesWindow* leftPanel, const CFileData* l, BOOL lFAT,
-                       CFilesWindow* rightPanel, CFileData* r, BOOL rFAT,
+int CompareFilesByTime(CPanelWindow* leftPanel, const CFileData* l, BOOL lFAT,
+                       CPanelWindow* rightPanel, CFileData* r, BOOL rFAT,
                        int* foundDSTShifts, int* compResNoDSTShiftIgn)
 {
     SLOW_CALL_STACK_MESSAGE3("CompareFilesByTime(, , %d, , , %d, ,)", lFAT, rFAT);
@@ -85,12 +85,10 @@ int CompareFilesByTime(CFilesWindow* leftPanel, const CFileData* l, BOOL lFAT,
 
     SYSTEMTIME stLeft;
     BOOL validDateLeft, validTimeLeft;
-    GetFileDateAndTimeFromPanel(leftPanel->ValidFileData, &leftPanel->PluginData, l, FALSE, &stLeft,
-                                &validDateLeft, &validTimeLeft);
+    GetFileDateAndTimeFromPanel(leftPanel->ValidFileData, &leftPanel->PluginData, l, FALSE, &stLeft, &validDateLeft, &validTimeLeft);
     SYSTEMTIME stRight;
     BOOL validDateRight, validTimeRight;
-    GetFileDateAndTimeFromPanel(rightPanel->ValidFileData, &rightPanel->PluginData, r, FALSE, &stRight,
-                                &validDateRight, &validTimeRight);
+    GetFileDateAndTimeFromPanel(rightPanel->ValidFileData, &rightPanel->PluginData, r, FALSE, &stRight, &validDateRight, &validTimeRight);
 
     if (validDateLeft && validDateRight ||                                    // pokud neni znamy cas, je inicializovan na 0:00:00.000, takze cas neresime...
         !validDateLeft && !validDateRight && validTimeLeft && validTimeRight) // datum je neznamy (nulovany), casy jsou oba zname, takze porovnani nic nebrani
@@ -227,7 +225,7 @@ void GetFileSizeFromPanel(DWORD validFileData, CPluginDataInterfaceEncapsulation
 }
 
 // porovna dva soubory 'l' a 'r' podle velikosti
-int CompareFilesBySize(CFilesWindow* leftPanel, CFileData* l, CFilesWindow* rightPanel, CFileData* r)
+int CompareFilesBySize(CPanelWindow* leftPanel, CFileData* l, CPanelWindow* rightPanel, CFileData* r)
 {
     CALL_STACK_MESSAGE_NONE
 
@@ -542,7 +540,7 @@ BOOL CompareFilesByContent(HWND hWindow, CCmpDirProgressDialog* progressDlg,
 // podporuje ptDisk a ptZIPArchive
 
 BOOL ReadDirsAndFilesAux(HWND hWindow, DWORD flags, CCmpDirProgressDialog* progressDlg,
-                         CFilesWindow* panel, const char* subPath,
+                         CPanelWindow* panel, const char* subPath,
                          CFilesArray* dirs, CFilesArray* files, BOOL* canceled, BOOL getTotal)
 {
     char message[2 * MAX_PATH + 200];
@@ -778,8 +776,8 @@ BOOL ReadDirsAndFilesAux(HWND hWindow, DWORD flags, CCmpDirProgressDialog* progr
 // podporuje ptDisk a ptZIPArchive
 
 BOOL CompareDirsAux(HWND hWindow, CCmpDirProgressDialog* progressDlg,
-                    CFilesWindow* leftPanel, const char* leftSubDir, BOOL leftFAT,
-                    CFilesWindow* rightPanel, const char* rightSubDir, BOOL rightFAT,
+                    CPanelWindow* leftPanel, const char* leftSubDir, BOOL leftFAT,
+                    CPanelWindow* rightPanel, const char* rightSubDir, BOOL rightFAT,
                     DWORD flags, BOOL* different, BOOL* canceled,
                     BOOL getTotal, CQuadWord* total, int* foundDSTShifts)
 {
@@ -1701,8 +1699,8 @@ void CMainWindow::CompareDirectories(DWORD flags)
         // zadosti o prekresleni ikonky
 
         // zrusime selection
-        LeftPanel->SetSel(FALSE, -1);
-        RightPanel->SetSel(FALSE, -1);
+        LeftPanel->SetSelected(FALSE, -1);
+        RightPanel->SetSelected(FALSE, -1);
 
         // pokud nedoslo ke cancelu, preneseme oznaceni
         if (!canceled)
@@ -1710,16 +1708,16 @@ void CMainWindow::CompareDirectories(DWORD flags)
             int i;
             for (i = 0; i < leftDirs->Count; i++)
                 if (leftDirs->At(i).Selected != 0)
-                    LeftPanel->SetSel(TRUE, i);
+                    LeftPanel->SetSelected(TRUE, i);
             for (i = 0; i < leftFiles->Count; i++)
                 if (leftFiles->At(i).Selected != 0)
-                    LeftPanel->SetSel(TRUE, leftDirs->Count + i);
+                    LeftPanel->SetSelected(TRUE, leftDirs->Count + i);
             for (i = 0; i < rightDirs->Count; i++)
                 if (rightDirs->At(i).Selected != 0)
-                    RightPanel->SetSel(TRUE, i);
+                    RightPanel->SetSelected(TRUE, i);
             for (i = 0; i < rightFiles->Count; i++)
                 if (rightFiles->At(i).Selected != 0)
-                    RightPanel->SetSel(TRUE, rightDirs->Count + i);
+                    RightPanel->SetSelected(TRUE, rightDirs->Count + i);
         }
 
     } // if (leftFiles != NULL && leftDirs != NULL && rightFiles != NULL && rightDirs != NULL)
@@ -1804,9 +1802,9 @@ void CMainWindow::CompareDirectories(DWORD flags)
     EndStopRefresh(); // ted uz zase cmuchal nastartuje
 }
 
-BOOL CMainWindow::GetViewersAssoc(int wantedViewerType, CDynString* strViewerMasks)
+BOOL CMainWindow::GetViewersAssoc(int wantedViewerType, String_TChar& strViewerMasks)
 {
-    BOOL ok = TRUE;
+    bool ok = true;
     EnterViewerMasksCS();
     BOOL first = TRUE;
     CViewerMasks* masks = ViewerMasks;
@@ -1816,8 +1814,8 @@ BOOL CMainWindow::GetViewersAssoc(int wantedViewerType, CDynString* strViewerMas
         CViewerMasksItem* item = masks->At(i);
         if (!item->OldType && item->ViewerType == wantedViewerType)
         {
-            const char* masksStr = item->Masks->GetMasksString();
-            int len = (int)strlen(masksStr);
+            const TCHAR* masksStr = item->Masks->GetMasksString();
+            int len = (int)_tcslen(masksStr);
             if (len > 0 && masksStr[len - 1] == ';')
                 len--;
             if (strchr(masksStr, '|') != NULL)
@@ -1828,43 +1826,13 @@ BOOL CMainWindow::GetViewersAssoc(int wantedViewerType, CDynString* strViewerMas
             if (len > 0)
             {
                 if (!first)
-                    ok &= strViewerMasks->Append(";", 1);
+                    ok = ok && strViewerMasks.Text_Append( TEXT_VIEW( ";" ) );
                 else
                     first = FALSE;
-                ok &= strViewerMasks->Append(masksStr, len);
+                ok = ok && strViewerMasks.Text_Append( String_TChar_View( masksStr, len ) );
             }
         }
     }
     LeaveViewerMasksCS();
-    return ok;
-}
-
-//
-// ****************************************************************************
-// CDynString
-//
-
-BOOL CDynString::Append(const char* str, int len)
-{
-    if (len == -1)
-        len = (int)strlen(str);
-    if (Length + len >= Allocated)
-    {
-        int size = Length + len + 1 + 256; // +256 znaku do foroty, at se tak casto nealokuje
-        char* newBuf = (char*)realloc(Buffer, size);
-        if (newBuf != NULL)
-        {
-            Buffer = newBuf;
-            Allocated = size;
-        }
-        else // nedostatek pameti, smula...
-        {
-            TRACE_E(LOW_MEMORY);
-            return FALSE;
-        }
-    }
-    memmove(Buffer + Length, str, len);
-    Length += len;
-    Buffer[Length] = 0;
-    return TRUE;
+    return ( ok ? TRUE : FALSE );
 }

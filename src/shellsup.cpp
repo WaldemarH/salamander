@@ -137,7 +137,7 @@ MENU_TEMPLATE_ITEM MouseDropMenu2[] =
 
 BOOL DoCopyMove(BOOL copy, char* targetDir, CCopyMoveData* data, void* param)
 {
-    CFilesWindow* panel = (CFilesWindow*)param;
+    CPanelWindow* panel = (CPanelWindow*)param;
 
     CTmpDropData* tmp = new CTmpDropData;
     if (tmp != NULL)
@@ -163,7 +163,7 @@ BOOL DoCopyMove(BOOL copy, char* targetDir, CCopyMoveData* data, void* param)
 void DoDragDropOper(BOOL copy, BOOL toArchive, const char* archiveOrFSName, const char* archivePathOrUserPart,
                     CDragDropOperData* data, void* param)
 {
-    CFilesWindow* panel = (CFilesWindow*)param;
+    CPanelWindow* panel = (CPanelWindow*)param;
     CTmpDragDropOperData* tmp = new CTmpDragDropOperData;
     if (tmp != NULL)
     {
@@ -220,7 +220,7 @@ void DoGetFSToFSDropEffect(const char* srcFSPath, const char* tgtFSPath,
                            DWORD allowedEffects, DWORD keyState,
                            DWORD* dropEffect, void* param)
 {
-    CFilesWindow* panel = (CFilesWindow*)param;
+    CPanelWindow* panel = (CPanelWindow*)param;
     DWORD orgEffect = *dropEffect;
     if (panel->Is(ptPluginFS) && panel->GetPluginFS()->NotEmpty())
     {
@@ -253,7 +253,7 @@ void DoGetFSToFSDropEffect(const char* srcFSPath, const char* tgtFSPath,
 const char* GetCurrentDir(POINTL& pt, void* param, DWORD* effect, BOOL rButton, BOOL& isTgtFile,
                           DWORD keyState, int& tgtType, int srcType)
 {
-    CFilesWindow* panel = (CFilesWindow*)param;
+    CPanelWindow* panel = (CPanelWindow*)param;
     isTgtFile = FALSE; // zatim neni drop target file -> operaci muzeme resime i my
     tgtType = idtttWindows;
     RECT r;
@@ -339,9 +339,9 @@ const char* GetCurrentDir(POINTL& pt, void* param, DWORD* effect, BOOL rButton, 
                     {
                         if (panel == DropSourcePanel) // drag&drop v ramci jednoho panelu
                         {
-                            if (panel->GetSelCount() == 0 &&
+                            if (panel->GetSelectedCount() == 0 &&
                                     index == panel->GetCaretIndex() ||
-                                panel->GetSel(index) != 0)
+                                panel->GetSelected(index) != 0)
                             {                             // adresar sam do sebe
                                 panel->SetDropTarget(-1); // schovat znacku (kopie pujde do akt. adresare, ne do fokusenyho podadresare)
                                 if (!rButton && (keyState & (MK_CONTROL | MK_SHIFT | MK_ALT)) == 0)
@@ -443,9 +443,9 @@ const char* GetCurrentDir(POINTL& pt, void* param, DWORD* effect, BOOL rButton, 
     {
         if (panel == DropSourcePanel) // drag&drop v ramci jednoho panelu
         {
-            if (panel->GetSelCount() == 0 &&
+            if (panel->GetSelectedCount() == 0 &&
                     index == panel->GetCaretIndex() ||
-                panel->GetSel(index) != 0)
+                panel->GetSelected(index) != 0)
             {                             // adresar sam do sebe
                 panel->SetDropTarget(-1); // schovat znacku (kopie/shortcuta pujde do akt. adresare, ne do fokusenyho podadresare)
                 if (!rButton && (keyState & (MK_CONTROL | MK_SHIFT | MK_ALT)) == 0)
@@ -489,9 +489,9 @@ const char* GetCurrentDir(POINTL& pt, void* param, DWORD* effect, BOOL rButton, 
         {                                 // drop na souboru
             if (panel == DropSourcePanel) // drag&drop v ramci jednoho panelu
             {
-                if (panel->GetSelCount() == 0 &&
+                if (panel->GetSelectedCount() == 0 &&
                         index == panel->GetCaretIndex() ||
-                    panel->GetSel(index) != 0)
+                    panel->GetSelected(index) != 0)
                 {                             // soubor sam do sebe
                     panel->SetDropTarget(-1); // schovat znacku (kopie/shortcuta pujde do akt. adresare, ne do fokusenyho souboru)
                     if (!rButton && (keyState & (MK_CONTROL | MK_SHIFT | MK_ALT)) == 0)
@@ -594,7 +594,7 @@ const char* GetCurrentDir(POINTL& pt, void* param, DWORD* effect, BOOL rButton, 
 const char* GetCurrentDirClipboard(POINTL& pt, void* param, DWORD* effect, BOOL rButton,
                                    BOOL& isTgtFile, DWORD keyState, int& tgtType, int srcType)
 { // jednodussi verze predchoziho pro "paste" z clipboardu
-    CFilesWindow* panel = (CFilesWindow*)param;
+    CPanelWindow* panel = (CPanelWindow*)param;
     isTgtFile = FALSE;
     tgtType = idtttWindows;
     if (panel->Is(ptZIPArchive) || panel->Is(ptPluginFS)) // do archivu a FS zatim ne
@@ -635,7 +635,7 @@ int CountNumberOfItemsOnPath(const char* path)
 
 void DropEnd(BOOL drop, BOOL shortcuts, void* param, BOOL ownRutine, BOOL isFakeDataObject, int tgtType)
 {
-    CFilesWindow* panel = (CFilesWindow*)param;
+    CPanelWindow* panel = (CPanelWindow*)param;
     if (drop && GetActiveWindow() == NULL)
         SetForegroundWindow(MainWindow->HWindow);
     if (drop)
@@ -688,7 +688,7 @@ void DropEnd(BOOL drop, BOOL shortcuts, void* param, BOOL ownRutine, BOOL isFake
 
 void EnterLeaveDrop(BOOL enter, void* param)
 {
-    CFilesWindow* panel = (CFilesWindow*)param;
+    CPanelWindow* panel = (CPanelWindow*)param;
     if (enter)
         panel->DragEnter();
     else
@@ -758,7 +758,7 @@ const char* EnumOneFileName(int index, void* param)
     return index == 0 ? (char*)param : NULL;
 }
 
-void AuxInvokeCommand2(CFilesWindow* panel, CMINVOKECOMMANDINFO* ici)
+void AuxInvokeCommand2(CPanelWindow* panel, CMINVOKECOMMANDINFO* ici)
 {
     CALL_STACK_MESSAGE_NONE
 
@@ -779,7 +779,7 @@ void AuxInvokeCommand2(CFilesWindow* panel, CMINVOKECOMMANDINFO* ici)
     SetThreadPriority(hThread, oldThreadPriority);
 }
 
-void AuxInvokeCommand(CFilesWindow* panel, CMINVOKECOMMANDINFO* ici)
+void AuxInvokeCommand(CPanelWindow* panel, CMINVOKECOMMANDINFO* ici)
 { // POZOR: pouziva se i z CSalamanderGeneral::OpenNetworkContextMenu()
     CALL_STACK_MESSAGE_NONE
 
@@ -847,7 +847,7 @@ HRESULT AuxGetCommandString(IContextMenu2* menu, UINT_PTR idCmd, UINT uType, UIN
     return ret;
 }
 
-void ShellActionAux5(UINT flags, CFilesWindow* panel, HMENU h)
+void ShellActionAux5(UINT flags, CPanelWindow* panel, HMENU h)
 { // POZOR: pouziva se i z CSalamanderGeneral::OpenNetworkContextMenu()
     CALL_STACK_MESSAGE_NONE
 
@@ -868,7 +868,7 @@ void ShellActionAux5(UINT flags, CFilesWindow* panel, HMENU h)
     SetThreadPriority(hThread, oldThreadPriority);
 }
 
-void ShellActionAux6(CFilesWindow* panel)
+void ShellActionAux6(CPanelWindow* panel)
 { // POZOR: pouziva se i z CSalamanderGeneral::OpenNetworkContextMenu()
     __try
     {
@@ -899,7 +899,7 @@ void ShellActionAux7(IDataObject* dataObject, CImpIDropSource* dropSource)
     }
 }
 
-void DoDragFromArchiveOrFS(CFilesWindow* panel, BOOL& dropDone, char* targetPath, int& operation,
+void DoDragFromArchiveOrFS(CPanelWindow* panel, BOOL& dropDone, char* targetPath, int& operation,
                            char* realDraggedPath, DWORD allowedEffects,
                            int srcType, const char* srcFSPath, BOOL leftMouseButton)
 {
@@ -1013,7 +1013,7 @@ void DoDragFromArchiveOrFS(CFilesWindow* panel, BOOL& dropDone, char* targetPath
     }
 }
 
-void GetLeftTopCornert(POINT* pt, BOOL posByMouse, BOOL useSelection, CFilesWindow* panel)
+void GetLeftTopCornert(POINT* pt, BOOL posByMouse, BOOL useSelection, CPanelWindow* panel)
 {
     if (posByMouse)
     {
@@ -1191,7 +1191,7 @@ BOOL GetACLUISecurityPageName(char* pageName, int pageNameMax)
     return ret;
 }
 
-void ShellAction(CFilesWindow* panel, CShellAction action, BOOL useSelection,
+void ShellAction(CPanelWindow* panel, CShellAction action, BOOL useSelection,
                  BOOL posByMouse, BOOL onlyPanelMenu)
 {
     CALL_STACK_MESSAGE5("ShellAction(, %d, %d, %d, %d)", action, useSelection, posByMouse, onlyPanelMenu);
@@ -1243,11 +1243,11 @@ void ShellAction(CFilesWindow* panel, CShellAction action, BOOL useSelection,
         else
             subDir = FALSE;
 
-        count = panel->GetSelCount();
+        count = panel->GetSelectedCount();
         if (count != 0)
         {
             indexes = new int[count];
-            panel->GetSelItems(count, indexes, action == saContextMenu); // od tohoto jsme ustoupili (viz GetSelItems): pro kontextova menu zaciname od fokusle polozky a koncime polozku pres fokusem (je tam mezilehle vraceni na zacatek seznamu jmen) (system to tak dela taky, viz Add To Windows Media Player List na MP3 souborech)
+            panel->GetSelectedItems(count, indexes, action == saContextMenu); // od tohoto jsme ustoupili (viz GetSelItems): pro kontextova menu zaciname od fokusle polozky a koncime polozku pres fokusem (je tam mezilehle vraceni na zacatek seznamu jmen) (system to tak dela taky, viz Add To Windows Media Player List na MP3 souborech)
         }
         else
         {
@@ -1414,7 +1414,7 @@ void ShellAction(CFilesWindow* panel, CShellAction action, BOOL useSelection,
                                                         // pri COPY vymazeme flag CutToClip
                                                         if (panel->CutToClipChanged)
                                                             panel->ClearCutToClipFlag(TRUE);
-                                                        CFilesWindow* anotherPanel = MainWindow->LeftPanel == panel ? MainWindow->RightPanel : MainWindow->LeftPanel;
+                                                        CPanelWindow* anotherPanel = MainWindow->LeftPanel == panel ? MainWindow->RightPanel : MainWindow->LeftPanel;
                                                         // pri COPY vymazeme flag CutToClip i u druheho panelu
                                                         if (anotherPanel->CutToClipChanged)
                                                             anotherPanel->ClearCutToClipFlag(TRUE);
@@ -1720,7 +1720,7 @@ void ShellAction(CFilesWindow* panel, CShellAction action, BOOL useSelection,
                         panel->ClearCutToClipFlag(FALSE);
                         repaint = TRUE;
                     }
-                    CFilesWindow* anotherPanel = MainWindow->LeftPanel == panel ? MainWindow->RightPanel : MainWindow->LeftPanel;
+                    CPanelWindow* anotherPanel = MainWindow->LeftPanel == panel ? MainWindow->RightPanel : MainWindow->LeftPanel;
                     BOOL samePaths = panel->Is(ptDisk) && anotherPanel->Is(ptDisk) &&
                                      IsTheSamePath(panel->GetPath(), anotherPanel->GetPath());
                     if (anotherPanel->CutToClipChanged)
@@ -2177,7 +2177,7 @@ MENU_TEMPLATE_ITEM PanelBkgndMenu[] =
                                 int specialIndex;
                                 if (count == 1) // select
                                 {
-                                    panel->GetSelItems(1, &specialIndex);
+                                    panel->GetSelectedItems(1, &specialIndex);
                                 }
                                 else
                                     specialIndex = panel->GetCaretIndex(); // focus
@@ -2213,7 +2213,7 @@ MENU_TEMPLATE_ITEM PanelBkgndMenu[] =
                                 int specialIndex;
                                 if (count == 1) // select
                                 {
-                                    panel->GetSelItems(1, &specialIndex);
+                                    panel->GetSelectedItems(1, &specialIndex);
                                 }
                                 else
                                     specialIndex = -1;           // focus
@@ -2234,7 +2234,7 @@ MENU_TEMPLATE_ITEM PanelBkgndMenu[] =
                                     GetRootPath(root, panel->GetPath());
                                     if (strlen(root) >= strlen(panel->GetPath())) // menu pro cely disk - kvuli prikazum typu
                                     {                                             // "format..." musime "dat ruce pryc" od media
-                                        CFilesWindow* win;
+                                        CPanelWindow* win;
                                         int i;
                                         for (i = 0; i < 2; i++)
                                         {

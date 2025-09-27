@@ -147,13 +147,9 @@ int MemICmp(const void* buf1, const void* buf2, int n);
 // int StrLen(const char *str);    // pouze 2 x rychlejsi, zbytecne riziko pristupu do nezarovnane pameti
 
 // nakopiruje text do nove naalokovaneho prostoru, NULL = malo pameti
-char* DupStr(const char* txt);
+TCHAR* DupStr( const TCHAR* text, int text_length = -1 );
 
-// nakopiruje text do nove naalokovaneho prostoru, NULL = malo pameti,
-// navic pri nedostatku pameti nastavi 'err' na TRUE
-char* DupStrEx(const char* str, BOOL& err);
-
-// vraci prvni vyskyt 'pattern' v 'txt' nebo NULL, je case-insensitive
+// returns the first occurrence of 'pattern' in 'txt' or NULL, it is case-insensitive
 const char* StrIStr(const char* txt, const char* pattern);
 
 // vraci prvni vyskyt 'pattern' v 'txt' nebo NULL, je case-insensitive

@@ -83,7 +83,7 @@ protected:
 class CSalamanderForOperations : public CSalamanderForOperationsAbstract
 {
 protected:
-    CFilesWindow* Panel;
+    CPanelWindow* Panel;
     CZIPUnpackProgress UnpackProgress; // UnpackProgress dialog
     BOOL ProgressDialog2;              // TRUE = dvou-progressovy, FALSE = jedno-progressovy UnpackProgress dialog
     HWND FocusWnd;
@@ -93,7 +93,7 @@ protected:
     BOOL Destroyed; // pokud je TRUE, objek jiz byl destruovan
 
 public:
-    CSalamanderForOperations(CFilesWindow* panel);
+    CSalamanderForOperations(CPanelWindow* panel);
     ~CSalamanderForOperations();
 
     // PROGRESS DIALOG: dialog obsahuje jeden/dva ('twoProgressBars' FALSE/TRUE) progress-metry
@@ -442,7 +442,7 @@ public:
     }
     void SetPreferedPacker(int i) { PreferedPacker = i; }
 
-    BOOL ExecutePacker(CFilesWindow* panel, const char* zipFile, BOOL move,
+    BOOL ExecutePacker(CPanelWindow* panel, const char* zipFile, BOOL move,
                        const char* sourcePath, SalEnumSelection2 next, void* param);
 };
 
@@ -570,7 +570,7 @@ public:
     }
     void SetPreferedUnpacker(int i) { PreferedUnpacker = i; }
 
-    BOOL ExecuteUnpacker(HWND parent, CFilesWindow* panel, const char* zipFile, const char* mask,
+    BOOL ExecuteUnpacker(HWND parent, CPanelWindow* panel, const char* zipFile, const char* mask,
                          const char* targetDir, BOOL delArchiveWhenDone, CDynamicString* archiveVolumes);
 };
 

@@ -132,20 +132,30 @@ public:
 
 class CPathHistoryItem
 {
-protected:
-    int Type;                             // typ: 0 je disk, 1 je archiv, 2 je FS
-    char* PathOrArchiveOrFSName;          // diskova cesta nebo jmeno archivu nebo jmeno FS
-    char* ArchivePathOrFSUserPart;        // cesta v archivu nebo user-part FS cesty
-    HICON HIcon;                          // ikona odpovidajici ceste (muze byt NULL); v destruktoru bude ikona sestrelena
-    CPluginFSInterfaceAbstract* PluginFS; // jen pro Type==2: posledni pouzivany interface pro FS cestu
+    public: struct Type
+    {
+        public: enum Value
+        {
+            not_set,
+
+            archiv,
+            disk,
+            fs
+        };
+    };
+
+    protected:
+    Type::Value m_Type;                             // typ: 0 je disk, 1 je archiv, 2 je FS
+    char* m_pPathOrArchiveOrFSName;                  // diskova cesta nebo jmeno archivu nebo jmeno FS
+    char* m_pArchivePathOrFSUserPart;                // cesta v archivu nebo user-part FS cesty
+    HICON m_HIcon;                                  // ikona odpovidajici ceste (muze byt NULL); v destruktoru bude ikona sestrelena
+    CPluginFSInterfaceAbstract* m_pPluginFS;        // jen pro Type==2: posledni pouzivany interface pro FS cestu
 
     int TopIndex;      // top-index v dobe ulozeni stavu panelu
     char* FocusedName; // focus v dobe ulozeni stavu panelu
 
 public:
-    CPathHistoryItem(int type, const char* pathOrArchiveOrFSName,
-                     const char* archivePathOrFSUserPart, HICON hIcon,
-                     CPluginFSInterfaceAbstract* pluginFS);
+    CPathHistoryItem( Type::Value type, const char* pPathOrArchiveOrFSName, const char* pArchivePathOrFSUserPart, HICON hIcon, CPluginFSInterfaceAbstract* pPluginFS );
     ~CPathHistoryItem();
 
     // zmena top-indexu a focused-name (opakovane pridani jedne cesty do historie)
@@ -153,7 +163,7 @@ public:
 
     void GetPath(char* buffer, int bufferSize);
     HICON GetIcon();
-    BOOL Execute(CFilesWindow* panel); // vraci TRUE pokud zmena vysla (FALSE - zustava na miste)
+    BOOL Execute(CPanelWindow* panel); // vraci TRUE pokud zmena vysla (FALSE - zustava na miste)
 
     BOOL IsTheSamePath(CPathHistoryItem& item, CPluginFSInterfaceEncapsulation* curPluginFS); // vraci TRUE pri shode cest (kazdy typ se porovnava jinak)
 
@@ -179,28 +189,18 @@ public:
     void ClearHistory();
 
     // pridani cesty do historie
-    void AddPath(int type, const char* pathOrArchiveOrFSName, const char* archivePathOrFSUserPart,
-                 CPluginFSInterfaceAbstract* pluginFS, CPluginFSInterfaceEncapsulation* curPluginFS);
+    void AddPath(CPathHistoryItem::Type::Value type, const char* pathOrArchiveOrFSName, const char* archivePathOrFSUserPart, CPluginFSInterfaceAbstract* pluginFS, CPluginFSInterfaceEncapsulation* curPluginFS);
 
     // pridani cesty do historie, jen pokud uz zde cesta neni (viz Alt+F12; u FS prepisuje pluginFS na nejnovejsi)
-    void AddPathUnique(int type, const char* pathOrArchiveOrFSName, const char* archivePathOrFSUserPart,
-                       HICON hIcon, CPluginFSInterfaceAbstract* pluginFS,
-                       CPluginFSInterfaceEncapsulation* curPluginFS);
+    void AddPathUnique(CPathHistoryItem::Type::Value type, const char* pathOrArchiveOrFSName, const char* archivePathOrFSUserPart, HICON hIcon, CPluginFSInterfaceAbstract* pluginFS, CPluginFSInterfaceEncapsulation* curPluginFS);
 
     // meni data (top-index a focused-name) aktualni cesty, a to jen pokud zadana cesta
     // odpovida aktualni ceste v historii
-    void ChangeActualPathData(int type, const char* pathOrArchiveOrFSName,
-                              const char* archivePathOrFSUserPart,
-                              CPluginFSInterfaceAbstract* pluginFS,
-                              CPluginFSInterfaceEncapsulation* curPluginFS,
-                              int topIndex, const char* focusedName);
+    void ChangeActualPathData( CPathHistoryItem::Type::Value type, const char* pathOrArchiveOrFSName, const char* archivePathOrFSUserPart, CPluginFSInterfaceAbstract* pluginFS, CPluginFSInterfaceEncapsulation* curPluginFS, int topIndex, const char* focusedName);
 
     // vymaze aktualni cestu z historie, a to jen pokud zadana cesta odpovida aktualni
     // ceste v historii
-    void RemoveActualPath(int type, const char* pathOrArchiveOrFSName,
-                          const char* archivePathOrFSUserPart,
-                          CPluginFSInterfaceAbstract* pluginFS,
-                          CPluginFSInterfaceEncapsulation* curPluginFS);
+    void RemoveActualPath(CPathHistoryItem::Type::Value type, const char* pathOrArchiveOrFSName, const char* archivePathOrFSUserPart, CPluginFSInterfaceAbstract* pluginFS, CPluginFSInterfaceEncapsulation* curPluginFS);
 
     // naplni menu polozkami
     // ID budou od jednicky a odpovidaji parameru index ve volani metody Execute()
@@ -217,15 +217,18 @@ public:
     void ClearPluginFSFromHistory(CPluginFSInterfaceAbstract* fs);
 
     // index vybrane polozky v menu forward/backward (indexovano: u forward od jedne, backward od dvou)
-    void Execute(int index, BOOL forward, CFilesWindow* panel, BOOL allItems = FALSE, BOOL removeItem = FALSE);
+    void Execute(int index, BOOL forward, CPanelWindow* panel, BOOL allItems = FALSE, BOOL removeItem = FALSE);
 
-    BOOL HasForward() { return ForwardIndex != -1; }
+    BOOL HasForward()
+    {
+        return ( ForwardIndex != -1 );
+    }
     BOOL HasBackward()
     {
         int count = (ForwardIndex == -1) ? Paths.Count : ForwardIndex;
-        return count > 1;
+        return ( count > 1 );
     }
-    BOOL HasPaths() { return Paths.Count > 0; }
+    BOOL HasPaths() { return ( Paths.Count > 0 ); }
 
     void SaveToRegistry(HKEY hKey, const char* name, BOOL onlyClear);
     void LoadFromRegistry(HKEY hKey, const char* name);
@@ -734,7 +737,7 @@ private:
     void EnableAll();
     // nacte vsechny klice a prida je do seznamu
     // vraci FALSE, pokud bylo malo pameti pro alokaci seznamu
-    BOOL LoadList(TDirectArray<char*>* list, HKEY hRootKey, const char* keyName);
+    BOOL LoadList(TDirectArray<char*>* list, HKEY hRootKey, const String_TChar_View keyName);
     // vrati TRUE, pokud je 'name' v seznamu list
     BOOL FindNameInList(TDirectArray<char*>* list, const char* name);
 };
@@ -797,18 +800,10 @@ protected:
 
 class CCommonPropSheetPage : public CPropSheetPage
 {
-public:
-    CCommonPropSheetPage(TCHAR* title, HINSTANCE modul, int resID,
-                         DWORD flags /* = PSP_USETITLE*/, HICON icon,
-                         CObjectOrigin origin = ooStatic)
-        : CPropSheetPage(title, modul, resID, flags, icon, origin) {}
-    CCommonPropSheetPage(TCHAR* title, HINSTANCE modul, int resID, UINT helpID,
-                         DWORD flags /* = PSP_USETITLE*/, HICON icon,
-                         CObjectOrigin origin = ooStatic)
-        : CPropSheetPage(title, modul, resID, helpID, flags, icon, origin) {}
+    public: CCommonPropSheetPage(TCHAR* title, HINSTANCE modul, int resID, DWORD flags /* = PSP_USETITLE*/, HICON icon, CObjectOrigin origin = ooStatic) : CPropSheetPage(title, modul, resID, flags, icon, origin) {};
+    public: CCommonPropSheetPage(TCHAR* title, HINSTANCE modul, int resID, UINT helpID, DWORD flags /* = PSP_USETITLE*/, HICON icon, CObjectOrigin origin = ooStatic) : CPropSheetPage(title, modul, resID, helpID, flags, icon, origin) {};
 
-protected:
-    virtual void NotifDlgJustCreated();
+    protected: virtual void NotifDlgJustCreated();
 };
 
 //****************************************************************************
@@ -1102,9 +1097,9 @@ extern CShares Shares; // zde jsou ulozeny nactene sharovane adresare
 
 extern CSalamanderSafeFile SalSafeFile; // interface pro komfortni praci se soubory
 
-extern const char* SalamanderConfigurationRoots[];                                                           // popis v mainwnd2.cpp
+extern const TCHAR* SalamanderConfigurationRoots[];                                                           // popis v mainwnd2.cpp
 BOOL GetUpgradeInfo(BOOL* autoImportConfig, char* autoImportConfigFromKey, int autoImportConfigFromKeySize); // popis v mainwnd2.cpp
-BOOL FindLatestConfiguration(BOOL* deleteConfigurations, const char*& loadConfiguration);                    // popis v mainwnd2.cpp
+BOOL FindLatestConfiguration(BOOL* deleteConfigurations, const TCHAR*& loadConfiguration);                    // popis v mainwnd2.cpp
 BOOL FindLanguageFromPrevVerOfSal(char* slgName);                                                            // popis v mainwnd2.cpp
 
 // k editline/comboboxu 'ctrlID' vytvori a attachne specialni tridu, ktera umoznuje

@@ -25,7 +25,7 @@ CIconCache::CIconCache()
       ThumbnailsCache(1, 20) // ziskavani thumbnailu je pomale, relokace je v tom hracka
 {
     IconsCount = 0;
-    IconSize = ICONSIZE_COUNT; // zatim nenastaveno; pokus o pridani ikonky bez predchoziho volani SetIconSize() zpusobi TRACE_E
+    IconSize = IconSize::nItems; // zatim nenastaveno; pokus o pridani ikonky bez predchoziho volani SetIconSize() zpusobi TRACE_E
     DataIfaceForFS = NULL;
 }
 
@@ -365,8 +365,8 @@ int CIconCache::AllocIcon(CIconList** iconList, int* iconListIndex)
         }
 
         int iconWidth = 16;
-        if (IconSize == ICONSIZE_COUNT)
-            TRACE_E("CIconCache::AllocIcon() IconSize == ICONSIZE_COUNT, you must call SetIconSize() first!");
+        if (IconSize == IconSize::nItems)
+            TRACE_E("CIconCache::AllocIcon() IconSize == IconSize::nItems, you must call SetIconSize() first!");
         else
             iconWidth = IconSizes[IconSize];
 
@@ -664,11 +664,11 @@ void CIconCache::GetIconsAndThumbsFrom(CIconCache* icons, CPluginDataInterfaceEn
     }
 }
 
-void CIconCache::SetIconSize(CIconSizeEnum iconSize)
+void CIconCache::SetIconSize(IconSize::Value iconSize)
 {
-    if (iconSize == ICONSIZE_COUNT)
+    if (iconSize == IconSize::nItems)
     {
-        TRACE_E("CIconCache::SetIconSize() unexpected iconSize==ICONSIZE_COUNT");
+        TRACE_E("CIconCache::SetIconSize() unexpected iconSize==IconSize::nItems");
         return;
     }
     if (iconSize == IconSize) // pokud se nemeni velikost, neni co resit
@@ -693,7 +693,7 @@ void CIconCache::SetIconSize(CIconSizeEnum iconSize)
 // CAssociations
 //
 
-BOOL ReadDirectoryIconAndTypeAux(CIconList* iconList, int index, CIconSizeEnum iconSize)
+BOOL ReadDirectoryIconAndTypeAux(CIconList* iconList, int index, IconSize::Value iconSize)
 {
     char systemDir[MAX_PATH];
     GetSystemDirectory(systemDir, MAX_PATH);
@@ -873,7 +873,7 @@ void CAssociations::Release()
             free(data->Type);
     }
     DestroyMembers();
-    for (i = 0; i < ICONSIZE_COUNT; i++)
+    for (i = 0; i < IconSize::nItems; i++)
         Icons[i].IconsCount = 0;
 }
 
@@ -884,7 +884,7 @@ void CAssociations::Destroy()
 
     // destrukce imagelistu z IconsCache
     int i;
-    for (i = 0; i < ICONSIZE_COUNT; i++)
+    for (i = 0; i < IconSize::nItems; i++)
         Icons[i].IconsCache.DestroyMembers();
 }
 
@@ -896,7 +896,7 @@ void CAssociations::ColorsChanged()
     // v imagelistech pro aktualni barevnou hloubku
     COLORREF bkColor = GetCOLORREF(CurrentColors[ITEM_BK_NORMAL]);
     int j;
-    for (j = 0; j < ICONSIZE_COUNT; j++)
+    for (j = 0; j < IconSize::nItems; j++)
     {
         int i;
         for (i = 0; i < Icons[j].IconsCache.Count; i++)
@@ -908,7 +908,7 @@ void CAssociations::ColorsChanged()
     }
     // FIXME: stacilo by nastavovat pozadi pouze pro patricny iconlist
     int i;
-    for (i = 0; i < ICONSIZE_COUNT; i++)
+    for (i = 0; i < IconSize::nItems; i++)
         SimpleIconLists[i]->SetBkColor(bkColor);
 }
 
@@ -953,7 +953,7 @@ BOOL CAssociations::GetIndex(const char* name, int& index)
     }
 }
 
-int CAssociations::AllocIcon(CIconList** iconList, int* iconListIndex, CIconSizeEnum iconSize)
+int CAssociations::AllocIcon(CIconList** iconList, int* iconListIndex, IconSize::Value iconSize)
 {
     CALL_STACK_MESSAGE1("CAssociations::AllocIcon()");
     int cache = Icons[iconSize].IconsCount / ICONS_IN_LIST; // cache
@@ -1002,7 +1002,7 @@ int CAssociations::AllocIcon(CIconList** iconList, int* iconListIndex, CIconSize
     return Icons[iconSize].IconsCount++;
 }
 
-BOOL CAssociations::GetIcon(int iconIndex, CIconList** iconList, int* iconListIndex, CIconSizeEnum iconSize)
+BOOL CAssociations::GetIcon(int iconIndex, CIconList** iconList, int* iconListIndex, IconSize::Value iconSize)
 {
     CALL_STACK_MESSAGE2("CAssociations::GetIcon(%d, , )", iconIndex);
     if (iconIndex >= 0 && iconIndex < Icons[iconSize].IconsCount)
@@ -1095,7 +1095,7 @@ void CAssociations::InsertData(const char* /*origin*/, int index, BOOL overwrite
                                const char* iconLocation, const char* type)
 {
     //  TRACE_I(origin << (overwriteItem ? "overwriting existing record by: " : "") << "file association: ext=" << e <<
-    //          ": index=" << data.GetIndex(ICONSIZE_16) << ": flag=" << data.GetFlag() << ": icon-location=" << iconLocation <<
+    //          ": index=" << data.GetIndex(IconSize::size_16x16) << ": flag=" << data.GetFlag() << ": icon-location=" << iconLocation <<
     //          ": type=" << (type == NULL ? "" : type));
 
     size = (LONG)(s - e) + 4;
@@ -1378,7 +1378,7 @@ void CAssociations::ReadAssociations(BOOL showWaitWnd)
 
     // pridani pevnych ikonek vsech velikosti do cache-bitmap CAssociations
     int iconSize;
-    for (iconSize = 0; iconSize < ICONSIZE_COUNT; iconSize++)
+    for (iconSize = 0; iconSize < IconSize::nItems; iconSize++)
     {
         int resID, vistaResID;
         CIconList* iconList;
@@ -1386,13 +1386,13 @@ void CAssociations::ReadAssociations(BOOL showWaitWnd)
         int j;
         for (j = 0; j < 4; j++)
         {
-            if (AllocIcon(&iconList, &iconListIndex, (CIconSizeEnum)iconSize) != -1)
+            if (AllocIcon(&iconList, &iconListIndex, (IconSize::Value)iconSize) != -1)
             {
                 switch (j)
                 {
                 case ASSOC_ICON_SOME_DIR:
                 {
-                    if (!ReadDirectoryIconAndTypeAux(iconList, iconListIndex, (CIconSizeEnum)iconSize))
+                    if (!ReadDirectoryIconAndTypeAux(iconList, iconListIndex, (IconSize::Value)iconSize))
                         TRACE_E("ReadDirectoryIconAndTypeAux() failed!");
                     continue;
                 }
@@ -1433,7 +1433,7 @@ void CAssociations::ReadAssociations(BOOL showWaitWnd)
     }
 }
 
-BOOL CAssociations::IsAssociated(char* ext, BOOL& addtoIconCache, CIconSizeEnum iconSize)
+BOOL CAssociations::IsAssociated(char* ext, BOOL& addtoIconCache, IconSize::Value iconSize)
 {
     int index;
     if (GetIndex(ext, index))
@@ -1451,7 +1451,7 @@ BOOL CAssociations::IsAssociated(char* ext, BOOL& addtoIconCache, CIconSizeEnum 
     }
 }
 
-BOOL CAssociations::IsAssociatedStatic(char* ext, const char*& iconLocation, CIconSizeEnum iconSize)
+BOOL CAssociations::IsAssociatedStatic(char* ext, const char*& iconLocation, IconSize::Value iconSize)
 {
     int index;
     if (GetIndex(ext, index))

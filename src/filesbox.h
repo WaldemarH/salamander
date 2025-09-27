@@ -3,22 +3,27 @@
 
 #pragma once
 
+#include "filesbox2.h"
+
 // ****************************************************************************
 
-class CFilesWindow;
+class CPanelWindow;
 class CFilesBox;
 
 #define UPDATE_VERT_SCROLL 0x00000001
 #define UPDATE_HORZ_SCROLL 0x00000002
 
-enum CViewModeEnum
-{
-    vmBrief,      // nekolik sloupcu dat; pouze vodorovne rolovatko; spodni polozky jsou vzdy cele viditelne
-    vmDetailed,   // jeden sloupec dat; zobrzene obe rolovatka; posledni radek nemusi byt cely viditelny
-    vmIcons,      // velke ikony zleva doprava a pak shora dolu; pouze svisle rolovatko
-    vmThumbnails, // nahledy zleva doprava a pak shora dolu; pouze svisle rolovatko
-    vmTiles       // velke (48x48) ikony zleva doprava a pak shora dolu; pouze svisle rolovatko
-};
+//struct ViewMode
+//{
+//    public: enum Value
+//    {
+//        brief,          //Several columns of data; only horizontal scrollbar; bottom items are always fully visible.
+//        detailed,       //One column of data; both scrollbars are displayed; the last row may not be fully visible.
+//        icons,          //Large icons from left to right and then top to bottom; only vertical scrollbar.
+//        thumbnails,     //Views from left to right and then top to bottom; only vertical scrolling.
+//        tiles           //Large (48x48) icons from left to right and then top to bottom; vertical scroll only.
+//    };
+//};
 
 //****************************************************************************
 //
@@ -47,21 +52,23 @@ protected:
 
 //****************************************************************************
 //
-// CHeaderLine
+// CHeaderLine - Header of the panel (it contains Name | Ext | Size | Date | ...)
 //
-
-enum CHeaderHitTestEnum
-{
-    hhtNone,    // plocha za polsedni polozkou
-    hhtItem,    // polozka
-    hhtDivider, // oodelovac polozky, ktera ma nastavitelnou sirku
-};
-
 class CHeaderLine : public CWindow
 {
+    public: struct HitTest
+    {
+        public: enum Value
+        {
+            None,    // plocha za polsedni polozkou
+            Item,    // polozka
+            Divider, // oodelovac polozky, ktera ma nastavitelnou sirku
+        };
+    };
+
 protected:
     CFilesBox* Parent;
-    TDirectArray<CColumn>* Columns; // ukazatel do pole drzeneho v CFilesWindow
+    TDirectArray<CColumn>* Columns; // ukazatel do pole drzeneho v CPanelWindow
     int Width;
     int Height;
     int HotIndex;        // index sloupce, ktery je prave vysviceny
@@ -86,7 +93,7 @@ public:
     // index odpovidajiciho sloupce v poli Columns.
     // Pokud dojde na kliknuti na "Name", bude nastavena promenna 'extInName'
     // Je-li kliknuto na "Ext", bude rovna TRUE. Jinak bude FALSE.
-    CHeaderHitTestEnum HitTest(int xPos, int yPos, int& index, BOOL& extInName);
+    HitTest::Value HitTest(int xPos, int yPos, int& index, BOOL& extInName);
 
 protected:
     virtual LRESULT WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -97,7 +104,7 @@ protected:
     void Cancel();
 
     friend class CFilesBox;
-    friend class CFilesWindow;
+    friend class CPanelWindow;
 };
 
 //****************************************************************************
@@ -108,7 +115,7 @@ protected:
 class CFilesBox : public CWindow
 {
 protected:
-    CFilesWindow* Parent;
+    CPanelWindow* Parent;
     HDC HPrivateDC; // kazdy panel ma sve DC
     HWND HVScrollBar;
     HWND HHScrollBar;
@@ -121,8 +128,8 @@ protected:
     RECT BottomBarRect; // poloha vodorovne scrollbary v ramci ClientRect
     RECT FilesRect;     // poloha vlastni kreslici polochy v ramci ClientRect
 
-    int TopIndex;            // vmBrief || vmDetailed: index prvni zobrazene polozky
-                             // vmIcons || vmThumbnails: odrolovani panelu v bodech
+    int TopIndex;            // ViewMode::brief || ViewMode::detailed: index prvni zobrazene polozky
+                             // ViewMode::icons || ViewMode::thumbnails: odrolovani panelu v bodech
     int XOffset;             // X souradnice prvniho zobrazeneho bodu
     int ItemsCount;          // celkovy pocet polozek
     int EntireItemsInColumn; // pocet plne viditelnych polozek ve sloupci
@@ -133,7 +140,7 @@ protected:
     SCROLLINFO OldVertSI; // abychom nenastavovali scrollbar zbytecne
     SCROLLINFO OldHorzSI; // abychom nenastavovali scrollbar zbytecne
 
-    CViewModeEnum ViewMode;
+    ViewMode::Value ViewMode;
     BOOL HeaderLineVisible; // je zobrazena header line?
 
     int ItemHeight; // vyska polozky
@@ -148,7 +155,7 @@ protected:
     int MouseHWheelAccumulator; // horizontal
 
 public:
-    CFilesBox(CFilesWindow* parent);
+    CFilesBox(CPanelWindow* parent);
 
     // nastavi pocet polozek v panelu
     // count             - pocet polozek v panelu
@@ -161,7 +168,7 @@ public:
 
     int GetColumnsCount();
 
-    void SetMode(CViewModeEnum mode, BOOL headerLine);
+    void SetMode(ViewMode::Value mode, BOOL headerLine);
 
     int GetItemWidth() { return ItemWidth; }
     int GetItemHeight() { return ItemHeight; }
@@ -228,7 +235,7 @@ protected:
 
     virtual LRESULT WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    friend class CFilesWindow;
+    friend class CPanelWindow;
     friend class CFilesMap;
     friend class CScrollPanel;
     friend class CBottomBar;

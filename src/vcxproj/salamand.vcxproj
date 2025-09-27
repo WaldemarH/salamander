@@ -40,6 +40,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <ConfigurationType>Application</ConfigurationType>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -95,7 +96,12 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -395,12 +401,37 @@
     </ClCompile>
     <ClCompile Include="..\filter.cpp">
     </ClCompile>
-    <ClCompile Include="..\find.cpp">
+    <ClCompile Include="..\find_dialog_.cpp" />
+    <ClCompile Include="..\find_dialog_2.cpp" />
+    <ClCompile Include="..\find.old.cpp">
     </ClCompile>
     <ClCompile Include="..\finddlg1.cpp">
     </ClCompile>
     <ClCompile Include="..\finddlg2.cpp">
     </ClCompile>
+    <ClCompile Include="..\find_dialog_clipboard.cpp" />
+    <ClCompile Include="..\find_filesList_.cpp" />
+    <ClCompile Include="..\find_filesList_items.cpp" />
+    <ClCompile Include="..\find_filesList_other.cpp" />
+    <ClCompile Include="..\find_filesList_item_.cpp" />
+    <ClCompile Include="..\find_filesList_item_text.cpp" />
+    <ClCompile Include="..\find_filesList_window.cpp" />
+    <ClCompile Include="..\find_ignore_.cpp" />
+    <ClCompile Include="..\find_ignore_items.cpp" />
+    <ClCompile Include="..\find_ignore_registry.cpp" />
+    <ClCompile Include="..\find_log_.cpp" />
+    <ClCompile Include="..\find_log_dialog_.cpp" />
+    <ClCompile Include="..\find_log_dialog_other.cpp" />
+    <ClCompile Include="..\find_log_dialog_window.cpp" />
+    <ClCompile Include="..\find_log_items.cpp" />
+    <ClCompile Include="..\find_options_item_.cpp" />
+    <ClCompile Include="..\find_options_item_registry.cpp" />
+    <ClCompile Include="..\find_options_menu.cpp" />
+    <ClCompile Include="..\find_options_.cpp" />
+    <ClCompile Include="..\find_options_registry.cpp" />
+    <ClCompile Include="..\find_string_search_.cpp" />
+    <ClCompile Include="..\find_string_search_redraw.cpp" />
+    <ClCompile Include="..\find_string_search_string.cpp" />
     <ClCompile Include="..\geticon.cpp">
     </ClCompile>
     <ClCompile Include="..\gui.cpp">
@@ -441,6 +472,8 @@
     </ClCompile>
     <ClCompile Include="..\menubar.cpp">
     </ClCompile>
+    <ClCompile Include="..\menu_queue_.cpp" />
+    <ClCompile Include="..\menu_queue_menu.cpp" />
     <ClCompile Include="..\msgbox.cpp">
     </ClCompile>
     <ClCompile Include="..\ms_init.cpp">
@@ -485,6 +518,12 @@
     </ClCompile>
     <ClCompile Include="..\pwdmngr.cpp">
     </ClCompile>
+    <ClCompile Include="..\registry_noisy_key.cpp" />
+    <ClCompile Include="..\registry_noisy_size.cpp" />
+    <ClCompile Include="..\registry_sal.cpp" />
+    <ClCompile Include="..\registry_silent_key.cpp" />
+    <ClCompile Include="..\registry_silent_size.cpp" />
+    <ClCompile Include="..\registry_silent_value.cpp" />
     <ClCompile Include="..\reglib\src\regcopy.cpp">
     </ClCompile>
     <ClCompile Include="..\reglib\src\reginmem.cpp">
@@ -493,8 +532,9 @@
     </ClCompile>
     <ClCompile Include="..\reglib\src\regparse.cpp">
     </ClCompile>
-    <ClCompile Include="..\regwork.cpp">
+    <ClCompile Include="..\registry_worker_thread.cpp">
     </ClCompile>
+    <ClCompile Include="..\registry_redirections.cpp" />
     <ClCompile Include="..\safefile.cpp">
     </ClCompile>
     <ClCompile Include="..\salamdr1.cpp">
@@ -521,6 +561,7 @@
     </ClCompile>
     <ClCompile Include="..\salzlib.cpp">
     </ClCompile>
+    <ClCompile Include="..\settings_.cpp" />
     <ClCompile Include="..\shares.cpp">
     </ClCompile>
     <ClCompile Include="..\shellib.cpp">
@@ -547,6 +588,7 @@
     </ClCompile>
     <ClCompile Include="..\svg.cpp">
     </ClCompile>
+    <ClCompile Include="..\system_error.cpp" />
     <ClCompile Include="..\tabwnd.cpp">
     </ClCompile>
     <ClCompile Include="..\tasklist.cpp">
@@ -677,6 +719,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\string_base.h" />
+    <ClInclude Include="..\string_base_view.h" />
+    <ClInclude Include="..\string_iterators.h" />
     <ClInclude Include="..\bitmap.h">
     </ClInclude>
     <ClInclude Include="..\common\dep\bzip2\bzlib.h">
@@ -745,12 +790,27 @@
     </ClInclude>
     <ClInclude Include="..\filesbox.h">
     </ClInclude>
+    <ClInclude Include="..\filesbox2.h" />
     <ClInclude Include="..\fileswnd.h">
     </ClInclude>
     <ClInclude Include="..\filter.h">
     </ClInclude>
-    <ClInclude Include="..\find.h">
+    <ClInclude Include="..\find_data_umd.h" />
+    <ClInclude Include="..\find_dialog.h" />
+    <ClInclude Include="..\find.old.h">
     </ClInclude>
+    <ClInclude Include="..\find_filesList.h" />
+    <ClInclude Include="..\find_filesList_item.h" />
+    <ClInclude Include="..\find_data_grep.h" />
+    <ClInclude Include="..\find_data_search.h" />
+    <ClInclude Include="..\find_ignore.h" />
+    <ClInclude Include="..\find_ignore_item.h" />
+    <ClInclude Include="..\find_log.h" />
+    <ClInclude Include="..\find_log_dialog.h" />
+    <ClInclude Include="..\find_log_item.h" />
+    <ClInclude Include="..\find_options.h" />
+    <ClInclude Include="..\find_options_item.h" />
+    <ClInclude Include="..\find_string_search.h" />
     <ClInclude Include="..\geticon.h">
     </ClInclude>
     <ClInclude Include="..\gui.h">
@@ -773,6 +833,7 @@
     </ClInclude>
     <ClInclude Include="..\menu.h">
     </ClInclude>
+    <ClInclude Include="..\menu_queue.h" />
     <ClInclude Include="..\olespy.h">
     </ClInclude>
     <ClInclude Include="..\pack.h">
@@ -807,9 +868,10 @@
     </ClInclude>
     <ClInclude Include="..\pwdmngr.h">
     </ClInclude>
+    <ClInclude Include="..\registry.h" />
     <ClInclude Include="..\reglib\src\regparse.h">
     </ClInclude>
-    <ClInclude Include="..\regwork.h">
+    <ClInclude Include="..\registry_worker_thread.h">
     </ClInclude>
     <ClInclude Include="..\salamand.h">
     </ClInclude>
@@ -819,6 +881,7 @@
     </ClInclude>
     <ClInclude Include="..\salshlib.h">
     </ClInclude>
+    <ClInclude Include="..\settings.h" />
     <ClInclude Include="..\shellib.h">
     </ClInclude>
     <ClInclude Include="..\shexreg.h">
@@ -829,10 +892,17 @@
     </ClInclude>
     <ClInclude Include="..\sort.h">
     </ClInclude>
+    <ClInclude Include="..\string_local.h" />
+    <ClInclude Include="..\string_local_view.h" />
+    <ClInclude Include="..\string_tchar.h" />
+    <ClInclude Include="..\string_tchar_view.h" />
+    <ClInclude Include="..\string_utf16.h" />
+    <ClInclude Include="..\string_utf16_view.h" />
     <ClInclude Include="..\stswnd.h">
     </ClInclude>
     <ClInclude Include="..\svg.h">
     </ClInclude>
+    <ClInclude Include="..\system.h" />
     <ClInclude Include="..\tabwnd.h">
     </ClInclude>
     <ClInclude Include="..\tasklist.h">

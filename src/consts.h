@@ -568,8 +568,8 @@ void GetFileSizeFromPanel(DWORD validFileData, CPluginDataInterfaceEncapsulation
                           const CFileData* f, BOOL isDir, CQuadWord* size, BOOL* validSize);
 
 void DrawSplitLine(HWND HWindow, int newDragSplitX, int oldDragSplitX, RECT client);
-BOOL InitializeCheckThread(); // inicializace threadu pro CFilesWindow::CheckPath()
-void ReleaseCheckThreads();   // uvolneni threadu pro CFilesWindow::CheckPath()
+BOOL InitializeCheckThread(); // inicializace threadu pro CPanelWindow::CheckPath()
+void ReleaseCheckThreads();   // uvolneni threadu pro CPanelWindow::CheckPath()
 void InitDefaultDir();        // inicializace pole DefaultDir (posledni navstivene cesty na vsech drivech)
 
 // zobrazi/schova zpravu ve vlastnim threadu (neodcerpa message-queue), zobrazi najednou jen
@@ -633,7 +633,7 @@ BOOL CheckAndCreateDirectory(const char* dir, HWND parent = NULL, BOOL quiet = F
 // je smazan take
 void RemoveEmptyDirs(const char* dir);
 
-// vykona rutina pro otevirani vieweru - pouziva se v CFilesWindow::ViewFile a
+// vykona rutina pro otevirani vieweru - pouziva se v CPanelWindow::ViewFile a
 // CSalamanderForViewFileOnFS::OpenViewer; dalsi vyuziti se neocekava, proto nejsou
 // popsany parametry a navratove hodnoty
 BOOL ViewFileInt(HWND parent, const char* name, BOOL altView, DWORD handlerID, BOOL returnLock,
@@ -735,7 +735,7 @@ class CViewerMasks;
 
 // funkce spojene s drag&dropem a dalsimi shellovymi vecmi
 
-class CFilesWindow;
+class CPanelWindow;
 
 // operace shellu
 enum CShellAction
@@ -770,7 +770,7 @@ void EnterLeaveDrop(BOOL enter, void* param);
 // uklada na clipboard prefered drop effect a informaci o puvodu ze Salamandera
 void SetClipCutCopyInfo(HWND hwnd, BOOL copy, BOOL salObject);
 
-void ShellAction(CFilesWindow* panel, CShellAction action, BOOL useSelection = TRUE,
+void ShellAction(CPanelWindow* panel, CShellAction action, BOOL useSelection = TRUE,
                  BOOL posByMouse = TRUE, BOOL onlyPanelMenu = FALSE);
 void ExecuteAssociation(HWND hWindow, const char* path, const char* name);
 
@@ -1036,7 +1036,7 @@ struct COpenViewerData
 
 // icon reader prave nacetl ikonu, vlozil ji do iconcache a rika to panelu
 // bezicimu v hlavnim threadu, aby se mohl prekreslit a ikonku zazalohovat do asociaci
-// index je dohledana pozice polozky v CFilesWindow::Files/Dirs
+// index je dohledana pozice polozky v CPanelWindow::Files/Dirs
 #define WM_USER_REFRESHINDEX WM_APP + 105 // [int index, 0]
 
 #define WM_USER_END_SUSPMODE WM_APP + 106  // [0, 0] - rychlejsi aktivace okna
@@ -1096,7 +1096,7 @@ struct COpenViewerData
 
 // icon reader prave nacetl icon-overlay a rika to panelu bezicimu v hlavnim threadu, aby
 // se mohl prekreslit
-// index je pozice polozky v CFilesWindow::Files/Dirs
+// index je pozice polozky v CPanelWindow::Files/Dirs
 #define WM_USER_REFRESHINDEX2 WM_APP + 149 // [int index, 0]
 
 #define WM_USER_DONEXTFOCUS WM_APP + 150       // [0, 0] - notifikace o zmene NextFocusName
@@ -1159,7 +1159,7 @@ struct COpenViewerData
 #define WM_USER_ENUMFILENAMES WM_APP + 400 // [requestUID, 0] - informuje zdroj (panely a Findy), ze maji resit pozadavek na enumeraci souboru pro viewer
 
 #define WM_USER_SM_END_NOTIFY_DELAYED WM_APP + 401  // [0, 0] notifikace o ukonceni suspend modu (zpozdena o 200ms, aby nedochazelo ke kolizi s WM_QUERYENDSESSION pri Shutdown / Log Off)
-#define WM_USER_REFRESH_DIR_EX_DELAYED WM_APP + 402 // [FALSE, time] - lisi se od WM_USER_REFRESH_DIR tim, ze jde pravdepodobne o zbytecny refresh (duvod: aktivace okna, zadost o lock-volume (dela se obdoba "hands-off"), atp.) (zpozdena o 200ms nebo 5s, aby nedochazelo ke kolizi s WM_QUERYENDSESSION pri Shutdown / Log Off nebo aby si proces zadajici o lock-volume stihl volume zamknout)
+#define WM_USER_REFRESH_DIR_EX_DELAYED WM_APP + 402 // [FALSE, time] - it differs from WM_USER_REFRESH_DIR in that it is probably an unnecessary refresh (reason: activation of the window, lack of lock-volume (similar to "hands-off"), etc.) (delayed by 200ms or 5s to avoid a collision with WM_QUERYENDSESSION during Shutdown / Log Off or so that the process specifying the lock-volume has time to lock the volume)
 
 #define WM_USER_CLOSE_MAINWND WM_APP + 403 // [0, 0] - pouziva se misto WM_CLOSE pro zavreni hlavniho okna Salamandera (vyhoda: je mozne zjistit, jestli se nedistribuuje z jine nez hlavni message-loopy)
 
@@ -1204,35 +1204,35 @@ struct COpenViewerData
 #define FOCUS_BK_INACTIVE_NORMAL 4
 #define FOCUS_BK_INACTIVE_SELECTED 5
 
-#define ITEM_FG_NORMAL 6 // barvy textu polozek v panelu
+#define ITEM_FG_NORMAL 6 // the colors of the text of the items in the panel
 #define ITEM_FG_SELECTED 7
 #define ITEM_FG_FOCUSED 8
 #define ITEM_FG_FOCSEL 9
 #define ITEM_FG_HIGHLIGHT 10
 
-#define ITEM_BK_NORMAL 11 // barvy pozadi polozek v panelu
+#define ITEM_BK_NORMAL 11 // the background colors of the items in the panel
 #define ITEM_BK_SELECTED 12
 #define ITEM_BK_FOCUSED 13
 #define ITEM_BK_FOCSEL 14
 #define ITEM_BK_HIGHLIGHT 15
 
-#define ICON_BLEND_SELECTED 16 // barvy pro blend ikonek
+#define ICON_BLEND_SELECTED 16 // colors for blending icons
 #define ICON_BLEND_FOCUSED 17
 #define ICON_BLEND_FOCSEL 18
 
-#define PROGRESS_FG_NORMAL 19 // barvy progress bary
+#define PROGRESS_FG_NORMAL 19 // progress bar colors
 #define PROGRESS_FG_SELECTED 20
 #define PROGRESS_BK_NORMAL 21
 #define PROGRESS_BK_SELECTED 22
 
-#define HOT_PANEL 23    // barva hot polozky v panelu
-#define HOT_ACTIVE 24   //                   v aktivnim titulku panelu
-#define HOT_INACTIVE 25 //                   v neaktivni tiulku panelu, statusbar,...
+#define HOT_PANEL 23    // color of the hot item in the panel
+#define HOT_ACTIVE 24   // ... in the active title of the panel
+#define HOT_INACTIVE 25 // ... in the inactive title of the panel panel, statusbar,...
 
-#define ACTIVE_CAPTION_FG 26   // barva textu v aktivnim titulku panelu
-#define ACTIVE_CAPTION_BK 27   // barva pozadi v aktivnim titulku panelu
-#define INACTIVE_CAPTION_FG 28 // barva textu v neaktivnim titulku panelu
-#define INACTIVE_CAPTION_BK 29 // barva pozadi v neaktivnim titulku panelu
+#define ACTIVE_CAPTION_FG 26   // the color of the text in the active title of the panel
+#define ACTIVE_CAPTION_BK 27   // background color in the active title panel
+#define INACTIVE_CAPTION_FG 28 // the color of the text in the inactive title panel
+#define INACTIVE_CAPTION_BK 29 // background color in inactive title panel
 
 #define THUMBNAIL_FRAME_NORMAL 30 // barvy pera pro ramecek kolem thumbnails
 #define THUMBNAIL_FRAME_FOCUSED 31
@@ -1244,15 +1244,16 @@ struct COpenViewerData
 #define VIEWER_FG_SELECTED 2 // selected text
 #define VIEWER_BK_SELECTED 3
 
-#define NUMBER_OF_COLORS 34       // pocet barev ve schematu
-#define NUMBER_OF_VIEWERCOLORS 4  // pocet barev pro viewer
-#define NUMBER_OF_CUSTOMCOLORS 16 // uzivatelelm definovane barvy v barevnem dialogu
+#define NUMBER_OF_COLORS 34       // the number of colors in the scheme
+#define NUMBER_OF_VIEWERCOLORS 4  // number of colors for the viewer
+#define NUMBER_OF_CUSTOMCOLORS 16 // user-defined colors in the color dialog
 
-// interni drzak barvy, ktery navic obsahuje flag
+// internal color holder, which additionally contains a flag
 typedef DWORD SALCOLOR;
 
 // SALCOLOR flags
-#define SCF_DEFAULT 0x01 // barevna slozka se ignoruje a pouzije se default hodnota
+#define SCF_DEFAULT 0x01 // the color component is ignored and the default value is used
+#define SCF_NOCOLOR 0x02 // do not use any color but just leave as is (currently intended to not color the file icons)
 
 #define GetCOLORREF(rgbf) ((COLORREF)rgbf & 0x00ffffff)
 #define RGBF(r, g, b, f) ((COLORREF)(((BYTE)(r) | ((WORD)((BYTE)(g)) << 8)) | (((DWORD)(BYTE)(b)) << 16) | (((DWORD)(BYTE)(f)) << 24)))
@@ -1263,13 +1264,13 @@ inline void SetRGBPart(SALCOLOR* salColor, COLORREF rgb)
     *salColor = rgb & 0x00ffffff | (((DWORD)(BYTE)((BYTE)((*salColor) >> 24))) << 24);
 }
 
-extern SALCOLOR* CurrentColors;               // aktualni barvy
-extern SALCOLOR UserColors[NUMBER_OF_COLORS]; // zmenene barvy
+extern SALCOLOR* CurrentColors;               // current colors
+extern SALCOLOR UserColors[NUMBER_OF_COLORS]; // changed colors
 
-extern SALCOLOR SalamanderColors[NUMBER_OF_COLORS]; // standardni barvy
-extern SALCOLOR ExplorerColors[NUMBER_OF_COLORS];   // standardni barvy
-extern SALCOLOR NortonColors[NUMBER_OF_COLORS];     // standardni barvy
-extern SALCOLOR NavigatorColors[NUMBER_OF_COLORS];  // standardni barvy
+extern SALCOLOR SalamanderColors[NUMBER_OF_COLORS]; // standard colors
+extern SALCOLOR ExplorerColors[NUMBER_OF_COLORS];   // standard colors
+extern SALCOLOR NortonColors[NUMBER_OF_COLORS];     // standard colors
+extern SALCOLOR NavigatorColors[NUMBER_OF_COLORS];  // standard colors
 
 extern SALCOLOR ViewerColors[NUMBER_OF_VIEWERCOLORS]; // barvy vieweru
 
@@ -1406,29 +1407,27 @@ extern HACCEL AccelTable2; // akceleratory v cmdline
 
 extern int SystemDPI;
 
-enum CIconSizeEnum
+struct IconSize
 {
-    ICONSIZE_16,   // 16x16 @ 100%DPI, 20x20 @ 125%DPI, 24x24 @ 150%DPI, ...
-    ICONSIZE_32,   // 32x32 @ 100%DPI, ...
-    ICONSIZE_48,   // 48x48 @ 100%DPI, ...
-    ICONSIZE_COUNT // items count
+    public: enum Value
+    {
+        size_16x16,   // 16x16 @ 100%DPI, 20x20 @ 125%DPI, 24x24 @ 150%DPI, ...
+        size_32x32,   // 32x32 @ 100%DPI, ...
+        size_48x48,   // 48x48 @ 100%DPI, ...
+
+        nItems // items count
+    };
 };
 
-extern int IconSizes[ICONSIZE_COUNT]; // velikosti ikonek: 16, 32, 48
+extern int IconSizes[IconSize::nItems]; // velikosti ikonek: 16, 32, 48
 extern int IconLRFlags;               // ridi barevnou hloubku nacitanych ikon
 
-// POZOR: na Viste se pouziva pro ikony 48x48 overlay ICONSIZE_32 a pro thumbnaily overlay ICONSIZE_48
-extern HICON HSharedOverlays[ICONSIZE_COUNT];   // shared (ruka) ve vsech velikostech
-extern HICON HShortcutOverlays[ICONSIZE_COUNT]; // shortcut (levy dolni roh) ve vsech velikostech
-extern HICON HSlowFileOverlays[ICONSIZE_COUNT]; // slow files
+// POZOR: na Viste se pouziva pro ikony 48x48 overlay IconSize::size_32x32 a pro thumbnaily overlay IconSize::size_48x48
+extern HICON HSharedOverlays[IconSize::nItems];   // shared (ruka) ve vsech velikostech
+extern HICON HShortcutOverlays[IconSize::nItems]; // shortcut (levy dolni roh) ve vsech velikostech
+extern HICON HSlowFileOverlays[IconSize::nItems]; // slow files
 
-extern CIconList* SimpleIconLists[ICONSIZE_COUNT]; // simple icons ve vsech velikostech
-
-#define THROBBER_WIDTH 12 // rozmery jednoho policka
-#define THROBBER_HEIGHT 12
-#define THROBBER_COUNT 36     // celkovy pocet policek
-#define IDT_THROBBER_DELAY 30 // delay [ms] v animaci jednoho policka
-extern CIconList* ThrobberFrames;
+extern CIconList* SimpleIconLists[IconSize::nItems]; // simple icons ve vsech velikostech
 
 #define LOCK_WIDTH 8 // rozmery jednoho policka
 #define LOCK_HEIGHT 13
@@ -1481,10 +1480,9 @@ extern HBITMAP HFilter; // bitmapa - panel skryva nejake soubory nebo adresare
 
 extern HBITMAP HHeaderSort; // sipky pro HeaderLine
 
-extern CBitmap ItemBitmap; // devecka pro vsechno mozne: kresleni polozek v panelu, header line, ...
+extern CBitmap ItemBitmap; // Temporary painting object (will be used for everything possible: cartoon item in the panel, header line, ...) for faster processing (should stay in cache).
 
 extern HBITMAP HUpDownBitmap; // Sipky pro rolovani uvnitr kratkych popup menu.
-extern HBITMAP HZoomBitmap;   // Zoom panelu
 
 //extern HBITMAP HWorkerBitmap;
 
@@ -1503,86 +1501,86 @@ extern BOOL DragFullWindows; // pokud je TRUE, mame menit velikost panelu realti
 #define SIZE_FORMAT_MIXED 2 // bajty, KB, MB, GB, ...
 
 // jmena klicu v registry
-extern const char* SALAMANDER_ROOT_REG;
-extern const char* SALAMANDER_SAVE_IN_PROGRESS;
-extern const char* SALAMANDER_COPY_IS_OK;
-extern const char* SALAMANDER_AUTO_IMPORT_CONFIG;
-extern const char* SALAMANDER_CONFIG_REG;
-extern const char* SALAMANDER_VERSION_REG;
-extern const char* SALAMANDER_VERSIONREG_REG;
-extern const char* CONFIG_ONLYONEINSTANCE_REG;
-extern const char* CONFIG_LANGUAGE_REG;
-extern const char* CONFIG_ALTLANGFORPLUGINS_REG;
-extern const char* CONFIG_LANGUAGECHANGED_REG;
-extern const char* CONFIG_USEALTLANGFORPLUGINS_REG;
-extern const char* CONFIG_STATUSAREA_REG;
-extern const char* CONFIG_SHOWSPLASHSCREEN_REG;
-extern const char* CONFIG_ENABLECUSTICOVRLS_REG;
-extern const char* CONFIG_DISABLEDCUSTICOVRLS_REG;
-extern const char* VIEWERS_MASKS_REG;
-extern const char* VIEWERS_COMMAND_REG;
-extern const char* VIEWERS_ARGUMENTS_REG;
-extern const char* VIEWERS_INITDIR_REG;
-extern const char* VIEWERS_TYPE_REG;
-extern const char* EDITORS_MASKS_REG;
-extern const char* EDITORS_COMMAND_REG;
-extern const char* EDITORS_ARGUMENTS_REG;
-extern const char* EDITORS_INITDIR_REG;
-extern const char* SALAMANDER_PLUGINSCONFIG;
-extern const char* SALAMANDER_PLUGINS_NAME;
-extern const char* SALAMANDER_PLUGINS_DLLNAME;
-extern const char* SALAMANDER_PLUGINS_VERSION;
-extern const char* SALAMANDER_PLUGINS_COPYRIGHT;
-extern const char* SALAMANDER_PLUGINS_EXTENSIONS;
-extern const char* SALAMANDER_PLUGINS_DESCRIPTION;
-extern const char* SALAMANDER_PLUGINS_LASTSLGNAME;
-extern const char* SALAMANDER_PLUGINS_HOMEPAGE;
-//extern const char *SALAMANDER_PLUGINS_PLGICONS;
-extern const char* SALAMANDER_PLUGINS_PLGICONLIST;
-extern const char* SALAMANDER_PLUGINS_PLGICONINDEX;
-extern const char* SALAMANDER_PLUGINS_PLGSUBMENUICONINDEX;
-extern const char* SALAMANDER_PLUGINS_SUBMENUINPLUGINSBAR;
-extern const char* SALAMANDER_PLUGINS_THUMBMASKS;
-extern const char* SALAMANDER_PLUGINS_REGKEYNAME;
-extern const char* SALAMANDER_PLUGINS_FSNAME;
-extern const char* SALAMANDER_PLUGINS_FUNCTIONS;
-extern const char* SALAMANDER_PLUGINS_LOADONSTART;
-extern const char* SALAMANDER_PLUGINS_MENU;
-extern const char* SALAMANDER_PLUGINS_MENUITEMNAME;
-extern const char* SALAMANDER_PLUGINS_MENUITEMHOTKEY;
-extern const char* SALAMANDER_PLUGINS_MENUITEMSTATE;
-extern const char* SALAMANDER_PLUGINS_MENUITEMID;
-extern const char* SALAMANDER_PLUGINS_MENUITEMSKILLLEVEL;
-extern const char* SALAMANDER_PLUGINS_MENUITEMICONINDEX;
-extern const char* SALAMANDER_PLUGINS_MENUITEMTYPE;
-extern const char* SALAMANDER_PLUGINS_FSCMDNAME;
-extern const char* SALAMANDER_PLUGINS_FSCMDICON;
-extern const char* SALAMANDER_PLUGINS_FSCMDVISIBLE;
-extern const char* SALAMANDER_PLUGINSORDER_SHOW;
-extern const char* SALAMANDER_PLUGINS_ISNETHOOD;
-extern const char* SALAMANDER_PLUGINS_USESPASSWDMAN;
+extern const TCHAR* SALAMANDER_ROOT_REG;
+extern const TCHAR* SALAMANDER_SAVE_IN_PROGRESS;
+extern const TCHAR* SALAMANDER_COPY_IS_OK;
+extern const TCHAR* SALAMANDER_AUTO_IMPORT_CONFIG;
+extern const TCHAR* SALAMANDER_CONFIG_REG;
+extern const TCHAR* SALAMANDER_VERSION_REG;
+extern const TCHAR* SALAMANDER_VERSIONREG_REG;
+extern const TCHAR* CONFIG_ONLYONEINSTANCE_REG;
+extern const TCHAR* CONFIG_LANGUAGE_REG;
+extern const TCHAR* CONFIG_ALTLANGFORPLUGINS_REG;
+extern const TCHAR* CONFIG_LANGUAGECHANGED_REG;
+extern const TCHAR* CONFIG_USEALTLANGFORPLUGINS_REG;
+extern const TCHAR* CONFIG_STATUSAREA_REG;
+extern const TCHAR* CONFIG_SHOWSPLASHSCREEN_REG;
+extern const TCHAR* CONFIG_ENABLECUSTICOVRLS_REG;
+extern const TCHAR* CONFIG_DISABLEDCUSTICOVRLS_REG;
+extern const TCHAR* VIEWERS_MASKS_REG;
+extern const TCHAR* VIEWERS_COMMAND_REG;
+extern const TCHAR* VIEWERS_ARGUMENTS_REG;
+extern const TCHAR* VIEWERS_INITDIR_REG;
+extern const TCHAR* VIEWERS_TYPE_REG;
+extern const TCHAR* EDITORS_MASKS_REG;
+extern const TCHAR* EDITORS_COMMAND_REG;
+extern const TCHAR* EDITORS_ARGUMENTS_REG;
+extern const TCHAR* EDITORS_INITDIR_REG;
+extern const TCHAR* SALAMANDER_PLUGINSCONFIG;
+extern const TCHAR* SALAMANDER_PLUGINS_NAME;
+extern const TCHAR* SALAMANDER_PLUGINS_DLLNAME;
+extern const TCHAR* SALAMANDER_PLUGINS_VERSION;
+extern const TCHAR* SALAMANDER_PLUGINS_COPYRIGHT;
+extern const TCHAR* SALAMANDER_PLUGINS_EXTENSIONS;
+extern const TCHAR* SALAMANDER_PLUGINS_DESCRIPTION;
+extern const TCHAR* SALAMANDER_PLUGINS_LASTSLGNAME;
+extern const TCHAR* SALAMANDER_PLUGINS_HOMEPAGE;
+//extern const TCHAR *SALAMANDER_PLUGINS_PLGICONS;
+extern const TCHAR* SALAMANDER_PLUGINS_PLGICONLIST;
+extern const TCHAR* SALAMANDER_PLUGINS_PLGICONINDEX;
+extern const TCHAR* SALAMANDER_PLUGINS_PLGSUBMENUICONINDEX;
+extern const TCHAR* SALAMANDER_PLUGINS_SUBMENUINPLUGINSBAR;
+extern const TCHAR* SALAMANDER_PLUGINS_THUMBMASKS;
+extern const TCHAR* SALAMANDER_PLUGINS_REGKEYNAME;
+extern const TCHAR* SALAMANDER_PLUGINS_FSNAME;
+extern const TCHAR* SALAMANDER_PLUGINS_FUNCTIONS;
+extern const TCHAR* SALAMANDER_PLUGINS_LOADONSTART;
+extern const TCHAR* SALAMANDER_PLUGINS_MENU;
+extern const TCHAR* SALAMANDER_PLUGINS_MENUITEMNAME;
+extern const TCHAR* SALAMANDER_PLUGINS_MENUITEMHOTKEY;
+extern const TCHAR* SALAMANDER_PLUGINS_MENUITEMSTATE;
+extern const TCHAR* SALAMANDER_PLUGINS_MENUITEMID;
+extern const TCHAR* SALAMANDER_PLUGINS_MENUITEMSKILLLEVEL;
+extern const TCHAR* SALAMANDER_PLUGINS_MENUITEMICONINDEX;
+extern const TCHAR* SALAMANDER_PLUGINS_MENUITEMTYPE;
+extern const TCHAR* SALAMANDER_PLUGINS_FSCMDNAME;
+extern const TCHAR* SALAMANDER_PLUGINS_FSCMDICON;
+extern const TCHAR* SALAMANDER_PLUGINS_FSCMDVISIBLE;
+extern const TCHAR* SALAMANDER_PLUGINSORDER_SHOW;
+extern const TCHAR* SALAMANDER_PLUGINS_ISNETHOOD;
+extern const TCHAR* SALAMANDER_PLUGINS_USESPASSWDMAN;
 
 // nasledujicich 8 retezcu je jen pro load konfigu verze 6 a nizsi, novejsi verze
 // jiz pouzivaji SALAMANDER_PLUGINS_FUNCTIONS (ulozeni v bitech DWORDove masky funkci)
-extern const char* SALAMANDER_PLUGINS_PANELVIEW;
-extern const char* SALAMANDER_PLUGINS_PANELEDIT;
-extern const char* SALAMANDER_PLUGINS_CUSTPACK;
-extern const char* SALAMANDER_PLUGINS_CUSTUNPACK;
-extern const char* SALAMANDER_PLUGINS_CONFIG;
-extern const char* SALAMANDER_PLUGINS_LOADSAVE;
-extern const char* SALAMANDER_PLUGINS_VIEWER;
-extern const char* SALAMANDER_PLUGINS_FS;
+extern const TCHAR* SALAMANDER_PLUGINS_PANELVIEW;
+extern const TCHAR* SALAMANDER_PLUGINS_PANELEDIT;
+extern const TCHAR* SALAMANDER_PLUGINS_CUSTPACK;
+extern const TCHAR* SALAMANDER_PLUGINS_CUSTUNPACK;
+extern const TCHAR* SALAMANDER_PLUGINS_CONFIG;
+extern const TCHAR* SALAMANDER_PLUGINS_LOADSAVE;
+extern const TCHAR* SALAMANDER_PLUGINS_VIEWER;
+extern const TCHAR* SALAMANDER_PLUGINS_FS;
 
 // clipboard format pro SalIDataObject (znacka naseho IDataObjectu na clipboardu)
-extern const char* SALCF_IDATAOBJECT;
+extern const TCHAR* SALCF_IDATAOBJECT;
 // clipboard format pro CFakeDragDropDataObject (urcuje cestu, ktera se ma po dropu objevit
 // v directory-line, command-line + blokuje drop do usermenu-toolbar); pokud je tazeno
 // vic adresaru/souboru, je cesta prazdny retezec (drop do directory/command-line neni mozny)
-extern const char* SALCF_FAKE_REALPATH;
+extern const TCHAR* SALCF_FAKE_REALPATH;
 // clipboard format pro CFakeDragDropDataObject (urcuje typ zdroje - 1=archiv, 2=FS)
-extern const char* SALCF_FAKE_SRCTYPE;
+extern const TCHAR* SALCF_FAKE_SRCTYPE;
 // clipboard format pro CFakeDragDropDataObject (jen je-li zdroj FS: zdrojova FS cesta)
-extern const char* SALCF_FAKE_SRCFSPATH;
+extern const TCHAR* SALCF_FAKE_SRCFSPATH;
 
 // promenne pro CanChangeDirectory() a AllowChangeDirectory()
 extern int ChangeDirectoryAllowed; // 0 znamena, ze je mozne menit adresar
@@ -1628,16 +1626,35 @@ void EndStopStatusbarRepaint();
 int SalMessageBox(HWND hParent, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType);
 int SalMessageBoxEx(const MSGBOXEX_PARAMS* params);
 
-// vykresli ikonky z imagelistu s nastavenyma stylama
-#define IMAGE_STATE_FOCUSED 0x00000001
-#define IMAGE_STATE_SELECTED 0x00000002
-#define IMAGE_STATE_HIDDEN 0x00000004
-#define IMAGE_STATE_SHARED 0x00000100
-#define IMAGE_STATE_SHORTCUT 0x00000200
-#define IMAGE_STATE_MASK 0x00000400
-#define IMAGE_STATE_OFFLINE 0x00000800
+// draw icons from the image list with the set styles
+struct ImageState
+{
+    public: enum Value : unsigned short         //bit flags
+    {
+        not_set     = 0x0000,
+        focused     = 0x0001,
+        selected    = 0x0002,
+        hidden      = 0x0004,
+        shared      = 0x0100,
+        shortcut    = 0x0200,
+        mask        = 0x0400,
+        offline     = 0x0800,
+    };
+};
+constexpr inline ImageState::Value operator|( ImageState::Value a, ImageState::Value b )
+{
+//Bitwise OR operator.
+    return static_cast<ImageState::Value>( static_cast<unsigned short>( a ) | static_cast<unsigned short>( b ) );
+};
+inline ImageState::Value& operator|=( ImageState::Value& a, ImageState::Value b )
+{
+//Bitwise OR operator.
+    a = a | b;
+    return a;
+};
+
 BOOL StateImageList_Draw(CIconList* iconList, int imageIndex, HDC hDC, int xDst, int yDst,
-                         DWORD state, CIconSizeEnum iconSize, DWORD iconOverlayIndex,
+                         ImageState::Value state, IconSize::Value iconSize, DWORD iconOverlayIndex,
                          const RECT* overlayRect, BOOL overlayOnly, BOOL iconOverlayFromPlugin,
                          int pluginIconOverlaysCount, HICON* pluginIconOverlays);
 DWORD GetImageListColorFlags(); // vrati ILC_COLOR??? podle verzi Windows - odladene pro pouziti imagelistu v listviewech
@@ -1756,33 +1773,6 @@ DWORD CfgSkillLevelToMenu(BYTE cfgSkillLevel);
 #define IDT_THROBBER 949
 #define IDT_DELAYEDTHROBBER 950
 #define IDT_UPDATETASKLIST 951
-
-// POZOR: skoro vsechny funkce v teto sekci pri chybe zobrazuji hlaseni o LOAD / SAVE
-//        konfigurace, coz z nich dela nevhodne pro bezny pristup do Registry,
-//        reseni viz funkce na zacatku regwork.h: OpenKeyAux, CreateKeyAux, atd.
-BOOL ClearKey(HKEY key);
-BOOL CreateKey(HKEY hKey, const char* name, HKEY& createdKey);
-BOOL OpenKey(HKEY hKey, const char* name, HKEY& openedKey);
-void CloseKey(HKEY key);
-BOOL DeleteKey(HKEY hKey, const char* name);
-BOOL DeleteValue(HKEY hKey, const char* name);
-// pro dataSize = -1 si funkce napocita delku stringu pres strlen
-BOOL SetValue(HKEY hKey, const char* name, DWORD type,
-              const void* data, DWORD dataSize);
-BOOL GetValue(HKEY hKey, const char* name, DWORD type, void* buffer, DWORD bufferSize);
-BOOL GetSize(HKEY hKey, const char* name, DWORD type, DWORD& bufferSize);
-BOOL LoadRGB(HKEY hKey, const char* name, COLORREF& color);
-BOOL SaveRGB(HKEY hKey, const char* name, COLORREF color);
-BOOL LoadRGBF(HKEY hKey, const char* name, SALCOLOR& color);
-BOOL SaveRGBF(HKEY hKey, const char* name, SALCOLOR color);
-BOOL LoadLogFont(HKEY hKey, const char* name, LOGFONT* logFont);
-BOOL SaveLogFont(HKEY hKey, const char* name, LOGFONT* logFont);
-BOOL LoadHistory(HKEY hKey, const char* name, char* history[], int maxCount);
-BOOL SaveHistory(HKEY hKey, const char* name, char* history[], int maxCount, BOOL onlyClear = FALSE);
-BOOL LoadViewers(HKEY hKey, const char* name, CViewerMasks* viewerMasks);
-BOOL SaveViewers(HKEY hKey, const char* name, CViewerMasks* viewerMasks);
-BOOL LoadEditors(HKEY hKey, const char* name, CEditorMasks* editorMasks);
-BOOL SaveEditors(HKEY hKey, const char* name, CEditorMasks* editorMasks);
 
 BOOL ExportConfiguration(HWND hParent, const char* fileName, BOOL clearKeyBeforeImport);
 BOOL ImportConfiguration(HWND hParent, const char* fileName, BOOL ignoreIfNotExists,
@@ -2019,8 +2009,9 @@ extern DWORD EnablerPermissions;          // focus|select je na souborech|adresa
 #define IDX_TB_HIDE_SELECTED 75     // Hide Selected Names
 #define IDX_TB_SHOW_ALL 76          // Show All Names
 #define IDX_TB_SMART_COLUMN_MODE 77 // Smart Column Mode
+#define IDX_TB_UNSELECTOTHERS 78    // Select focused and unselect others
 
-#define IDX_TB_FD 78 // first "dynamic added" index
+#define IDX_TB_FD 79 // first "dynamic added" index
 // nasledujici ikony budou pridany k bitmape dynamicky
 // a nektere budou nacteny z shell32.dll
 
@@ -2358,14 +2349,14 @@ extern BOOL IsSetSALAMANDER_SAVE_IN_PROGRESS; // TRUE = v registry je vytvorena 
 struct CTmpEnumData
 {
     int* Indexes;
-    CFilesWindow* Panel;
+    CPanelWindow* Panel;
 };
 
 const char* EnumFileNames(int index, void* param);
 
-void ShellActionAux5(UINT flags, CFilesWindow* panel, HMENU h);
-void AuxInvokeCommand(CFilesWindow* panel, CMINVOKECOMMANDINFO* ici);
-void ShellActionAux6(CFilesWindow* panel);
+void ShellActionAux5(UINT flags, CPanelWindow* panel, HMENU h);
+void AuxInvokeCommand(CPanelWindow* panel, CMINVOKECOMMANDINFO* ici);
+void ShellActionAux6(CPanelWindow* panel);
 
 //******************************************************************************
 
@@ -2423,21 +2414,21 @@ BOOL IsWin64RedirectedDir(const char* path, char** lastSubDir, BOOL failIfDirWit
 // jen 32-bitova verze pod Win64: zjistuje jestli selectiona obsahuje pseudo-adresar, ktery redirector
 // presmeruje do SysWOW64 nebo naopak zpet do System32 a zaroven na disku neexistuje stejne pojmenovany
 // adresar (pseudo-adresar pridany jen na zaklade AddWin64RedirectedDir)
-BOOL ContainsWin64RedirectedDir(CFilesWindow* panel, int* indexes, int count, char* redirectedDir,
+BOOL ContainsWin64RedirectedDir(CPanelWindow* panel, int* indexes, int count, char* redirectedDir,
                                 BOOL onlyAdded);
 
 #endif // _WIN64
 
-// nase varianty funkci RegQueryValue a RegQueryValueEx, narozdil od API variant
-// zajistuji pridani null-terminatoru pro typy REG_SZ, REG_MULTI_SZ a REG_EXPAND_SZ
-// POZOR: pri zjistovani potrebne velikosti bufferu vraci o jeden nebo dva (dva
-//        jen u REG_MULTI_SZ) znaky vic pro pripad, ze by string bylo potreba
-//        zakoncit nulou/nulami
+//[W: use registry class functions -> the following will probably be renamed to something else just for the use for plugins]
+// our variants of the RegQueryValue and RegQueryValueEx functions, unlike the API variants
+// they provide the addition of a null-terminator for the REG_SZ, REG_MULTI_SZ and REG_EXPAND_SZ types
+// ATTENTION: when determining the required buffer size, it returns one or two (two
+// only for REG_MULTI_SZ) characters more in case the string needs to
+// be terminated with a zero/zeros
 extern "C"
 {
     LONG SalRegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpData, PLONG lpcbData);
-    LONG SalRegQueryValueEx(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved,
-                            LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+    LONG SalRegQueryValueEx(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
 }
 
 // Win7 a novejsi OS - notifikace od taskbar, ze doslo k vytvoreni tlacitka pro okno
@@ -2446,7 +2437,7 @@ extern UINT TaskbarBtnCreatedMsg;
 
 // vrati rozmer ikony s ohledem na promennou SystemDPI
 // pokud je 'large' TRUE, vraci rozmer pro velkou ikonu, jinak pro malou
-int GetIconSizeForSystemDPI(CIconSizeEnum iconSize);
+int GetIconSizeForSystemDPI(IconSize::Value iconSize);
 
 // vraci aktualni systemove DPI (96, 120, 144, ...)
 int GetSystemDPI();

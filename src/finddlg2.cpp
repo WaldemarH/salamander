@@ -3,10 +3,13 @@
 
 #include "precomp.h"
 
+#include "find_dialog.h"
+#include "find_filesList.h"
+#include "find_log_dialog.h"
 #include "cfgdlg.h"
 #include "edtlbwnd.h"
 #include "mainwnd.h"
-#include "find.h"
+#include "find.old.h"
 #include "toolbar.h"
 #include "menu.h"
 #include "shellib.h"
@@ -17,10 +20,10 @@
 
 //****************************************************************************
 //
-// CFindDialog (continued finddlg1.cpp)
+// Find_Dialog (continued finddlg1.cpp)
 //
 
-void CFindDialog::OnHideSelection()
+void Find_Dialog::OnHideSelection()
 {
     HWND hListView = FoundFilesListView->HWindow;
     DWORD totalCount = ListView_GetItemCount(hListView);
@@ -45,7 +48,7 @@ void CFindDialog::OnHideSelection()
     {
         if (ListView_GetItemState(hListView, i, LVIS_SELECTED) & LVIS_SELECTED)
         {
-            FoundFilesListView->Delete(i);
+            FoundFilesListView->Items_Delete(i);
             deletedCount++;
         }
     }
@@ -73,7 +76,7 @@ void CFindDialog::OnHideSelection()
     SetCursor(hOldCursor);
 }
 
-void CFindDialog::OnHideDuplicateNames()
+void Find_Dialog::OnHideDuplicateNames()
 {
     HWND hListView = FoundFilesListView->HWindow;
     DWORD totalCount = ListView_GetItemCount(hListView);
@@ -87,20 +90,20 @@ void CFindDialog::OnHideDuplicateNames()
 
     // pokud polozka bude mit stejnou cestu a jmeno jako predesla polozka, vyradime ji
     int deletedCount = 0;
-    CFoundFilesData* lastData = NULL;
+    Find_FileList_Item* lastData = NULL;
     int i;
     for (i = totalCount - 1; i >= 0; i--)
     {
         if (lastData == NULL)
-            lastData = FoundFilesListView->At(i);
+            lastData = FoundFilesListView->Items_At(i);
         else
         {
-            CFoundFilesData* data = FoundFilesListView->At(i);
+            Find_FileList_Item* data = FoundFilesListView->Items_At(i);
             if (lastData->IsDir == data->IsDir &&
                 RegSetStrICmp(lastData->Path, data->Path) == 0 &&
                 RegSetStrICmp(lastData->Name, data->Name) == 0)
             {
-                FoundFilesListView->Delete(i);
+                FoundFilesListView->Items_Delete(i);
                 deletedCount++;
             }
             else
@@ -126,9 +129,9 @@ void CFindDialog::OnHideDuplicateNames()
     SetCursor(hOldCursor);
 }
 
-void CFindDialog::OnDelete(BOOL toRecycle)
+void Find_Dialog::OnDelete(BOOL toRecycle)
 {
-    CALL_STACK_MESSAGE1("CFindDialog::OnDelete()");
+    CALL_STACK_MESSAGE1("Find_Dialog::OnDelete()");
     HWND hListView = FoundFilesListView->HWindow;
     DWORD selCount = ListView_GetSelectedCount(hListView);
     if (selCount == 0)
@@ -154,17 +157,17 @@ void CFindDialog::OnDelete(BOOL toRecycle)
     }
 
     // ulozime focused polozku a index
-    CFoundFilesData lastFocusedItem;
+    Find_FileList_Item lastFocusedItem;
     int lastFocusedIndex = ListView_GetNextItem(FoundFilesListView->HWindow, 0, LVIS_FOCUSED);
     if (lastFocusedIndex != -1)
     {
-        CFoundFilesData* lastItem = FoundFilesListView->At(lastFocusedIndex);
-        lastFocusedItem.Set(lastItem->Path, lastItem->Name, lastItem->Size, lastItem->Attr, &lastItem->LastWrite, lastItem->IsDir);
+        Find_FileList_Item* lastItem = FoundFilesListView->Items_At(lastFocusedIndex);
+        lastFocusedItem.Text_Set(lastItem->Path, lastItem->Name, lastItem->Size, lastItem->Attr, &lastItem->LastWrite, lastItem->IsDir);
     }
 
     CShellExecuteWnd shellExecuteWnd;
     SHFILEOPSTRUCT fo;
-    fo.hwnd = shellExecuteWnd.Create(HWindow, "SEW: CFindDialog::OnDelete toRecycle=%d", toRecycle);
+    fo.hwnd = shellExecuteWnd.Create(HWindow, "SEW: Find_Dialog::OnDelete toRecycle=%d", toRecycle);
     fo.wFunc = FO_DELETE;
     fo.pFrom = list;
     fo.pTo = NULL;
@@ -173,7 +176,7 @@ void CFindDialog::OnDelete(BOOL toRecycle)
     fo.hNameMappings = NULL;
     fo.lpszProgressTitle = "";
     // provedeme samotne mazani - uzasne snadne, bohuzel jim sem tam pada ;-)
-    CALL_STACK_MESSAGE1("CFindDialog::OnDelete::SHFileOperation");
+    CALL_STACK_MESSAGE1("Find_Dialog::OnDelete::SHFileOperation");
     SHFileOperation(&fo);
     free(list);
 
@@ -181,14 +184,14 @@ void CFindDialog::OnDelete(BOOL toRecycle)
     FoundFilesListView->CheckAndRemoveSelectedItems(FALSE, lastFocusedIndex, &lastFocusedItem);
 }
 
-void CFindDialog::OnSelectAll()
+void Find_Dialog::OnSelectAll()
 {
     HCURSOR hOldCursor = SetCursor(LoadCursor(NULL, IDC_WAIT));
     ListView_SetItemState(FoundFilesListView->HWindow, -1, LVIS_SELECTED, LVIS_SELECTED);
     SetCursor(hOldCursor);
 }
 
-void CFindDialog::OnInvertSelection()
+void Find_Dialog::OnInvertSelection()
 {
     HCURSOR hOldCursor = SetCursor(LoadCursor(NULL, IDC_WAIT));
     HWND hListView = FoundFilesListView->HWindow;
@@ -202,16 +205,16 @@ void CFindDialog::OnInvertSelection()
     SetCursor(hOldCursor);
 }
 
-void CFindDialog::OnShowLog()
+void Find_Dialog::OnShowLog()
 {
-    if (Log.GetCount() == 0)
+    if (Log.Items_Count() == 0)
         return;
 
-    CFindLogDialog dlg(HWindow, &Log);
+    Find_Log_Dialog dlg(HWindow, &Log);
     dlg.Execute();
 }
 
-void CFindDialog::OnEnterIdle()
+void Find_Dialog::OnEnterIdle()
 {
     if (UpdateStatusBar && !IsSearchInProgress())
     {
@@ -220,7 +223,7 @@ void CFindDialog::OnEnterIdle()
     }
 }
 
-void CFindDialog::UpdateStatusText()
+void Find_Dialog::UpdateStatusText()
 {
     int count = ListView_GetSelectedCount(FoundFilesListView->HWindow);
     if (count != 0)
@@ -237,7 +240,7 @@ void CFindDialog::UpdateStatusText()
             index = ListView_GetNextItem(FoundFilesListView->HWindow, index, LVNI_SELECTED);
             if (index != -1)
             {
-                CFoundFilesData* item = FoundFilesListView->At(index);
+                Find_FileList_Item* item = FoundFilesListView->Items_At(index);
                 if (item->IsDir)
                     dirs++;
                 else
@@ -261,7 +264,7 @@ void CFindDialog::UpdateStatusText()
     }
 }
 
-void CFindDialog::OnColorsChange()
+void Find_Dialog::OnColorsChange()
 {
     if (MainMenu != NULL)
     {
@@ -367,7 +370,7 @@ BOOL CFindTBHeader::CreateLogToolbar(BOOL errors, BOOL infos)
             LogToolBar->RemoveItem(0, TRUE);
         if (HWarningIcon == NULL)
         {
-            int iconSize = IconSizes[ICONSIZE_16];
+            int iconSize = IconSizes[IconSize::size_16x16];
             LoadIconWithScaleDown(NULL, (PCWSTR)IDI_EXCLAMATION, iconSize, iconSize, &HWarningIcon);
         }
         tii.HIcon = HWarningIcon;
@@ -380,7 +383,7 @@ BOOL CFindTBHeader::CreateLogToolbar(BOOL errors, BOOL infos)
     {
         if (HInfoIcon == NULL)
         {
-            int iconSize = IconSizes[ICONSIZE_16];
+            int iconSize = IconSizes[IconSize::size_16x16];
             LoadIconWithScaleDown(NULL, (PCWSTR)IDI_INFORMATION, iconSize, iconSize, &HInfoIcon);
         }
         tii.HIcon = HInfoIcon;
@@ -544,7 +547,7 @@ CFindTBHeader::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
             {
                 if (HEmptyIcon == NULL)
                 {
-                    int iconSize = IconSizes[ICONSIZE_16];
+                    int iconSize = IconSizes[IconSize::size_16x16];
                     LoadIconWithScaleDown(HInstance, (PCWSTR)IDI_EMPTY, iconSize, iconSize, &HEmptyIcon);
                 }
                 TLBI_ITEM_INFO2 tii;
@@ -630,12 +633,12 @@ CFindTBHeader::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 // CFindManageDialog
 //
 
-CFindManageDialog::CFindManageDialog(HWND hParent, const CFindOptionsItem* currenOptionsItem)
+CFindManageDialog::CFindManageDialog(HWND hParent, const Find_Options_Item* currenOptionsItem)
     : CCommonDialog(HLanguage, IDD_FINDSETTINGS, IDD_FINDSETTINGS, hParent)
 {
     CurrenOptionsItem = currenOptionsItem;
     EditLB = NULL;
-    FO = new CFindOptions();
+    FO = new Find_Options();
     if (FO == NULL)
     {
         TRACE_E(LOW_MEMORY);
@@ -656,8 +659,8 @@ void CFindManageDialog::Transfer(CTransferInfo& ti)
     if (ti.Type == ttDataToWindow)
     {
         int i;
-        for (i = 0; i < FO->GetCount(); i++)
-            EditLB->AddItem((INT_PTR)FO->At(i));
+        for (i = 0; i < FO->Items_Count(); i++)
+            EditLB->AddItem((INT_PTR)FO->Items_At(i));
         EditLB->SetCurSel(0);
         LoadControls();
         //    EnableButtons();
@@ -677,11 +680,11 @@ void CFindManageDialog::LoadControls()
     if (itemID == -1)
         empty = TRUE;
 
-    CFindOptionsItem* item = NULL;
+    Find_Options_Item* item = NULL;
     if (!empty)
-        item = (CFindOptionsItem*)itemID;
+        item = (Find_Options_Item*)itemID;
     else
-        item = (CFindOptionsItem*)CurrenOptionsItem;
+        item = (Find_Options_Item*)CurrenOptionsItem;
     SetDlgItemText(HWindow, IDC_FFS_NAMED, item->NamedText);
     SetDlgItemText(HWindow, IDC_FFS_LOOKIN, item->LookInText);
     SetDlgItemText(HWindow, IDC_FFS_SUBDIRS, item->SubDirectories ? LoadStr(IDS_INFODLGYES) : LoadStr(IDS_INFODLGNO));
@@ -726,11 +729,11 @@ CFindManageDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 {
                     BOOL checked = IsDlgButtonChecked(HWindow, IDC_FFS_AUTOLOAD);
                     int i;
-                    for (i = 0; i < FO->GetCount(); i++)
-                        if (FO->At(i)->AutoLoad)
-                            FO->At(i)->AutoLoad = FALSE;
+                    for (i = 0; i < FO->Items_Count(); i++)
+                        if (FO->Items_At(i)->AutoLoad)
+                            FO->Items_At(i)->AutoLoad = FALSE;
                     if (checked)
-                        FO->At(index)->AutoLoad = TRUE;
+                        FO->Items_At(index)->AutoLoad = TRUE;
                     InvalidateRect(EditLB->HWindow, NULL, TRUE);
                     UpdateWindow(EditLB->HWindow);
                 }
@@ -750,12 +753,12 @@ CFindManageDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case IDC_FFS_ADD:
         {
-            CFindOptionsItem* item = new CFindOptionsItem();
+            Find_Options_Item* item = new Find_Options_Item();
             if (item != NULL)
             {
                 *item = *CurrenOptionsItem;
                 item->BuildItemName();
-                FO->Add(item);
+                FO->Items_Add(item);
                 int index = EditLB->AddItem((INT_PTR)item);
                 EditLB->SetCurSel(index);
             }
@@ -781,17 +784,17 @@ CFindManageDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 EDTLB_DISPINFO* dispInfo = (EDTLB_DISPINFO*)lParam;
                 if (dispInfo->ToDo == edtlbGetData)
                 {
-                    strcpy(dispInfo->Buffer, ((CFindOptionsItem*)dispInfo->ItemID)->ItemName);
-                    dispInfo->Bold = ((CFindOptionsItem*)dispInfo->ItemID)->AutoLoad;
+                    strcpy(dispInfo->Buffer, ((Find_Options_Item*)dispInfo->ItemID)->ItemName);
+                    dispInfo->Bold = ((Find_Options_Item*)dispInfo->ItemID)->AutoLoad;
                     SetWindowLongPtr(HWindow, DWLP_MSGRESULT, FALSE);
                     return TRUE;
                 }
                 else
                 {
-                    CFindOptionsItem* item;
+                    Find_Options_Item* item;
                     if (dispInfo->ItemID == -1)
                     {
-                        item = new CFindOptionsItem();
+                        item = new Find_Options_Item();
                         if (item == NULL)
                         {
                             TRACE_E(LOW_MEMORY);
@@ -799,14 +802,14 @@ CFindManageDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                             return TRUE;
                         }
                         *item = *CurrenOptionsItem;
-                        FO->Add(item);
+                        FO->Items_Add(item);
                         lstrcpyn(item->ItemName, dispInfo->Buffer, ITEMNAME_TEXT_LEN);
                         EditLB->SetItemData((INT_PTR)item);
                         LoadControls();
                     }
                     else
                     {
-                        item = (CFindOptionsItem*)dispInfo->ItemID;
+                        item = (Find_Options_Item*)dispInfo->ItemID;
                         lstrcpyn(item->ItemName, dispInfo->Buffer, ITEMNAME_TEXT_LEN);
                     }
                     SetWindowLongPtr(HWindow, DWLP_MSGRESULT, TRUE);
@@ -823,7 +826,7 @@ CFindManageDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
               int srcIndex = index;
               int dstIndex = index + (dispInfo->Up ? -1 : 1);
 
-              CFindOptionsItem tmp;
+              Find_Options_Item tmp;
               tmp = *FO->At(srcIndex);
               *FO->At(srcIndex) = *FO->At(dstIndex);
               *FO->At(dstIndex) = tmp;
@@ -840,21 +843,21 @@ CFindManageDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 int srcIndex = index;
                 int dstIndex = dispInfo->NewIndex;
 
-                CFindOptionsItem tmp;
-                tmp = *FO->At(srcIndex);
+                Find_Options_Item tmp;
+                tmp = *FO->Items_At(srcIndex);
                 if (srcIndex < dstIndex)
                 {
                     int i;
                     for (i = srcIndex; i < dstIndex; i++)
-                        *FO->At(i) = *FO->At(i + 1);
+                        *FO->Items_At(i) = *FO->Items_At(i + 1);
                 }
                 else
                 {
                     int i;
                     for (i = srcIndex; i > dstIndex; i--)
-                        *FO->At(i) = *FO->At(i - 1);
+                        *FO->Items_At(i) = *FO->Items_At(i - 1);
                 }
-                *FO->At(dstIndex) = tmp;
+                *FO->Items_At(dstIndex) = tmp;
 
                 SetWindowLongPtr(HWindow, DWLP_MSGRESULT, FALSE); // povolime zmenu
                 return TRUE;
@@ -864,7 +867,7 @@ CFindManageDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
             {
                 int index;
                 EditLB->GetCurSel(index);
-                FO->Delete(index);
+                FO->Items_Delete(index);
                 SetWindowLongPtr(HWindow, DWLP_MSGRESULT, FALSE); // povolim smazani
                 return TRUE;
             }
@@ -894,7 +897,7 @@ CFindManageDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 // CFindIgnoreDialog
 //
 
-CFindIgnoreDialog::CFindIgnoreDialog(HWND hParent, CFindIgnore* globalIgnoreList)
+CFindIgnoreDialog::CFindIgnoreDialog(HWND hParent, FindIgnore* globalIgnoreList)
     : CCommonDialog(HLanguage, IDD_FINDIGNORE, IDD_FINDIGNORE, hParent)
 {
     EditLB = NULL;
@@ -903,7 +906,7 @@ CFindIgnoreDialog::CFindIgnoreDialog(HWND hParent, CFindIgnore* globalIgnoreList
     HChecked = NULL;
     HUnchecked = NULL;
 
-    IgnoreList = new CFindIgnore;
+    IgnoreList = new FindIgnore;
     if (IgnoreList == NULL)
     {
         TRACE_E(LOW_MEMORY);
@@ -960,7 +963,7 @@ void CFindIgnoreDialog::Validate(CTransferInfo& ti)
     int i;
     for (i = 0; i < IgnoreList->GetCount(); i++)
     {
-        CFindIgnoreItem* item = IgnoreList->At(i);
+        Find_Ignore_Item* item = IgnoreList->At(i);
         if (item->Enabled && !IsIgnorePathValid(item->Path))
         {
             SalMessageBox(HWindow, LoadStr(IDS_ACBADDRIVE), LoadStr(IDS_ERRORTITLE),
@@ -996,7 +999,7 @@ CFindIgnoreDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
             TRACE_E(LOW_MEMORY);
         EditLB->MakeHeader(IDC_FFI_NAMESLABEL);
         EditLB->EnableDrag(HWindow);
-        int iconSize = IconSizes[ICONSIZE_16];
+        int iconSize = IconSizes[IconSize::size_16x16];
         HIMAGELIST hIL = CreateCheckboxImagelist(iconSize);
         HUnchecked = ImageList_GetIcon(hIL, 0, ILD_NORMAL);
         HChecked = ImageList_GetIcon(hIL, 1, ILD_NORMAL);
@@ -1065,7 +1068,7 @@ CFindIgnoreDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 EDTLB_DISPINFO* dispInfo = (EDTLB_DISPINFO*)lParam;
                 if (dispInfo->ToDo == edtlbGetData)
                 {
-                    CFindIgnoreItem* item = IgnoreList->At((int)dispInfo->ItemID);
+                    Find_Ignore_Item* item = IgnoreList->At((int)dispInfo->ItemID);
                     strcpy(dispInfo->Buffer, item->Path);
                     dispInfo->HIcon = item->Enabled ? HChecked : HUnchecked;
                     SetWindowLongPtr(HWindow, DWLP_MSGRESULT, FALSE);
@@ -1086,7 +1089,7 @@ CFindIgnoreDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                     else
                     {
                         int index = (int)dispInfo->ItemID;
-                        CFindIgnoreItem* item = IgnoreList->At(index);
+                        Find_Ignore_Item* item = IgnoreList->At(index);
                         IgnoreList->Set(index, item->Enabled, dispInfo->Buffer);
                     }
 
@@ -1126,7 +1129,7 @@ CFindIgnoreDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 EDTLB_DISPINFO* dispInfo = (EDTLB_DISPINFO*)lParam;
                 if (dispInfo->ItemID >= 0 && dispInfo->ItemID < IgnoreList->GetCount())
                 {
-                    CFindIgnoreItem* item = IgnoreList->At((int)dispInfo->ItemID);
+                    Find_Ignore_Item* item = IgnoreList->At((int)dispInfo->ItemID);
                     item->Enabled = item->Enabled ? FALSE : TRUE;
                     EditLB->RedrawFocusedItem();
                 }
@@ -1156,7 +1159,7 @@ CFindIgnoreDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 // Drag&Drop + Clipboard Copy&Cut
 //
 
-BOOL CFindDialog::InitializeOle()
+BOOL Find_Dialog::InitializeOle()
 {
     if (!OleInitialized)
     {
@@ -1165,7 +1168,7 @@ BOOL CFindDialog::InitializeOle()
     return OleInitialized;
 }
 
-void CFindDialog::UninitializeOle()
+void Find_Dialog::UninitializeOle()
 {
     if (OleInitialized)
     {
@@ -1183,22 +1186,22 @@ void CFindDialog::UninitializeOle()
 }
 
 const char*
-CFindDialog::GetName(int index)
+Find_Dialog::GetName(int index)
 {
-    if (index < 0 || index >= FoundFilesListView->GetCount())
+    if (index < 0 || index >= FoundFilesListView->Items_Count())
         return FALSE;
-    return FoundFilesListView->At(index)->Name;
+    return FoundFilesListView->Items_At(index)->Name;
 }
 
 const char*
-CFindDialog::GetPath(int index)
+Find_Dialog::GetPath(int index)
 {
-    if (index < 0 || index >= FoundFilesListView->GetCount())
+    if (index < 0 || index >= FoundFilesListView->Items_Count())
         return FALSE;
-    return FoundFilesListView->At(index)->Path;
+    return FoundFilesListView->Items_At(index)->Path;
 }
 
-BOOL CFindDialog::GetCommonPrefixPath(char* buffer, int bufferMax, int& commonPrefixChars)
+BOOL Find_Dialog::GetCommonPrefixPath(char* buffer, int bufferMax, int& commonPrefixChars)
 {
     HWND hListView = FoundFilesListView->HWindow;
     DWORD selCount = ListView_GetSelectedCount(hListView);
@@ -1218,7 +1221,7 @@ BOOL CFindDialog::GetCommonPrefixPath(char* buffer, int bufferMax, int& commonPr
         index = ListView_GetNextItem(FoundFilesListView->HWindow, index, LVNI_SELECTED);
         if (index != -1)
         {
-            CFoundFilesData* file = FoundFilesListView->At(index);
+            Find_FileList_Item* file = FoundFilesListView->Items_At(index);
             if (path[0] == 0)
             {
                 lstrcpy(path, file->Path); // v prvnim kroku pouze zapiseme cestu
@@ -1253,7 +1256,7 @@ BOOL CFindDialog::GetCommonPrefixPath(char* buffer, int bufferMax, int& commonPr
 
 struct CMyEnumFileNamesData
 {
-    CFindDialog* FindDialog;
+    Find_Dialog* FindDialog;
     HWND HListView;
     int CommonPrefixChars; // pocet znaku spolecne cesty
     int LastIndex;
@@ -1333,7 +1336,7 @@ void ContextMenuQuery(IContextMenu2* contextMenu, HMENU h)
     SetThreadPriority(hThread, oldThreadPriority);
 }
 
-void CFindDialog::OnDrag(BOOL rightMouseButton)
+void Find_Dialog::OnDrag(BOOL rightMouseButton)
 {
     if (!InitializeOle())
         return;
@@ -1353,12 +1356,12 @@ void CFindDialog::OnDrag(BOOL rightMouseButton)
     }
 
     // ulozime focused polozku a index
-    CFoundFilesData lastFocusedItem;
+    Find_FileList_Item lastFocusedItem;
     int lastFocusedIndex = ListView_GetNextItem(FoundFilesListView->HWindow, 0, LVIS_FOCUSED);
     if (lastFocusedIndex != -1)
     {
-        CFoundFilesData* lastItem = FoundFilesListView->At(lastFocusedIndex);
-        lastFocusedItem.Set(lastItem->Path, lastItem->Name, lastItem->Size, lastItem->Attr, &lastItem->LastWrite, lastItem->IsDir);
+        Find_FileList_Item* lastItem = FoundFilesListView->Items_At(lastFocusedIndex);
+        lastFocusedItem.Text_Set(lastItem->Path, lastItem->Name, lastItem->Size, lastItem->Attr, &lastItem->LastWrite, lastItem->IsDir);
     }
 
     CMyEnumFileNamesData data;
@@ -1410,7 +1413,7 @@ void CFindDialog::OnDrag(BOOL rightMouseButton)
     dataObject->Release();
 }
 
-void CFindDialog::OnContextMenu(int x, int y)
+void Find_Dialog::OnContextMenu(int x, int y)
 {
     if (!InitializeOle())
         return;
@@ -1463,7 +1466,7 @@ void CFindDialog::OnContextMenu(int x, int y)
             ici.cbSize = sizeof(CMINVOKECOMMANDINFOEX);
             ici.fMask = CMIC_MASK_PTINVOKE;
             if (CanUseShellExecuteWndAsParent(cmdName))
-                ici.hwnd = shellExecuteWnd.Create(HWindow, "SEW: CFindDialog::OnContextMenu cmd=%d cmdName=%s", cmd, cmdName);
+                ici.hwnd = shellExecuteWnd.Create(HWindow, "SEW: Find_Dialog::OnContextMenu cmd=%d cmdName=%s", cmd, cmdName);
             else
                 ici.hwnd = HWindow;
             ici.lpVerb = MAKEINTRESOURCE(cmd);
@@ -1495,7 +1498,7 @@ void CFindDialog::OnContextMenu(int x, int y)
                       MB_ICONEXCLAMATION | MB_OK);
 }
 
-BOOL CFindDialog::InvokeContextMenu(const char* lpVerb)
+BOOL Find_Dialog::InvokeContextMenu(const char* lpVerb)
 {
     BOOL ret = FALSE;
     HWND hListView = FoundFilesListView->HWindow;
@@ -1524,7 +1527,7 @@ BOOL CFindDialog::InvokeContextMenu(const char* lpVerb)
                 ZeroMemory(&ici, sizeof(CMINVOKECOMMANDINFOEX));
                 ici.cbSize = sizeof(CMINVOKECOMMANDINFOEX);
                 ici.fMask = CMIC_MASK_PTINVOKE;
-                ici.hwnd = shellExecuteWnd.Create(HWindow, "SEW: CFindDialog::InvokeContextMenu lpVerb=%s", lpVerb);
+                ici.hwnd = shellExecuteWnd.Create(HWindow, "SEW: Find_Dialog::InvokeContextMenu lpVerb=%s", lpVerb);
                 ici.lpVerb = lpVerb;
                 ici.nShow = SW_SHOWNORMAL;
                 GetListViewContextMenuPos(FoundFilesListView->HWindow, &ici.ptInvoke);
@@ -1546,7 +1549,7 @@ BOOL CFindDialog::InvokeContextMenu(const char* lpVerb)
     return TRUE;
 }
 
-void CFindDialog::OnCutOrCopy(BOOL cut)
+void Find_Dialog::OnCutOrCopy(BOOL cut)
 {
     if (InvokeContextMenu(cut ? "cut" : "copy"))
     {
@@ -1555,12 +1558,12 @@ void CFindDialog::OnCutOrCopy(BOOL cut)
     }
 }
 
-void CFindDialog::OnProperties()
+void Find_Dialog::OnProperties()
 {
     InvokeContextMenu("properties");
 }
 
-void CFindDialog::OnOpen(BOOL onlyFocused)
+void Find_Dialog::OnOpen(BOOL onlyFocused)
 {
     int count = ListView_GetSelectedCount(FoundFilesListView->HWindow);
     if (count == 0)
@@ -1585,7 +1588,7 @@ void CFindDialog::OnOpen(BOOL onlyFocused)
         index = ListView_GetNextItem(FoundFilesListView->HWindow, index, onlyFocused ? LVNI_FOCUSED : LVNI_SELECTED);
         if (index != -1)
         {
-            CFoundFilesData* file = FoundFilesListView->At(index);
+            Find_FileList_Item* file = FoundFilesListView->Items_At(index);
             BOOL setWait = (GetCursor() != LoadCursor(NULL, IDC_WAIT)); // ceka uz ?
             HCURSOR oldCur;
             if (setWait)
@@ -1664,311 +1667,3 @@ CFindDuplicatesDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return CCommonDialog::DialogProc(uMsg, wParam, lParam);
 }
 
-//*********************************************************************************
-//
-// CFindLog
-//
-
-#define DEFERRED_ERRORS_MAX 300 // maximalni pocet pamatovanych chyb
-
-CFindLog::CFindLog()
-    : Items(1, 50)
-{
-    Clean();
-}
-
-CFindLog::~CFindLog()
-{
-    Clean();
-}
-
-void CFindLog::Clean()
-{
-    int i;
-    for (i = 0; i < Items.Count; i++)
-    {
-        CFindLogItem* item = &Items[i];
-        free(item->Text);
-        free(item->Path);
-    }
-    Items.DetachMembers();
-    SkippedErrors = 0;
-    ErrorCount = 0;
-    InfoCount = 0;
-}
-
-BOOL CFindLog::Add(DWORD flags, const char* text, const char* path)
-{
-    CFindLogItem item;
-
-    if (flags & FLI_ERROR)
-        ErrorCount++;
-    else
-        InfoCount++;
-
-    if (Items.Count > DEFERRED_ERRORS_MAX)
-    {
-        SkippedErrors++;
-        return TRUE;
-    }
-
-    item.Flags = flags;
-    item.Text = DupStr(text == NULL ? "" : text);
-    if (item.Text == NULL)
-    {
-        TRACE_E(LOW_MEMORY);
-        return FALSE;
-    }
-
-    item.Path = DupStr(path == NULL ? "" : path);
-    if (item.Path == NULL)
-    {
-        TRACE_E(LOW_MEMORY);
-        free(item.Text);
-        return FALSE;
-    }
-
-    Items.Add(item);
-    if (!Items.IsGood())
-    {
-        TRACE_E(LOW_MEMORY);
-        free(item.Text);
-        free(item.Path);
-        Items.ResetState();
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-const CFindLogItem*
-CFindLog::Get(int index)
-{
-    if (index < 0 || index >= Items.Count)
-    {
-        TRACE_E("Index is out of range");
-        return NULL;
-    }
-    return &Items[index];
-}
-
-//*********************************************************************************
-//
-// CFindLogDialog
-//
-
-CFindLogDialog::CFindLogDialog(HWND hParent, CFindLog* log)
-    : CCommonDialog(HLanguage, IDD_FIND_LOG, IDD_FIND_LOG, hParent)
-{
-    Log = log;
-    HListView = NULL;
-}
-
-void CFindLogDialog::Transfer(CTransferInfo& ti)
-{
-    if (ti.Type == ttDataToWindow)
-    {
-        HListView = GetDlgItem(HWindow, IDC_FINDLOG_LIST);
-
-        int iconSize = IconSizes[ICONSIZE_16];
-        HIMAGELIST hIcons = ImageList_Create(iconSize, iconSize, ILC_MASK | GetImageListColorFlags(), 2, 0); // o destrukci se postara listview
-
-        HICON hWarning;
-        LoadIconWithScaleDown(NULL, (PCWSTR)IDI_EXCLAMATION, iconSize, iconSize, &hWarning);
-        HICON hInfo;
-        LoadIconWithScaleDown(NULL, (PCWSTR)IDI_INFORMATION, iconSize, iconSize, &hInfo);
-        ImageList_SetImageCount(hIcons, 2);
-        ImageList_ReplaceIcon(hIcons, 0, hWarning);
-        ImageList_ReplaceIcon(hIcons, 1, hInfo);
-        DestroyIcon(hWarning);
-        DestroyIcon(hInfo);
-        HIMAGELIST hOldIcons = ListView_SetImageList(HListView, hIcons, LVSIL_SMALL);
-        if (hOldIcons != NULL)
-            ImageList_Destroy(hOldIcons);
-
-        DWORD exFlags = LVS_EX_FULLROWSELECT;
-        DWORD origFlags = ListView_GetExtendedListViewStyle(HListView);
-        ListView_SetExtendedListViewStyle(HListView, origFlags | exFlags); // 4.71
-
-        // inicializace sloupcu
-        int header[] = {IDS_FINDLOG_TYPE, IDS_FINDLOG_TEXT, IDS_FINDLOG_PATH, -1};
-
-        LV_COLUMN lvc;
-        lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_SUBITEM;
-        lvc.fmt = LVCFMT_LEFT;
-        int i;
-        for (i = 0; header[i] != -1; i++)
-        {
-            lvc.pszText = LoadStr(header[i]);
-            lvc.iSubItem = i;
-            ListView_InsertColumn(HListView, i, &lvc);
-        }
-
-        // pridani polozek
-        LVITEM lvi;
-        lvi.mask = LVIF_IMAGE;
-        lvi.iSubItem = 0;
-        char buff[4000];
-        const CFindLogItem* item;
-        for (i = 0; i < Log->GetCount(); i++)
-        {
-            item = Log->Get(i);
-
-            lvi.iItem = i;
-            lvi.iSubItem = 0;
-            lvi.iImage = (item->Flags & FLI_ERROR) != 0 ? 0 : 1;
-            ListView_InsertItem(HListView, &lvi);
-            ListView_SetItemText(HListView, i, 0, LoadStr((item->Flags & FLI_ERROR) != 0 ? IDS_FINDLOG_ERROR : IDS_FINDLOG_INFO));
-
-            // odstranim z textu znaky '\r' a '\n'
-            lstrcpyn(buff, item->Text, 4000);
-            int j;
-            for (j = 0; buff[j] != 0; j++)
-                if (buff[j] == '\r' || buff[j] == '\n')
-                    buff[j] = ' ';
-
-            ListView_SetItemText(HListView, i, 1, buff);
-            ListView_SetItemText(HListView, i, 2, item->Path);
-        }
-
-        if (Log->GetSkippedCount() > 0)
-        {
-            wsprintf(buff, LoadStr(IDS_FINDERRORS_SKIPPING), Log->GetSkippedCount());
-
-            lvi.iItem = i;
-            lvi.iSubItem = 0;
-            lvi.iImage = 1; // question
-            ListView_InsertItem(HListView, &lvi);
-            ListView_SetItemText(HListView, i, 0, LoadStr(IDS_FINDLOG_INFO));
-            ListView_SetItemText(HListView, i, 1, buff);
-        }
-
-        // nulta polozka bude vybrana
-        DWORD state = LVIS_SELECTED | LVIS_FOCUSED;
-        ListView_SetItemState(HListView, 0, state, state);
-
-        // nastavim sirky sloupcu
-        ListView_SetColumnWidth(HListView, 0, LVSCW_AUTOSIZE_USEHEADER);
-        ListView_SetColumnWidth(HListView, 1, LVSCW_AUTOSIZE_USEHEADER);
-        ListView_SetColumnWidth(HListView, 2, LVSCW_AUTOSIZE_USEHEADER);
-    }
-}
-
-void CFindLogDialog::OnFocusFile()
-{
-    CALL_STACK_MESSAGE1("CFindLogDialog::OnFocusFile()");
-    const CFindLogItem* item = GetSelectedItem();
-    if (item == NULL)
-        return;
-
-    if (SalamanderBusy)
-    {
-        Sleep(200); // dame Salamu cas - pokud slo o prepnuti z hlavniho okna, mohla
-                    // by jeste dobihat message queue od menu
-        if (SalamanderBusy)
-        {
-            SalMessageBox(HWindow, LoadStr(IDS_SALAMANDBUSY2),
-                          LoadStr(IDS_INFOTITLE), MB_OK | MB_ICONINFORMATION);
-            return;
-        }
-    }
-    static char FocusPath[2 * MAX_PATH];
-    lstrcpyn(FocusPath, item->Path, _countof(FocusPath));
-    char buffEmpty[] = "";
-    char* p = buffEmpty;
-    if (FocusPath[0] != 0)
-    {
-        if (FocusPath[strlen(FocusPath) - 1] == '\\')
-            FocusPath[strlen(FocusPath) - 1] = 0;
-        p = strrchr(FocusPath, '\\');
-        if (p == NULL)
-        {
-            TRACE_E("p == NULL");
-            return;
-        }
-        *p = 0;
-    }
-
-    SendMessage(MainWindow->GetActivePanel()->HWindow, WM_USER_FOCUSFILE, (WPARAM)p + 1, (LPARAM)FocusPath);
-}
-
-void CFindLogDialog::OnIgnore()
-{
-    CALL_STACK_MESSAGE1("CFindLogDialog::OnIgnore()");
-    const CFindLogItem* item = GetSelectedItem();
-    if (item == NULL)
-        return;
-
-    CTruncatedString str;
-    str.Set(LoadStr(IDS_FINDLOG_IGNORE), item->Path);
-    CMessageBox msgBox(HWindow, MSGBOXEX_OKCANCEL | MSGBOXEX_ICONQUESTION,
-                       LoadStr(IDS_QUESTION), &str, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL);
-    if (msgBox.Execute() == IDOK)
-    {
-        FindIgnore.AddUnique(TRUE, item->Path);
-    }
-}
-
-const CFindLogItem*
-CFindLogDialog::GetSelectedItem()
-{
-    CALL_STACK_MESSAGE1("CFindLogDialog::OnIgnore()");
-    int index = ListView_GetNextItem(HListView, -1, LVNI_SELECTED);
-    if (index < 0 || index >= Log->GetCount())
-        return NULL;
-    return Log->Get(index);
-}
-
-void CFindLogDialog::EnableControls()
-{
-    const CFindLogItem* item = GetSelectedItem();
-    BOOL path = item != NULL && item->Path != NULL && item->Path[0] != 0;
-    TRACE_I("path=" << path);
-    EnableWindow(GetDlgItem(HWindow, IDC_FINDLOG_FOCUS), path);
-    EnableWindow(GetDlgItem(HWindow, IDC_FINDLOG_IGNORE), path && (item->Flags & FLI_IGNORE) != 0);
-}
-
-INT_PTR
-CFindLogDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    CALL_STACK_MESSAGE4("CFindLogDialog::DialogProc(0x%X, 0x%IX, 0x%IX)", uMsg, wParam, lParam);
-    switch (uMsg)
-    {
-    case WM_COMMAND:
-    {
-        switch (LOWORD(wParam))
-        {
-        case IDC_FINDLOG_FOCUS:
-        {
-            OnFocusFile();
-            return 0;
-        }
-
-        case IDC_FINDLOG_IGNORE:
-        {
-            OnIgnore();
-            return 0;
-        }
-        }
-        break;
-    }
-
-    case WM_NOTIFY:
-    {
-        if (wParam == IDC_FINDLOG_LIST)
-        {
-            switch (((LPNMHDR)lParam)->code)
-            {
-            case LVN_ITEMCHANGED:
-            {
-                EnableControls();
-                return 0;
-            }
-            }
-        }
-        break;
-    }
-    }
-
-    return CCommonDialog::DialogProc(uMsg, wParam, lParam);
-}

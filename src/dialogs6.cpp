@@ -395,7 +395,7 @@ CSharesDialog::CreateImageList()
     HIMAGELIST himl = ImageList_Create(16, 16, GetImageListColorFlags() | ILC_MASK, 2, 0);
     //  ImageList_SetBkColor(himl, GetSysColor(COLOR_WINDOW)); // aby pod XP chodily pruhledne ikonky
 
-    HICON hIcon = SalLoadImage(4, 4, IconSizes[ICONSIZE_16], IconSizes[ICONSIZE_16], IconLRFlags); // symbolsDirectory
+    HICON hIcon = SalLoadImage(4, 4, IconSizes[IconSize::size_16x16], IconSizes[IconSize::size_16x16], IconLRFlags); // symbolsDirectory
     if (hIcon != NULL)
     {
         ImageList_ReplaceIcon(himl, -1, hIcon);
@@ -404,7 +404,7 @@ CSharesDialog::CreateImageList()
     else
         ImageList_SetImageCount(himl, 1);
 
-    ImageList_ReplaceIcon(himl, -1, HSharedOverlays[ICONSIZE_16]);
+    ImageList_ReplaceIcon(himl, -1, HSharedOverlays[IconSize::size_16x16]);
     ImageList_SetOverlayImage(himl, 1, 1);
     return himl;
 }
@@ -725,7 +725,7 @@ CSharesDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 // CDisconnectDialog
 //
 
-CDisconnectDialog::CDisconnectDialog(CFilesWindow* panel)
+CDisconnectDialog::CDisconnectDialog(CPanelWindow* panel)
     : CCommonDialog(HLanguage, IDD_DISCONNECT, IDD_DISCONNECT, panel->HWindow), Connections(10, 5)
 {
     Panel = panel;
@@ -871,7 +871,7 @@ CDisconnectDialog::CreateImageList()
     //  ImageList_SetBkColor(himl, GetSysColor(COLOR_WINDOW)); // aby pod XP chodily pruhledne ikonky
 
     // CONNECTION_ICON_NETWORK
-    HICON hIcon = SalLoadImage(33, 10, IconSizes[ICONSIZE_16], IconSizes[ICONSIZE_16], IconLRFlags); // accessible network drive
+    HICON hIcon = SalLoadImage(33, 10, IconSizes[IconSize::size_16x16], IconSizes[IconSize::size_16x16], IconLRFlags); // accessible network drive
     if (hIcon != NULL)
     {
         ImageList_ReplaceIcon(himl, -1, hIcon);
@@ -881,12 +881,12 @@ CDisconnectDialog::CreateImageList()
         TRACE_E("Icon was not found!");
 
     // CONNECTION_ICON_PLUGIN
-    hIcon = SalLoadIcon(HInstance, IDI_PLUGINFS, IconSizes[ICONSIZE_16]);
+    hIcon = SalLoadIcon(HInstance, IDI_PLUGINFS, IconSizes[IconSize::size_16x16]);
     ImageList_ReplaceIcon(himl, -1, hIcon);
     HANDLES(DestroyIcon(hIcon));
 
     // CONNECTION_ICON_ACCESSIBLE
-    hIcon = SalLoadImage(33, 10, IconSizes[ICONSIZE_16], IconSizes[ICONSIZE_16], IconLRFlags); // accessible network drive
+    hIcon = SalLoadImage(33, 10, IconSizes[IconSize::size_16x16], IconSizes[IconSize::size_16x16], IconLRFlags); // accessible network drive
     if (hIcon != NULL)
     {
         ImageList_ReplaceIcon(himl, -1, hIcon);
@@ -896,7 +896,7 @@ CDisconnectDialog::CreateImageList()
         TRACE_E("Icon was not found!");
 
     // CONNECTION_ICON_INACCESSIBLE
-    hIcon = SalLoadImage(31, 11, IconSizes[ICONSIZE_16], IconSizes[ICONSIZE_16], IconLRFlags); // non-accessible network drive
+    hIcon = SalLoadImage(31, 11, IconSizes[IconSize::size_16x16], IconSizes[IconSize::size_16x16], IconLRFlags); // non-accessible network drive
     if (hIcon != NULL)
     {
         ImageList_ReplaceIcon(himl, -1, hIcon);
@@ -1058,7 +1058,7 @@ void CDisconnectDialog::EnumConnections()
             activePanelFS = Panel->GetPluginFS();
             *fsListItem++ = activePanelFS;
         }
-        CFilesWindow* otherPanel = MainWindow->LeftPanel == Panel ? MainWindow->RightPanel : MainWindow->LeftPanel;
+        CPanelWindow* otherPanel = MainWindow->LeftPanel == Panel ? MainWindow->RightPanel : MainWindow->LeftPanel;
         CPluginFSInterfaceEncapsulation* nonactivePanelFS = NULL;
         if (otherPanel->Is(ptPluginFS))
         {
@@ -1451,8 +1451,8 @@ void CLoadSelectionDialog::Transfer(CTransferInfo& ti)
 
 CCompareDirsDialog::CCompareDirsDialog(HWND hParent, BOOL enableByDateAndTime, BOOL enableBySize,
                                        BOOL enableByAttrs, BOOL enableByContent, BOOL enableSubdirs,
-                                       BOOL enableCompAttrsOfSubdirs, CFilesWindow* leftPanel,
-                                       CFilesWindow* rightPanel)
+                                       BOOL enableCompAttrsOfSubdirs, CPanelWindow* leftPanel,
+                                       CPanelWindow* rightPanel)
     : CCommonDialog(HLanguage, IDD_COMPAREDIRS, IDD_COMPAREDIRS, hParent)
 {
     EnableByDateAndTime = enableByDateAndTime;
@@ -1895,14 +1895,12 @@ CCmpDirProgressDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 // CExitingOpenSal
 //
 
-CExitingOpenSal::CExitingOpenSal(HWND hParent)
-    : CCommonDialog(HLanguage, IDD_EXITINGOPENSAL, hParent)
+CExitingOpenSal::CExitingOpenSal(HWND hParent) : CCommonDialog(HLanguage, IDD_EXITINGOPENSAL, hParent)
 {
     NextOpenedDlgIndex = 0;
 }
 
-INT_PTR
-CExitingOpenSal::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CExitingOpenSal::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {

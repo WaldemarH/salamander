@@ -291,8 +291,7 @@ BOOL AgreeQSMask(const char* filename, BOOL hasExtension, const char* mask, BOOL
 // CMaskGroup
 //
 
-CMaskGroup::CMaskGroup()
-    : PreparedMasks(10, 10)
+CMaskGroup::CMaskGroup() : PreparedMasks(10, 10)
 {
     MasksString[0] = 0;
     NeedPrepare = FALSE;
@@ -301,8 +300,7 @@ CMaskGroup::CMaskGroup()
     MasksHashArraySize = 0;
 }
 
-CMaskGroup::CMaskGroup(const char* masks, BOOL extendedMode)
-    : PreparedMasks(10, 10)
+CMaskGroup::CMaskGroup(const char* masks, BOOL extendedMode) : PreparedMasks(10, 10)
 {
     MasksHashArray = NULL;
     MasksHashArraySize = 0;
@@ -329,8 +327,7 @@ void CMaskGroup::Release()
     ReleaseMasksHashArray();
 }
 
-CMaskGroup&
-CMaskGroup::operator=(const CMaskGroup& s)
+CMaskGroup& CMaskGroup::operator=(const CMaskGroup& s)
 {
     Release();
 
@@ -392,8 +389,7 @@ void CMaskGroup::SetMasksString(const char* masks, BOOL extendedMode)
     ExtendedMode = extendedMode;
 }
 
-const char*
-CMaskGroup::GetMasksString()
+const char* CMaskGroup::GetMasksString()
 {
     return MasksString;
 }

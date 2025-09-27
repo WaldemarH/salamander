@@ -53,7 +53,7 @@ protected:
 class CSalamanderThumbnailMaker : public CSalamanderThumbnailMakerAbstract
 {
 protected:
-    CFilesWindow* Window; // okno panelu, v jehoz icon-readeru fungujeme
+    CPanelWindow* Window; // okno panelu, v jehoz icon-readeru fungujeme
 
     DWORD* Buffer;  // vlastni buffer pro data radek od pluginu
     int BufferSize; // velikost bufferu 'Buffer'
@@ -77,7 +77,7 @@ protected:
     BOOL ShrinkImage;
 
 public:
-    CSalamanderThumbnailMaker(CFilesWindow* window);
+    CSalamanderThumbnailMaker(CPanelWindow* window);
     ~CSalamanderThumbnailMaker();
 
     // vycisteni objektu - vola se pred zpracovanim dalsiho thumbnailu nebo kdyz uz
